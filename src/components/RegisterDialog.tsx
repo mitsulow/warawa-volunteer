@@ -37,6 +37,7 @@ export function RegisterDialog({
     display_name: string;
     avatar_url: string | null;
     email: string;
+    bio?: string | null;
     sns: Record<string, string> | null;
   };
   isFirst: boolean;
@@ -44,8 +45,10 @@ export function RegisterDialog({
   onClose?: () => void;
 }) {
   const [name, setName] = useState(initial.display_name);
+  const [hitokoto, setHitokoto] = useState(initial.bio ?? "");
   const [email, setEmail] = useState(initial.email);
   const [sns, setSns] = useState<Record<string, string>>(initial.sns ?? {});
+  const [snsOpen, setSnsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -80,6 +83,7 @@ export function RegisterDialog({
     const { error: e } = await upsertMyProfile(userId, {
       display_name: name.trim(),
       avatar_url: initial.avatar_url,
+      bio: hitokoto.trim() || null,
       sns: Object.keys(snsClean).length ? snsClean : null,
     });
     if (!e) await saveMyEmail(userId, email.trim());
@@ -111,13 +115,25 @@ export function RegisterDialog({
 
         <label className="mt-2 block text-sm font-bold">
           お名前{" "}
-          <span className="font-normal text-[#a09888]">（ペンネームでもOKです）</span>
+          <span className="font-normal text-[#a09888]">（ニックネームもOKです）</span>
         </label>
         <input
           className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
+        />
+
+        <label className="mt-3 block text-sm font-bold">
+          みんなにひとこと{" "}
+          <span className="font-normal text-[#a09888]">（任意）</span>
+        </label>
+        <input
+          className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
+          placeholder="よろしくお願いします！"
+          value={hitokoto}
+          onChange={(e) => setHitokoto(e.target.value)}
+          maxLength={60}
         />
 
         <label className="mt-3 block text-sm font-bold">
@@ -132,26 +148,34 @@ export function RegisterDialog({
         />
         <p className="mt-1 text-[11px] text-[#a09888]">他の参加者には公開されません</p>
 
-        <label className="mt-3 block text-sm font-bold">SNSリンク</label>
-        <p className="mt-0.5 mb-1.5 text-[11px] text-[#a09888]">
-          ※SNSで情報発信をされている方はご登録ください（任意です）
-        </p>
-        <div className="space-y-2">
-          {SNS_FIELDS.map((f) => (
-            <div key={f.id} className="flex items-center gap-2">
-              <span className="flex w-24 flex-shrink-0 items-center gap-1.5 text-[11px] text-[#8a8070]">
-                <SnsIcon platform={f.id} size={18} />
-                {f.label}
-              </span>
-              <input
-                value={sns[f.id] ?? ""}
-                onChange={(e) => setSns({ ...sns, [f.id]: e.target.value })}
-                placeholder={f.placeholder}
-                className="min-w-0 flex-1 rounded-lg border border-[#ede5d8] bg-white px-2.5 py-2 text-[12px] outline-none focus:border-[#d96a1a]"
-              />
-            </div>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => setSnsOpen(!snsOpen)}
+          className="mt-3 flex w-full items-center justify-between rounded-xl border border-[#ede5d8] bg-[#fffaf0] px-3 py-2.5 text-left"
+        >
+          <span className="text-[12.5px] font-bold text-[#8a7a5a]">
+            SNSリンクがあれば登録できます
+          </span>
+          <span className="text-[#b0a898]">{snsOpen ? "▲" : "▼"}</span>
+        </button>
+        {snsOpen && (
+          <div className="mt-2 space-y-2">
+            {SNS_FIELDS.map((f) => (
+              <div key={f.id} className="flex items-center gap-2">
+                <span className="flex w-24 flex-shrink-0 items-center gap-1.5 text-[11px] text-[#8a8070]">
+                  <SnsIcon platform={f.id} size={18} />
+                  {f.label}
+                </span>
+                <input
+                  value={sns[f.id] ?? ""}
+                  onChange={(e) => setSns({ ...sns, [f.id]: e.target.value })}
+                  placeholder={f.placeholder}
+                  className="min-w-0 flex-1 rounded-lg border border-[#ede5d8] bg-white px-2.5 py-2 text-[12px] outline-none focus:border-[#d96a1a]"
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 

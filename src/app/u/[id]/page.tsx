@@ -290,6 +290,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
             display_name: profile.display_name,
             avatar_url: profile.avatar_url,
             email: myEmail,
+            bio: profile.bio,
             sns: profile.sns,
           }}
           isFirst={false}
