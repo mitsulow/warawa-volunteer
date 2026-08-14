@@ -151,6 +151,14 @@ export default function GroupTalkPage({
                   }`}
                   style={mine ? { background: "#d96a1a" } : undefined}
                 >
+                  {(m.pref || m.city) && (
+                    <span
+                      className={`block text-[11px] font-bold ${mine ? "text-white/90" : ""}`}
+                      style={mine ? undefined : { color: "#c05e14" }}
+                    >
+                      📍 {m.pref ?? ""}{m.city ? ` ${m.city}` : ""}
+                    </span>
+                  )}
                   {m.body && <span className="whitespace-pre-wrap break-words">{m.body}</span>}
                   {m.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element

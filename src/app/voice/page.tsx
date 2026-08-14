@@ -43,8 +43,9 @@ export default function VoicePage() {
         <GroupFeed
           scope="voice"
           userId={session.userId}
+          myAvatar={session.profile?.avatar_url ?? null}
           requireJoin={() => setShowJoin(true)}
-          placeholder="欲しい物・やって欲しい事を書く"
+          placeholder="今欲しいモノ、あったら助かるもの、やって欲しい事"
         />
       </div>
 

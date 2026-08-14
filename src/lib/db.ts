@@ -41,6 +41,8 @@ export interface BoardMessage {
   image_urls: string[] | null;
   thumb_urls: string[] | null;
   embed: { url: string; title?: string; description?: string; image?: string; platform?: string } | null;
+  pref: string | null;
+  city: string | null;
   scope: BoardScope;
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null; member_no: number | null } | null;
@@ -239,7 +241,7 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
 /* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
 
 const BOARD_SELECT =
-  "id, user_id, body, image_url, image_urls, thumb_urls, embed, scope, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, created_at, profiles(display_name, avatar_url, member_no)";
 const BOARD_SELECT_FULL = BOARD_SELECT;
 
 export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
@@ -278,6 +280,8 @@ export async function sendBoardMessage(
     imageUrls?: string[];
     thumbUrls?: string[];
     embed?: BoardMessage["embed"];
+    pref?: string | null;
+    city?: string | null;
   }
 ) {
   const supabase = createClient();
@@ -289,6 +293,8 @@ export async function sendBoardMessage(
     image_urls: extras?.imageUrls?.length ? extras.imageUrls : null,
     thumb_urls: extras?.thumbUrls?.length ? extras.thumbUrls : null,
     embed: extras?.embed ?? null,
+    pref: extras?.pref ?? null,
+    city: extras?.city ?? null,
   });
   if (!result.error) {
     firePush("/api/push-group", { scope, body: body || "📷 写真" });
