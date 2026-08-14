@@ -441,7 +441,8 @@ export function OffersSection({
       {/* 折り畳みと4ボタンを1つの箱に一体化 */}
       <div className="mb-3 overflow-hidden rounded-xl border border-[#ede5d8] bg-white shadow-sm">
         <button
-          className="flex w-full items-center justify-between px-3.5 py-2.5"
+          className="flex w-full items-center justify-between px-3.5 py-1.5"
+          style={{ background: "#fdeedd" }}
           onClick={() => setPickerOpen(!pickerOpen)}
         >
           <span className="text-[13.5px] font-bold text-[#5a5448]">何ができるかを選ぶ</span>
