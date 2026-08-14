@@ -86,34 +86,34 @@ export function InstallPrompt() {
 
   return (
     <>
-      {/* 下部バナー（下タブの上に出す） */}
-      <div className="fixed bottom-16 left-1/2 z-50 w-[calc(100%-24px)] max-w-[496px] -translate-x-1/2">
+      {/* 前面の中央ダイアログ（目立つように） */}
+      <div className="fixed inset-0 z-[90] flex items-start justify-center bg-black/55 px-5 pt-[18vh]">
         <div
-          className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 shadow-xl"
-          style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
+          className="relative w-full max-w-[340px] rounded-3xl p-5 text-center shadow-2xl"
+          style={{ background: "#fffdf8" }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/waraeru-archangel.png"
-            alt=""
-            className="h-9 w-9 flex-shrink-0 object-contain"
-          />
-          <p className="min-w-0 flex-1 text-[13px] font-extrabold leading-tight text-white">
-            ホーム画面に追加できます
-          </p>
           <button
-            className="flex-shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold"
-            style={{ color: "#d96a1a" }}
-            onClick={install}
-          >
-            ホーム画面に追加
-          </button>
-          <button
-            className="flex-shrink-0 px-1 text-[18px] text-white/70"
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece2] text-[15px] font-bold text-[#8a8070]"
             aria-label="あとで"
             onClick={snooze}
           >
             ×
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icon-192.png"
+            alt=""
+            className="mx-auto h-16 w-16 rounded-2xl object-cover shadow"
+          />
+          <h3 className="mt-3 text-[17px] font-extrabold text-[#3a3428]">
+            ホーム画面に追加できます
+          </h3>
+          <button
+            className="mt-4 w-full rounded-2xl py-3.5 text-[15px] font-extrabold text-white shadow-md"
+            style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
+            onClick={install}
+          >
+            ホーム画面に追加
           </button>
         </div>
       </div>
