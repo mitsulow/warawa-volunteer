@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "わらわ〜ボランティア 熊本",
   description:
-    "熊本地震の被災地支援。お金・体・物資 — 出せるものを持ち寄って、西福寺（熊本県八代郡氷川町）を拠点に支え合う。",
+    "熊本地震の被災地支援。届けるのは「大丈夫」、配るのは「笑顔」。お金・体・物資 — 出せるものを持ち寄って支え合う。",
   metadataBase: new URL("https://warawa-volunteer.vercel.app"),
   openGraph: {
     title: "わらわ〜ボランティア 熊本",

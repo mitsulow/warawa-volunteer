@@ -15,11 +15,6 @@ import { GroupFeed } from "@/components/GroupFeed";
 import { AdminSection } from "@/components/AdminSection";
 import { BottomNav } from "@/components/BottomNav";
 
-const TEMPLE_ADDRESS = "熊本県八代郡氷川町宮原598-1";
-const MAP_URL =
-  "https://www.google.com/maps/search/?api=1&query=" +
-  encodeURIComponent(`西福寺 ${TEMPLE_ADDRESS}`);
-
 type Tab = "voice" | "offers" | "board";
 
 export default function Home() {
@@ -65,78 +60,67 @@ export default function Home() {
 
   return (
     <main className="overflow-x-clip pb-24" style={{ background: "#faf6ee" }}>
-      {/* ヘッダー（楽市楽座スタイル: エンブレム + タイトル + 右上アバター） */}
+      {/* ヘッダー: スローガン + センター寄せタイトル + 右上に丸アイコン（ゲスト=●参加 / ログイン=アバター） */}
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
-        <div className="flex h-[52px] items-center justify-between px-4">
-          <span className="inline-flex select-none items-center" style={{ color: "#c94d3a", gap: 8 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/waraeru-archangel.png"
-              alt=""
-              className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-            />
-            <span
-              className="whitespace-nowrap font-bold"
-              style={{ fontSize: 19, letterSpacing: "0.02em", lineHeight: 1 }}
-            >
-              わらわ〜ボランティア
-            </span>
-            <span
+        <div className="relative px-14 py-1.5">
+          <div className="select-none text-center" style={{ color: "#c94d3a" }}>
+            <p
               className="whitespace-nowrap font-semibold"
-              style={{ fontSize: 10, letterSpacing: "-0.02em", lineHeight: 1, marginLeft: 2, opacity: 0.85 }}
+              style={{ fontSize: 10, letterSpacing: "0.04em", lineHeight: 1.2, opacity: 0.9 }}
             >
-              熊本地震 被災地支援
-            </span>
-          </span>
-          {session.profile?.avatar_url ? (
-            <Link href={`/u/${session.userId}`} className="shrink-0">
+              届けるのは「大丈夫」、配るのは「笑顔」。
+            </p>
+            <span className="mt-0.5 inline-flex items-center justify-center" style={{ gap: 7 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={session.profile.avatar_url}
+                src="/waraeru-archangel.png"
                 alt=""
-                referrerPolicy="no-referrer"
-                className="h-9 w-9 rounded-full object-cover"
-                style={{ boxShadow: "0 0 0 2px #c94d3a" }}
+                className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
               />
-            </Link>
-          ) : session.profile ? (
-            <Link
-              href={`/u/${session.userId}`}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-bold text-white no-underline"
-              style={{ background: "#c94d3a" }}
-            >
-              {session.profile.display_name.charAt(0)}
-            </Link>
-          ) : (
-            <button
-              className="flex h-9 shrink-0 items-center rounded-full px-3 text-[12px] font-bold text-white"
-              style={{ background: "#c94d3a" }}
-              onClick={requireJoin}
-            >
-              参加
-            </button>
-          )}
+              <span
+                className="whitespace-nowrap font-bold"
+                style={{ fontSize: 19, letterSpacing: "0.02em", lineHeight: 1 }}
+              >
+                わらわ〜ボランティア
+              </span>
+            </span>
+          </div>
+
+          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+            {session.profile?.avatar_url ? (
+              <Link href={`/u/${session.userId}`} className="block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={session.profile.avatar_url}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="h-9 w-9 rounded-full object-cover"
+                  style={{ boxShadow: "0 0 0 2px #c94d3a" }}
+                />
+              </Link>
+            ) : session.profile ? (
+              <Link
+                href={`/u/${session.userId}`}
+                className="flex h-9 w-9 items-center justify-center rounded-full font-bold text-white no-underline"
+                style={{ background: "#c94d3a" }}
+              >
+                {session.profile.display_name.charAt(0)}
+              </Link>
+            ) : (
+              <button
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                style={{ background: "#c94d3a" }}
+                onClick={requireJoin}
+                aria-label="参加する"
+              >
+                参加
+              </button>
+            )}
+          </span>
         </div>
       </header>
 
       <div className="space-y-3 px-4 pt-3">
-        {/* 受け入れ先 */}
-        <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2 text-[12px] text-[#5a5448]">
-          <span className="shrink-0">🏠</span>
-          <span className="min-w-0 flex-1 truncate">
-            受け入れ先: <b>西福寺</b>（{TEMPLE_ADDRESS}）
-          </span>
-          <a
-            href={MAP_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white no-underline"
-            style={{ background: "#c94d3a" }}
-          >
-            📍 地図
-          </a>
-        </div>
-
         {/* 本日の出せる物資一覧 */}
         <FeaturedGoods offers={offers} />
 
