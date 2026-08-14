@@ -75,6 +75,7 @@ export function GroupFeed({
   // エリア絞り込み（助けて）: どこの県・市で困っているかをセクション分けで確認できる
   const [fPref, setFPref] = useState("九州全域");
   const [fCity, setFCity] = useState("全市町村");
+  const [composerOpen, setComposerOpen] = useState(false);
   const [cityMap, setCityMap] = useState<Record<string, string[]>>({});
   const cursorRef = useRef<string | null>(null);
 
@@ -172,7 +173,7 @@ export function GroupFeed({
 
   return (
     <div>
-      {scope === "voice" && (
+      {scope === "voice" && !composerOpen && (
         <div className="mb-2">
           <p className="mb-1 text-[13px] font-bold text-[#5a5448]">助けて欲しい場所</p>
           <div className="flex gap-2">
@@ -226,6 +227,7 @@ export function GroupFeed({
         myAvatar={myAvatar}
         requireJoin={requireJoin}
         onPosted={pull}
+        onExpandedChange={setComposerOpen}
       />
 
       <div className="space-y-2">
@@ -278,7 +280,7 @@ export function GroupFeed({
                     </span>
                   )}
                   <span className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-tight" style={{ color: "#c05e14" }}>
-                    {m.pref ?? ""}{m.city ? ` ${m.city}` : ""}からの投稿
+                    {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
                   </span>
                   <span className="shrink-0 self-start text-[10px] text-[#c0b8a8]">
                     {fmtTime(m.created_at)}

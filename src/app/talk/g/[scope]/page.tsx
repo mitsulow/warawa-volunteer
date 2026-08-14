@@ -156,7 +156,7 @@ export default function GroupTalkPage({
                       className={`block text-[11px] font-bold ${mine ? "text-white/90" : ""}`}
                       style={mine ? undefined : { color: "#c05e14" }}
                     >
-                      {m.pref ?? ""}{m.city ? ` ${m.city}` : ""}からの投稿
+                      {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
                     </span>
                   )}
                   {m.body && <span className="whitespace-pre-wrap break-words">{m.body}</span>}

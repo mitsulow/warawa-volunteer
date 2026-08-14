@@ -61,6 +61,7 @@ export function PostComposer({
   myAvatar,
   requireJoin,
   onPosted,
+  onExpandedChange,
 }: {
   scope: BoardScope;
   prompt: string;
@@ -70,11 +71,16 @@ export function PostComposer({
   myAvatar: string | null;
   requireJoin: () => void;
   onPosted: () => void;
+  onExpandedChange?: (open: boolean) => void;
 }) {
   const draftKey = `warawa-draft-${scope}`;
   const [body, setBody] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpandedRaw] = useState(false);
+  const setExpanded = (v: boolean) => {
+    setExpandedRaw(v);
+    onExpandedChange?.(v);
+  };
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [embed, setEmbed] = useState<OGPEmbed | null>(null);
@@ -270,6 +276,7 @@ export function PostComposer({
             className="min-w-0 flex-1 rounded-xl border border-[#e8dcc4] bg-white px-2 py-2.5 text-[13.5px] outline-none focus:border-[#d96a1a]"
           >
             <option value="">市町村を選ぶ</option>
+            <option value="市は不明">市は不明</option>
             {(cities[pref] ?? []).map((c) => (
               <option key={c} value={c}>
                 {c}
