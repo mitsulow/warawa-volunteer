@@ -53,12 +53,12 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
   return (
     <div
       className="overflow-hidden rounded-2xl border-2 shadow-md"
-      style={{ borderColor: "#c94d3a", background: "linear-gradient(135deg,#fdf6e9 0%,#f5e8d5 100%)" }}
+      style={{ borderColor: "#1e6b3a", background: "linear-gradient(135deg,#fdf6e9 0%,#f5e8d5 100%)" }}
     >
       {/* リボン */}
       <div
         className="flex items-center justify-center gap-2 px-3 py-1"
-        style={{ background: "linear-gradient(90deg,#c94d3a 0%,#d4612e 50%,#c94d3a 100%)" }}
+        style={{ background: "linear-gradient(90deg,#1e6b3a 0%,#2e8b4f 50%,#1e6b3a 100%)" }}
       >
         {picks.length > 1 && (
           <div className="flex flex-shrink-0 gap-1">
@@ -133,7 +133,7 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
                         {o.profiles?.display_name ?? ""}
                       </span>
                     </div>
-                    <div className="flex-shrink-0 text-[11px] font-bold" style={{ color: "#c94d3a" }}>
+                    <div className="flex-shrink-0 text-[11px] font-bold" style={{ color: "#1e6b3a" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src="/icons/icon-rice.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2 }} /> 物資
                     </div>

@@ -140,7 +140,7 @@ export function RegisterDialog({
 
         <button
           className="mt-4 w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
-          style={{ background: "#c94d3a" }}
+          style={{ background: "#1e6b3a" }}
           disabled={busy}
           onClick={save}
         >

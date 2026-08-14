@@ -63,7 +63,7 @@ export default function TalkListPage() {
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
-        <h1 className="flex items-center gap-2 text-lg font-bold" style={{ color: "#c94d3a" }}>
+        <h1 className="flex items-center gap-2 text-lg font-bold" style={{ color: "#1e6b3a" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" /> TalK
         </h1>
@@ -72,7 +72,7 @@ export default function TalkListPage() {
       {!session.loading && !session.userId && (
         <div className="p-6 text-center text-sm text-[#8a8070]">
           <p className="mb-3">TalKを使うにはGoogleログインが必要です。</p>
-          <Link href="/" className="font-bold underline" style={{ color: "#c94d3a" }}>
+          <Link href="/" className="font-bold underline" style={{ color: "#1e6b3a" }}>
             ← ホームから参加する
           </Link>
         </div>

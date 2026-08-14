@@ -55,7 +55,7 @@ export function BottomNav({
 
   const cls = (key: string) =>
     `flex-1 flex flex-col items-center py-1.5 relative no-underline ${
-      active === key ? "text-[#c94d3a] font-bold" : "text-[#8a8070]"
+      active === key ? "text-[#1e6b3a] font-bold" : "text-[#8a8070]"
     }`;
 
   return (
@@ -70,7 +70,7 @@ export function BottomNav({
               alt=""
               referrerPolicy="no-referrer"
               className="h-6 w-6 rounded-full object-cover"
-              style={active === "my" ? { boxShadow: "0 0 0 2px #c94d3a" } : undefined}
+              style={active === "my" ? { boxShadow: "0 0 0 2px #1e6b3a" } : undefined}
             />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element

@@ -72,7 +72,7 @@ export function InAppBrowserGuard() {
         )}
         <button
           className="mt-4 w-full rounded-xl py-3 text-[14px] font-bold text-white"
-          style={{ background: "#c94d3a" }}
+          style={{ background: "#1e6b3a" }}
           onClick={copyUrl}
         >
           {copied ? "✅ コピーしました" : "URLをコピーする"}

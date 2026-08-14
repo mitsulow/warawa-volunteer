@@ -63,7 +63,7 @@ export default function Home() {
       {/* ヘッダー: スローガン + センター寄せタイトル + 右上に丸アイコン（ゲスト=●参加 / ログイン=アバター） */}
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
         <div className="relative px-14 py-1.5">
-          <div className="select-none text-center" style={{ color: "#c94d3a" }}>
+          <div className="select-none text-center" style={{ color: "#1e6b3a" }}>
             <p
               className="whitespace-nowrap font-semibold"
               style={{ fontSize: 10, letterSpacing: "0.04em", lineHeight: 1.2, opacity: 0.9 }}
@@ -95,21 +95,21 @@ export default function Home() {
                   alt=""
                   referrerPolicy="no-referrer"
                   className="h-9 w-9 rounded-full object-cover"
-                  style={{ boxShadow: "0 0 0 2px #c94d3a" }}
+                  style={{ boxShadow: "0 0 0 2px #1e6b3a" }}
                 />
               </Link>
             ) : session.profile ? (
               <Link
                 href={`/u/${session.userId}`}
                 className="flex h-9 w-9 items-center justify-center rounded-full font-bold text-white no-underline"
-                style={{ background: "#c94d3a" }}
+                style={{ background: "#1e6b3a" }}
               >
                 {session.profile.display_name.charAt(0)}
               </Link>
             ) : (
               <button
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                style={{ background: "#c94d3a" }}
+                style={{ background: "#1e6b3a" }}
                 onClick={requireJoin}
                 aria-label="参加する"
               >
@@ -136,7 +136,7 @@ export default function Home() {
               className="rounded-xl py-2 text-center transition-colors"
               style={
                 tab === id
-                  ? { background: "#c94d3a", color: "#fff", boxShadow: "0 2px 8px rgba(201,77,58,.35)" }
+                  ? { background: "#1e6b3a", color: "#fff", boxShadow: "0 2px 8px rgba(30,107,58,.35)" }
                   : { background: "transparent", color: "#8a8070" }
               }
             >
@@ -152,7 +152,7 @@ export default function Home() {
               <p className="text-xs font-medium text-[#8a8070]">
                 現地の「欲しい物・やって欲しい事」。TalKのグループトークと同期しています
               </p>
-              <Link href="/voice" className="shrink-0 text-[11px] font-bold underline" style={{ color: "#c94d3a" }}>
+              <Link href="/voice" className="shrink-0 text-[11px] font-bold underline" style={{ color: "#1e6b3a" }}>
                 全画面で見る
               </Link>
             </div>
@@ -194,7 +194,7 @@ export default function Home() {
         >
           <div
             className="flex items-center gap-2.5 rounded-xl px-3 py-3 shadow-md"
-            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
+            style={{ background: "linear-gradient(120deg,#1e6b3a,#124a26)" }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -212,7 +212,7 @@ export default function Home() {
             </div>
             <div
               className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold"
-              style={{ color: "#c94d3a" }}
+              style={{ color: "#1e6b3a" }}
             >
               登録する →
             </div>
