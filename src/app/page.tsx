@@ -26,18 +26,18 @@ export default function Home() {
     avatar: string | null;
     email: string;
   } | null>(null);
-  const [tab, setTabState] = useState<Tab>("board");
+  const [tab, setTabState] = useState<Tab>("voice");
   // タブ位置を記憶: リロードしても選んでいたタブから始まる
   useEffect(() => {
     try {
-      const t = localStorage.getItem("warawa-tab") as Tab | null;
+      const t = localStorage.getItem("warawa-tab2") as Tab | null;
       if (t === "board" || t === "offers" || t === "voice") setTabState(t);
     } catch {}
   }, []);
   const setTab = (t: Tab) => {
     setTabState(t);
     try {
-      localStorage.setItem("warawa-tab", t);
+      localStorage.setItem("warawa-tab2", t);
     } catch {}
   };
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -136,12 +136,6 @@ export default function Home() {
       </header>
 
       <div className="space-y-3 px-4 pt-3">
-        {/* 本日の出せる物資一覧 */}
-        <FeaturedGoods offers={offers} />
-
-        {/* オレンジ軍団 */}
-        <OrangeCorps />
-
         {/* 3タブ切り替え（楽市/楽座/この指とまれ の移植） */}
         <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
           {TABS.map(([id, label, sub]) => (
@@ -199,6 +193,12 @@ export default function Home() {
             requireJoin={requireJoin}
           />
         )}
+
+        {/* 本日の出せる物資一覧 */}
+        <FeaturedGoods offers={offers} />
+
+        {/* 現地入りメンバー（一番下） */}
+        <OrangeCorps />
 
         <footer className="py-6 text-center text-sm text-[#8a8070]">
           <p className="mb-1 font-bold">📱 アプリのように使えます</p>
