@@ -102,6 +102,22 @@ function OfferDialog({
   const [error, setError] = useState("");
 
   const isGoods = kind === "goods";
+  const draftKey = `warawa-draft-offer-${kind}`;
+
+  /* 下書き保存（CotoZuteと同じ: アプリ切替でも本文が消えない） */
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem(draftKey);
+      if (d) setDetail(d);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      if (detail) localStorage.setItem(draftKey, detail);
+      else localStorage.removeItem(draftKey);
+    } catch {}
+  }, [detail, draftKey]);
 
   const submit = async () => {
     if (!detail.trim()) {
@@ -119,6 +135,9 @@ function OfferDialog({
       setError(`投稿できませんでした: ${e.message}`);
       return;
     }
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {}
     setSent(true);
     onDone();
   };
@@ -157,8 +176,9 @@ function OfferDialog({
               {isGoods ? "私に出せるもの" : "私が持ち寄れるもの・アイディア・その他"}
             </label>
             <textarea
-              className="mt-1 w-full rounded-xl border border-[#e8dcc4] px-3 py-2 text-[14px] leading-relaxed outline-none focus:border-[#d96a1a]"
+              className="mt-1 w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#d96a1a]"
               rows={3}
+              maxLength={500}
               autoFocus
               placeholder={
                 isGoods
@@ -219,16 +239,28 @@ function OfferDialog({
               )}
             </div>
 
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-
-            <button
-              className="mt-4 w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
-              style={{ background: "#d96a1a" }}
-              disabled={busy || uploading || !detail.trim()}
-              onClick={submit}
-            >
-              {busy ? "投稿中…" : "投稿する"}
-            </button>
+            {/* 送信バー（CotoZuteと同じ: 文字数カウンター + キャンセル/投稿） */}
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-[#c0b8a8]">
+                {error ? <span className="font-bold text-red-600">{error}</span> : `${detail.length}/500`}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={onClose}
+                  className="rounded-xl px-3 py-2 text-[12.5px] font-bold text-[#a09888]"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={submit}
+                  disabled={busy || uploading || !detail.trim()}
+                  className="rounded-xl px-5 py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
+                  style={{ background: "#d96a1a" }}
+                >
+                  {busy ? "投稿中..." : "投稿"}
+                </button>
+              </div>
+            </div>
           </>
         )}
       </div>
