@@ -96,6 +96,11 @@ export default function OfficePage() {
           {a.detail}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
+          {(priv?.pref || priv?.city) && (
+            <span className="font-bold text-[#5a5448]">
+              🏠 {priv?.pref ?? ""}{priv?.city ? ` ${priv.city}` : ""}
+            </span>
+          )}
           {priv?.phone && (
             <a href={`tel:${priv.phone}`} className="font-bold" style={{ color: "#d96a1a" }}>
               📞 {priv.phone}
