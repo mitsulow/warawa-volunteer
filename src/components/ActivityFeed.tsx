@@ -300,7 +300,7 @@ export function ActivityFeed({
                 {it.body.trim() && (
                   <div className="mt-2">
                     <p
-                      className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#1c1e21] ${
+                      className={`whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#1c1e21] ${
                         bodyExpanded || !needsFold(it.body) ? "" : "line-clamp-1"
                       }`}
                       onClick={() => {

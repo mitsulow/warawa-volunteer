@@ -295,7 +295,7 @@ export function GroupFeed({
                   )}
                 </div>
                 {m.body && (
-                  <p className="mt-1.5 whitespace-pre-wrap break-words text-[14.5px] font-bold leading-relaxed text-[#3a3428]">
+                  <p className="mt-1.5 whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#3a3428]">
                     {m.body}
                   </p>
                 )}
@@ -376,7 +376,7 @@ export function GroupFeed({
                 <span className="ml-auto text-[10px] text-[#a09888]">{fmtTime(m.created_at)}</span>
               </div>
               {m.body && (
-                <p className="mt-1.5 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#4a4438]">
+                <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#4a4438]">
                   {m.body}
                 </p>
               )}

@@ -400,7 +400,7 @@ export function OffersSection({
                   <p className="text-[10px] text-[#c0b8a8]">{fmtTime(o.created_at)}</p>
                 </div>
               </div>
-              <p className="mt-1.5 whitespace-pre-wrap break-words text-[14px] leading-relaxed text-[#3a3428]">
+              <p className="mt-1.5 whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#3a3428]">
                 {o.title ? `${o.title}\n` : ""}
                 {o.detail}
               </p>
