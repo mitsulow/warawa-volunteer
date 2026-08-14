@@ -28,7 +28,7 @@ export interface Offer {
   image_url: string | null;
   status: "open" | "confirmed" | "done";
   created_at: string;
-  profiles: { display_name: string; avatar_url: string | null } | null;
+  profiles: { display_name: string; avatar_url: string | null; member_no?: number | null } | null;
 }
 
 export type BoardScope = "board" | "voice";
@@ -38,9 +38,12 @@ export interface BoardMessage {
   user_id: string;
   body: string;
   image_url: string | null;
+  image_urls: string[] | null;
+  thumb_urls: string[] | null;
+  embed: { url: string; title?: string; description?: string; image?: string; platform?: string } | null;
   scope: BoardScope;
   created_at: string;
-  profiles: { display_name: string; avatar_url: string | null } | null;
+  profiles: { display_name: string; avatar_url: string | null; member_no: number | null } | null;
 }
 
 export interface DmMessage {
@@ -167,7 +170,7 @@ export async function fetchIsAdmin(userId: string): Promise<boolean> {
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
-  "id, user_id, kind, title, detail, image_url, status, created_at, profiles(display_name, avatar_url)";
+  "id, user_id, kind, title, detail, image_url, status, created_at, profiles(display_name, avatar_url, member_no)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
@@ -236,7 +239,7 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
 /* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
 
 const BOARD_SELECT =
-  "id, user_id, body, image_url, scope, created_at, profiles(display_name, avatar_url)";
+  "id, user_id, body, image_url, image_urls, thumb_urls, embed, scope, created_at, profiles(display_name, avatar_url, member_no)";
 
 export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
   const supabase = createClient();
@@ -269,12 +272,23 @@ export async function sendBoardMessage(
   scope: BoardScope,
   userId: string,
   body: string,
-  imageUrl?: string | null
+  imageUrl?: string | null,
+  extras?: {
+    imageUrls?: string[];
+    thumbUrls?: string[];
+    embed?: BoardMessage["embed"];
+  }
 ) {
   const supabase = createClient();
-  const result = await supabase
-    .from("board_messages")
-    .insert({ scope, user_id: userId, body, image_url: imageUrl ?? null });
+  const result = await supabase.from("board_messages").insert({
+    scope,
+    user_id: userId,
+    body,
+    image_url: imageUrl ?? null,
+    image_urls: extras?.imageUrls?.length ? extras.imageUrls : null,
+    thumb_urls: extras?.thumbUrls?.length ? extras.thumbUrls : null,
+    embed: extras?.embed ?? null,
+  });
   if (!result.error) {
     firePush("/api/push-group", { scope, body: body || "📷 写真" });
   }

@@ -45,3 +45,16 @@ body {
 a {
   text-decoration: none;
 }
+
+/* 投稿ボックスの点滅カーソル（CotoZuteと同じ） */
+.caret-blink::after {
+  content: "|";
+  margin-left: 2px;
+  animation: caret-blink 1.1s steps(1) infinite;
+  color: #b0a898;
+}
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
