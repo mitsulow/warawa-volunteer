@@ -106,7 +106,7 @@ export function InstallPrompt() {
             style={{ color: "#d96a1a" }}
             onClick={install}
           >
-            アプリにする
+            ホーム画面に追加
           </button>
           <button
             className="flex-shrink-0 px-1 text-[18px] text-white/70"
