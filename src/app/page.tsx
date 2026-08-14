@@ -168,8 +168,8 @@ export default function Home() {
 
         {tab === "voice" && (
           <div>
-            <p className="mb-2 text-xs font-medium text-[#8a8070]">
-              現地の人の「いま欲しい物・やって欲しい事」の掲示板です。
+            <p className="mb-2 text-center text-xs font-medium text-[#8a8070]">
+              現地で今欲しい物、やって欲しい事の掲示板
             </p>
             <GroupFeed
               scope="voice"
