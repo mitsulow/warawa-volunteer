@@ -20,9 +20,9 @@ const KINDS: Record<
   OfferKind,
   { icon: string; label: string; verb: string }
 > = {
-  money: { icon: "/icons/icon-yen.webp", label: "お金を出す", verb: "お金を出します" },
-  body: { icon: "/icons/icon-tasukete.webp", label: "体を出す", verb: "体を出します" },
-  goods: { icon: "/icons/icon-rice.webp", label: "物資を出す", verb: "物資を出します" },
+  money: { icon: "/icons/icon-yen.webp", label: "寄付をする", verb: "お金を出します" },
+  body: { icon: "/icons/icon-tasukete.webp", label: "現地へ行く", verb: "体を出します" },
+  goods: { icon: "/icons/icon-rice.webp", label: "物資を送る", verb: "物資を出します" },
   other: { icon: "/icons/icon-gift.webp", label: "その他", verb: "持ち寄ります" },
 };
 
