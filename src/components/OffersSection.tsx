@@ -44,7 +44,7 @@ function BankDialog({ onClose }: { onClose: () => void }) {
       >
         <h3 className="flex items-center gap-2 text-lg font-bold">
           <img src="/icons/icon-yen.webp" alt="" className="h-7 w-7 object-contain" />
-          お金を出す
+          寄付をする
         </h3>
         <p className="mt-2 text-sm text-[#5a5448]">以下への振り込みをお願い致します。</p>
         <div
@@ -285,10 +285,10 @@ export function OffersSection({
         {(Object.keys(KINDS) as OfferKind[]).map((k) => (
           <button
             key={k}
-            className="rounded-2xl border border-[#ede5d8] bg-white py-3.5 shadow-sm transition-transform active:scale-95"
+            className="rounded-xl border border-[#ede5d8] bg-white py-1.5 shadow-sm transition-transform active:scale-95"
             onClick={() => open(k)}
           >
-            <img src={KINDS[k].icon} alt="" className="mx-auto h-10 w-10 object-contain" />
+            <img src={KINDS[k].icon} alt="" className="mx-auto h-7 w-7 object-contain" />
             <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
           </button>
         ))}
