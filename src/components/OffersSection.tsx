@@ -48,17 +48,28 @@ function BankDialog({ onClose }: { onClose: () => void }) {
         </h3>
         <p className="mt-2 text-sm text-[#5a5448]">以下への振り込みをお願い致します。</p>
         <div
-          className="mt-3 space-y-1.5 rounded-xl border p-4 text-[14px] leading-relaxed"
+          className="mt-3 space-y-1.5 rounded-xl border p-4 text-[14.5px] leading-relaxed"
           style={{ borderColor: "#e8c890", background: "#fffaf0" }}
         >
-          <p><span className="text-[11px] font-bold text-[#a09888]">銀行名　</span>準備中</p>
-          <p><span className="text-[11px] font-bold text-[#a09888]">支店　　</span>準備中</p>
-          <p><span className="text-[11px] font-bold text-[#a09888]">口座番号</span> 準備中</p>
-          <p><span className="text-[11px] font-bold text-[#a09888]">口座名義</span> わらわ〜ボランティア</p>
+          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">銀行名</span> GMOあおぞらネット銀行</p>
+          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">支店名</span> 法人第二営業部</p>
+          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">口座　</span> 普通 1007941</p>
+          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">名義　</span> ファミュニティリンク カ）</p>
         </div>
-        <p className="mt-2 text-[11.5px] text-[#a09888]">
-          ※正式な口座情報は確定し次第、ここに表示されます。
-        </p>
+        <button
+          className="mt-2 w-full rounded-xl border py-2 text-[12.5px] font-bold"
+          style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(
+                "GMOあおぞらネット銀行 法人第二営業部 普通 1007941 ファミュニティリンク カ）"
+              );
+              alert("口座情報をコピーしました");
+            } catch {}
+          }}
+        >
+          📋 口座情報をコピーする
+        </button>
         <button
           className="mt-4 w-full rounded-xl py-3 font-bold text-white"
           style={{ background: "#d96a1a" }}
