@@ -259,14 +259,6 @@ export function GroupFeed({
                 style={{ background: "linear-gradient(160deg,#f2a35c,#e0803a)", padding: "5px 5px 0" }}
               >
               <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
-                {/* 透かしワラエル（文字の後ろに薄く） */}
-                <img
-                  src="/waraeru-v2.png"
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none absolute -right-4 h-32 w-32 object-contain"
-                  style={{ opacity: 0.12, bottom: -6 }}
-                />
                 <div className="relative">
                 <div className="flex items-center gap-2.5">
                   {m.profiles?.avatar_url ? (
@@ -352,6 +344,18 @@ export function GroupFeed({
                   />
                 )}
                 </div>
+                {/* 透かしワラエル: 少し左に倒してナナメ。写真がある時は写真の上に重なる(mondの猫と同じ) */}
+                <img
+                  src="/waraeru-v2.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute -right-4 h-32 w-32 object-contain"
+                  style={{
+                    opacity: images.length > 0 ? 0.55 : 0.12,
+                    bottom: -6,
+                    transform: "rotate(-8deg)",
+                  }}
+                />
               </div>
               {/* 枠の外・右下に手書きロゴ */}
               <div className="flex h-[24px] items-center justify-end pr-2.5">
