@@ -85,6 +85,7 @@ export function PostComposer({
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<Record<string, string[]>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [alertMsg, setAlertMsg] = useState<string | null>(null);
   const lastFetchedUrl = useRef<string | null>(null);
 
   useEffect(() => {
@@ -135,7 +136,7 @@ export function PostComposer({
   const submit = async () => {
     if (!userId || (!body.trim() && !embed && images.length === 0) || sending) return;
     if (withLocation && !city) {
-      setMessage("市町村を選んでください");
+      setAlertMsg("市町村を選んでください");
       return;
     }
     setSending(true);
@@ -149,7 +150,7 @@ export function PostComposer({
     });
     setSending(false);
     if (error) {
-      setMessage(`投稿できませんでした: ${error.message}`);
+      setAlertMsg(`投稿できませんでした: ${error.message}`);
       return;
     }
     setBody("");
@@ -182,6 +183,29 @@ export function PostComposer({
             style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
           >
             {toast}
+          </div>
+        </div>
+      )}
+      {alertMsg && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/55 p-6"
+          onClick={() => setAlertMsg(null)}
+        >
+          <div
+            className="w-full max-w-[320px] rounded-2xl bg-white p-5 text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-3xl">⚠️</div>
+            <p className="mt-2 text-[16px] font-extrabold leading-relaxed text-[#c0392b]">
+              {alertMsg}
+            </p>
+            <button
+              className="mt-4 w-full rounded-xl py-3 text-[14px] font-bold text-white"
+              style={{ background: "#d96a1a" }}
+              onClick={() => setAlertMsg(null)}
+            >
+              わかった
+            </button>
           </div>
         </div>
       )}
