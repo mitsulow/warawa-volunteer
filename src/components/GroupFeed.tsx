@@ -17,7 +17,7 @@ import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 /**
