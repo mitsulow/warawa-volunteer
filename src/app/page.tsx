@@ -41,7 +41,6 @@ export default function Home() {
     } catch {}
   };
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [goodsSignal, setGoodsSignal] = useState(0);
 
   useEffect(() => {
     fetchOffers().then(setOffers);
@@ -189,7 +188,6 @@ export default function Home() {
             profile={session.profile}
             isAdmin={session.isAdmin}
             requireJoin={requireJoin}
-            openGoodsSignal={goodsSignal}
           />
         )}
 
@@ -201,42 +199,6 @@ export default function Home() {
             requireJoin={requireJoin}
           />
         )}
-
-        {/* 物資登録CTA（フィードの下・楽市楽座の出品CTAを移植） */}
-        <button
-          className="block w-full text-left"
-          onClick={() => {
-            setTab("offers");
-            if (!session.userId) requireJoin();
-            else setGoodsSignal((n) => n + 1);
-          }}
-        >
-          <div
-            className="flex items-center gap-2.5 rounded-xl px-3 py-3 shadow-md"
-            style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/waraeru-archangel.png"
-              alt=""
-              className="h-9 w-9 flex-shrink-0 object-contain"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-extrabold leading-tight text-white">
-                出せる物資を登録する
-              </div>
-              <div className="text-[10.5px] leading-tight text-white/85">
-                体に優しい食材を現地の炊き出しへ。写真つきでトップに載ります
-              </div>
-            </div>
-            <div
-              className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold"
-              style={{ color: "#d96a1a" }}
-            >
-              登録する →
-            </div>
-          </div>
-        </button>
 
         <footer className="py-6 text-center text-sm text-[#8a8070]">
           <p className="mb-1 font-bold">📱 アプリのように使えます</p>
