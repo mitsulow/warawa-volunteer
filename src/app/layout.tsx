@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { BadgeSync } from "@/components/BadgeSync";
 import { InAppBrowserGuard } from "@/components/InAppBrowserGuard";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { PushSetup } from "@/components/PushSetup";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,6 +48,7 @@ export default function RootLayout({
       <body>
         <InAppBrowserGuard />
         <InstallPrompt />
+        <PushSetup />
         <BadgeSync />
         <div className="mx-auto min-h-screen max-w-[520px] bg-washi shadow-xl">
           {children}

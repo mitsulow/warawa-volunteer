@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase";
+import { firePush } from "@/lib/push";
 
 export interface Profile {
   id: string;
@@ -220,9 +221,13 @@ export async function sendBoardMessage(
   imageUrl?: string | null
 ) {
   const supabase = createClient();
-  return supabase
+  const result = await supabase
     .from("board_messages")
     .insert({ scope, user_id: userId, body, image_url: imageUrl ?? null });
+  if (!result.error) {
+    firePush("/api/push-group", { scope, body: body || "📷 写真" });
+  }
+  return result;
 }
 
 export async function markGroupRead(scope: BoardScope, userId: string) {
@@ -351,6 +356,7 @@ export async function sendDm(chatId: string, myId: string, body: string) {
       .from("chats")
       .update({ last_message_at: new Date().toISOString() })
       .eq("id", chatId);
+    firePush("/api/push", { chatId, body });
   }
   return { error };
 }

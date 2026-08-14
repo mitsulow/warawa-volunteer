@@ -15,6 +15,47 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
+// プッシュ通知の受信: 通知表示 + アイコンバッジ更新
+self.addEventListener("push", (e) => {
+  let data = {};
+  try {
+    data = e.data ? e.data.json() : {};
+  } catch {}
+  e.waitUntil(
+    (async () => {
+      await self.registration.showNotification(data.title || "わらわ〜ボランティア", {
+        body: data.body || "",
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        tag: data.tag || "warawa",
+        data: { url: data.url || "/talk" },
+      });
+      if (typeof data.unread === "number" && "setAppBadge" in self.navigator) {
+        try {
+          if (data.unread > 0) await self.navigator.setAppBadge(data.unread);
+          else await self.navigator.clearAppBadge();
+        } catch {}
+      }
+    })()
+  );
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/talk";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ("focus" in c) {
+          c.navigate(url);
+          return c.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
 // ネットワーク優先・失敗時のみキャッシュ（APIやSupabaseは素通し）
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || !e.request.url.startsWith(self.location.origin)) return;
