@@ -86,6 +86,22 @@ export async function fetchMembers(): Promise<Profile[]> {
   return (data as Profile[]) ?? [];
 }
 
+/** 連絡用メール（profile_private: 本人+管理者のみ閲覧可） */
+export async function saveMyEmail(userId: string, email: string) {
+  const supabase = createClient();
+  return supabase.from("profile_private").upsert({ id: userId, email });
+}
+
+export async function fetchMyEmail(userId: string): Promise<string | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("profile_private")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+  return (data?.email as string | null) ?? null;
+}
+
 export async function fetchIsAdmin(userId: string): Promise<boolean> {
   const supabase = createClient();
   const { data } = await supabase

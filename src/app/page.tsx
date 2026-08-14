@@ -25,7 +25,11 @@ type Tab = "voice" | "offers" | "board";
 export default function Home() {
   const session = useSession();
   const [showJoin, setShowJoin] = useState(false);
-  const [googleMeta, setGoogleMeta] = useState<{ name: string; avatar: string | null } | null>(null);
+  const [googleMeta, setGoogleMeta] = useState<{
+    name: string;
+    avatar: string | null;
+    email: string;
+  } | null>(null);
   const [tab, setTab] = useState<Tab>("voice");
   const [offers, setOffers] = useState<Offer[]>([]);
   const [goodsSignal, setGoodsSignal] = useState(0);
@@ -46,6 +50,7 @@ export default function Home() {
       setGoogleMeta({
         name: (meta.full_name as string) || (meta.name as string) || "",
         avatar: (meta.picture as string) || (meta.avatar_url as string) || null,
+        email: data.user?.email ?? "",
       });
     });
   }, [session.userId, session.profile, session.loading]);
@@ -249,7 +254,7 @@ export default function Home() {
           initial={{
             display_name: googleMeta.name,
             avatar_url: googleMeta.avatar,
-            bio: null,
+            email: googleMeta.email,
             sns: null,
           }}
           isFirst

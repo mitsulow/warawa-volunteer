@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { upsertMyProfile, type Profile } from "@/lib/db";
+import { saveMyEmail, upsertMyProfile } from "@/lib/db";
 import { detectPlatform, getPlatformLabel } from "@/components/SnsIcon";
 
 /**
  * 最初の登録フォーム（Googleログイン直後）/ プロフィール編集（同じフォームを再利用）。
- * 入力: お名前（Googleから自動）・自己紹介（任意）・SNSリンク（URLを貼るだけ・複数可）。
- * ボランティアNo.はDB側で登録順に自動採番。
+ * 入力: お名前（Googleアカウント名を自動入力・変更可）/ メールアドレス（Google認証のメールを自動入力・変更可）/ SNSリンク（任意）。
+ * メールは profile_private（本人+管理者のみ閲覧可）に保存。ボランティアNo.は登録順に自動採番。
  */
 export function RegisterDialog({
   userId,
@@ -17,13 +17,18 @@ export function RegisterDialog({
   onClose,
 }: {
   userId: string;
-  initial: { display_name: string; avatar_url: string | null; bio: string | null; sns: Record<string, string> | null };
+  initial: {
+    display_name: string;
+    avatar_url: string | null;
+    email: string;
+    sns: Record<string, string> | null;
+  };
   isFirst: boolean;
   onDone: () => void;
   onClose?: () => void;
 }) {
   const [name, setName] = useState(initial.display_name);
-  const [bio, setBio] = useState(initial.bio ?? "");
+  const [email, setEmail] = useState(initial.email);
   const [snsLines, setSnsLines] = useState(
     Object.values(initial.sns ?? {}).join("\n")
   );
@@ -33,6 +38,10 @@ export function RegisterDialog({
   const save = async () => {
     if (!name.trim()) {
       setError("お名前を入れてください");
+      return;
+    }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("メールアドレスの形式を確認してください");
       return;
     }
     setBusy(true);
@@ -50,9 +59,9 @@ export function RegisterDialog({
     const { error: e } = await upsertMyProfile(userId, {
       display_name: name.trim(),
       avatar_url: initial.avatar_url,
-      bio: bio.trim() || null,
       sns: Object.keys(sns).length ? sns : null,
     });
+    if (!e) await saveMyEmail(userId, email.trim());
     setBusy(false);
     if (e) {
       setError("保存できませんでした。もう一度お試しください");
@@ -79,7 +88,10 @@ export function RegisterDialog({
           </p>
         )}
 
-        <label className="mt-2 block text-sm font-bold">お名前</label>
+        <label className="mt-2 block text-sm font-bold">
+          お名前{" "}
+          <span className="font-normal text-[#a09888]">（変更可能です）</span>
+        </label>
         <input
           className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
           value={name}
@@ -88,20 +100,23 @@ export function RegisterDialog({
         />
 
         <label className="mt-3 block text-sm font-bold">
-          自己紹介 <span className="font-normal text-[#a09888]">（任意）</span>
+          メールアドレス{" "}
+          <span className="font-normal text-[#a09888]">（変更可能です）</span>
         </label>
-        <textarea
+        <input
+          type="email"
           className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
-          rows={3}
-          maxLength={300}
-          placeholder="やっていること・支援への想いなど"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
+        <p className="mt-1 text-[11px] text-[#a09888]">
+          連絡用です。他の参加者には公開されません
+        </p>
 
-        <label className="mt-3 block text-sm font-bold">
-          SNSリンク <span className="font-normal text-[#a09888]">（任意・1行に1つ貼るだけ）</span>
-        </label>
+        <label className="mt-3 block text-sm font-bold">SNSリンク</label>
+        <p className="mt-0.5 text-[11px] text-[#a09888]">
+          ※SNSで情報発信をされている方はご登録ください（任意です）
+        </p>
         <textarea
           className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2 text-[13px]"
           rows={3}

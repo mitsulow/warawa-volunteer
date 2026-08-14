@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
+  fetchMyEmail,
   fetchOffersByUser,
   fetchProfile,
   getOrCreateChat,
@@ -26,6 +27,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [goods, setGoods] = useState<Offer[]>([]);
   const [editing, setEditing] = useState(false);
+  const [myEmail, setMyEmail] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
@@ -173,7 +175,11 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
 
           {isMe && (
             <button
-              onClick={() => setEditing(true)}
+              onClick={async () => {
+                const e = await fetchMyEmail(id).catch(() => null);
+                setMyEmail(e ?? "");
+                setEditing(true);
+              }}
               className="mt-3 block w-full rounded-xl border border-[#e0d6c6] bg-white py-2.5 text-center text-[13px] font-bold text-[#8a7a5a]"
             >
               プロフィールを編集
@@ -274,7 +280,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
           initial={{
             display_name: profile.display_name,
             avatar_url: profile.avatar_url,
-            bio: profile.bio,
+            email: myEmail,
             sns: profile.sns,
           }}
           isFirst={false}
