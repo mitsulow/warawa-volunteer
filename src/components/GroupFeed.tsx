@@ -245,10 +245,22 @@ export function GroupFeed({
           // 助けて(voice): 名前・アイコンなしのシンプル行「📍○○県○○市 ＋ 欲しい物」
           if (scope === "voice") {
             return (
+              /* mond式カード: 色枠 + 白カード + 透かしワラエル + 手書きロゴ */
               <div
                 key={m.id}
-                className="rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
+                className="overflow-hidden rounded-2xl shadow-sm"
+                style={{ background: "linear-gradient(160deg,#f2a35c,#e0803a)", padding: "5px 5px 0" }}
               >
+              <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
+                {/* 透かしワラエル（文字の後ろに薄く） */}
+                <img
+                  src="/waraeru-v2.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-3 -right-3 h-28 w-28 object-contain"
+                  style={{ opacity: 0.1 }}
+                />
+                <div className="relative">
                 <div className="flex items-center gap-2.5">
                   {m.profiles?.avatar_url ? (
                     <img
@@ -332,6 +344,12 @@ export function GroupFeed({
                     }
                   />
                 )}
+                </div>
+              </div>
+              {/* 枠の外・右下に手書きロゴ */}
+              <div className="flex h-[20px] items-center justify-end pr-2">
+                <img src="/warawa-logo.png" alt="わらわ〜" className="h-[13px] w-auto object-contain" />
+              </div>
               </div>
             );
           }

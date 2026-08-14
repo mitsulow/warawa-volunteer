@@ -314,28 +314,30 @@ export function OffersSection({
 
   return (
     <div>
-      {/* 折り畳み: 押すと4つのボタンが出てくる */}
-      <button
-        className="mb-2 flex w-full items-center justify-between rounded-xl border border-[#ede5d8] bg-white px-3.5 py-2.5 shadow-sm"
-        onClick={() => setPickerOpen(!pickerOpen)}
-      >
-        <span className="text-[13.5px] font-bold text-[#5a5448]">何ができるかを選ぶ</span>
-        <span className="text-[#b0a898]">{pickerOpen ? "△" : "▽"}</span>
-      </button>
-      {pickerOpen && (
-        <div className="mb-3 grid grid-cols-4 gap-2">
-          {(Object.keys(KINDS) as OfferKind[]).map((k) => (
-            <button
-              key={k}
-              className="rounded-xl border border-[#ede5d8] bg-white py-1.5 shadow-sm transition-transform active:scale-95"
-              onClick={() => open(k)}
-            >
-              <img src={KINDS[k].icon} alt="" className="mx-auto h-7 w-7 object-contain" />
-              <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 折り畳みと4ボタンを1つの箱に一体化 */}
+      <div className="mb-3 overflow-hidden rounded-xl border border-[#ede5d8] bg-white shadow-sm">
+        <button
+          className="flex w-full items-center justify-between px-3.5 py-2.5"
+          onClick={() => setPickerOpen(!pickerOpen)}
+        >
+          <span className="text-[13.5px] font-bold text-[#5a5448]">何ができるかを選ぶ</span>
+          <span className="text-[#b0a898]">{pickerOpen ? "△" : "▽"}</span>
+        </button>
+        {pickerOpen && (
+          <div className="grid grid-cols-4 gap-2 border-t border-[#f0e9dc] bg-[#fffaf0] p-2">
+            {(Object.keys(KINDS) as OfferKind[]).map((k) => (
+              <button
+                key={k}
+                className="rounded-xl border border-[#ede5d8] bg-white py-1.5 shadow-sm transition-transform active:scale-95"
+                onClick={() => open(k)}
+              >
+                <img src={KINDS[k].icon} alt="" className="mx-auto h-7 w-7 object-contain" />
+                <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {dialog === "money" && <BankDialog onClose={() => setDialog(null)} />}
       {dialog === "body" && userId && profile && (
@@ -354,11 +356,6 @@ export function OffersSection({
           onDone={reload}
         />
       )}
-
-      <p className="mb-2 rounded-xl px-3 py-2 text-[11.5px] font-medium"
-         style={{ background: "#fdf0e0", color: "#a05a10", border: "1px solid #f0d0a8" }}>
-        現地の人が欲しいモノと一致したら、送付をお願いする事があります
-      </p>
 
       <div className="space-y-2">
         {feed.length === 0 && (
