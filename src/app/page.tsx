@@ -162,7 +162,7 @@ export default function Home() {
             ))}
           </div>
           <div
-            className="overflow-hidden rounded-b-2xl"
+            className="overflow-hidden rounded-b-2xl p-2"
             style={{ border: "3px solid #d96a1a", background: "#fffdf8" }}
           >
 
