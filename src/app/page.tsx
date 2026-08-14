@@ -105,7 +105,7 @@ export default function Home() {
             <span className="mt-0.5 inline-flex items-center justify-center" style={{ gap: 7 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/waraeru-archangel.png"
+                src="/waraeru-v2.png"
                 alt=""
                 className="h-8 w-8 flex-shrink-0 object-contain"
               />

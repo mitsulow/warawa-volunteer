@@ -250,7 +250,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                         style={{ background: "linear-gradient(135deg,#d96a1a 0%,#d4a043 50%,#5a7d4a 100%)" }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/waraeru-archangel.png" alt="" className="h-12 w-12 object-contain opacity-90" />
+                        <img src="/waraeru-v2.png" alt="" className="h-12 w-12 object-contain opacity-90" />
                       </div>
                     )}
                     {o.status === "done" && (
