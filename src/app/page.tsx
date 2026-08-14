@@ -185,7 +185,7 @@ export default function Home() {
         {tab === "offers" && (
           <div>
             <p className="mb-2 text-center text-xs font-medium text-[#8a8070]">
-              私にできる事を持ち寄る
+              「わたし」に出来る事を持ち寄る
             </p>
           <OffersSection
             userId={session.userId}
