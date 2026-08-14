@@ -34,13 +34,31 @@ export default function Home() {
     fetchOffers().then(setOffers);
   }, [tab]);
 
-  // Googleログイン直後でプロフィール未作成 → 登録フォームを出す
+  // Googleログイン直後でプロフィール未作成 → 登録フォームを出す。
+  // プロフィールはあるがアバターが空（事前登録など）→ Googleの写真を自動で入れる
   useEffect(() => {
-    if (session.loading || !session.userId || session.profile) {
+    if (session.loading || !session.userId) {
       setGoogleMeta(null);
       return;
     }
     const supabase = createClient();
+    if (session.profile) {
+      setGoogleMeta(null);
+      if (!session.profile.avatar_url) {
+        supabase.auth.getUser().then(async ({ data }: { data: { user: User | null } }) => {
+          const meta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
+          const pic = (meta.picture as string) || (meta.avatar_url as string) || null;
+          if (pic) {
+            await supabase
+              .from("profiles")
+              .update({ avatar_url: pic })
+              .eq("id", session.userId!);
+            session.refresh();
+          }
+        });
+      }
+      return;
+    }
     supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
       const meta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
       setGoogleMeta({
@@ -49,6 +67,7 @@ export default function Home() {
         email: data.user?.email ?? "",
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.userId, session.profile, session.loading]);
 
   const requireJoin = () => setShowJoin(true);
