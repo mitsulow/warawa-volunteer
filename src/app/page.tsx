@@ -26,18 +26,18 @@ export default function Home() {
     avatar: string | null;
     email: string;
   } | null>(null);
-  const [tab, setTabState] = useState<Tab>("voice");
+  const [tab, setTabState] = useState<Tab>("offers");
   // タブ位置を記憶: リロードしても選んでいたタブから始まる
   useEffect(() => {
     try {
-      const t = localStorage.getItem("warawa-tab2") as Tab | null;
+      const t = localStorage.getItem("warawa-tab3") as Tab | null;
       if (t === "board" || t === "offers" || t === "voice") setTabState(t);
     } catch {}
   }, []);
   const setTab = (t: Tab) => {
     setTabState(t);
     try {
-      localStorage.setItem("warawa-tab2", t);
+      localStorage.setItem("warawa-tab3", t);
     } catch {}
   };
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -85,8 +85,8 @@ export default function Home() {
   const requireJoin = () => setShowJoin(true);
 
   const TABS: Array<[Tab, string, string]> = [
-    ["voice", "助けて", "現地からの声"],
     ["offers", "助けたい", "私にできること"],
+    ["voice", "助けて", "現地からの声"],
     ["board", "掲示板", "ここまでの取り組み"],
   ];
 
