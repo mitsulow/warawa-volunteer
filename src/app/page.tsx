@@ -108,11 +108,7 @@ export default function Home() {
 
           <span className="absolute right-3 top-1/2 -translate-y-1/2">
             {session.profile && session.userId ? (
-              <AvatarMenu
-                userId={session.userId}
-                profile={session.profile}
-                isAdmin={session.isAdmin}
-              />
+              <AvatarMenu userId={session.userId} profile={session.profile} />
             ) : (
               <button
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-bold text-white"
@@ -225,16 +221,6 @@ export default function Home() {
             </div>
           </div>
         </button>
-
-        {session.isAdmin && (
-          <Link
-            href="/office"
-            className="block rounded-xl border-2 border-dashed py-3 text-center text-sm font-bold no-underline"
-            style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
-          >
-            🏛 事務局ページ（管理者専用）
-          </Link>
-        )}
 
         <footer className="py-6 text-center text-sm text-[#8a8070]">
           <p className="mb-1 font-bold">📱 アプリのように使えます</p>

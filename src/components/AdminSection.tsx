@@ -10,7 +10,7 @@ import {
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 
-/** 管理者だけに見える: 管理者の追加・解除 */
+/** 事務局だけに見える: 事務局権限の認定・解除（アイコンから指定） */
 export function AdminSection({ userId }: { userId: string }) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<Profile[]>([]);
@@ -32,8 +32,8 @@ export function AdminSection({ userId }: { userId: string }) {
       const self = m.id === userId;
       const ok = window.confirm(
         self
-          ? "自分自身の管理者権限を解除します。よろしいですか？"
-          : `${m.display_name} さんの管理者権限を解除しますか？`
+          ? "自分自身の事務局権限を解除します。よろしいですか？"
+          : `${m.display_name} さんの事務局権限を解除しますか？`
       );
       if (!ok) return;
     }
@@ -50,7 +50,7 @@ export function AdminSection({ userId }: { userId: string }) {
         className="w-full rounded-xl bg-white shadow-sm px-4 py-3 flex items-center justify-between"
         onClick={() => setOpen(!open)}
       >
-        <span className="font-bold text-sm">🛠 管理者の管理</span>
+        <span className="font-bold text-sm">🏛 この人を事務局にする</span>
         <span className="text-gray-400">{open ? "▲" : "▼"}</span>
       </button>
 
@@ -75,7 +75,7 @@ export function AdminSection({ userId }: { userId: string }) {
                   disabled={busy}
                   onClick={() => toggle(m)}
                 >
-                  {isAdmin ? "解除" : "管理者にする"}
+                  {isAdmin ? "解除" : "事務局にする"}
                 </button>
               </div>
             );

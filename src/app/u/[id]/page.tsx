@@ -275,6 +275,21 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
+      {/* 事務局ページへの入り口（事務局に認定された本人のマイページだけに出る） */}
+      {isMe && session.isAdmin && (
+        <div className="px-4 pt-5">
+          <Link
+            href="/office"
+            className="flex items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-extrabold text-white no-underline shadow-md"
+            style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/icon-megaphone.webp" alt="" className="h-5 w-5 object-contain" />
+            事務局ページ
+          </Link>
+        </div>
+      )}
+
       {editing && session.userId && (
         <RegisterDialog
           userId={session.userId}
