@@ -90,7 +90,7 @@ export function InstallPrompt() {
       <div className="fixed bottom-16 left-1/2 z-50 w-[calc(100%-24px)] max-w-[496px] -translate-x-1/2">
         <div
           className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 shadow-xl"
-          style={{ background: "linear-gradient(120deg,#1e6b3a,#124a26)" }}
+          style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -103,7 +103,7 @@ export function InstallPrompt() {
           </p>
           <button
             className="flex-shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold"
-            style={{ color: "#1e6b3a" }}
+            style={{ color: "#d96a1a" }}
             onClick={install}
           >
             アプリにする
@@ -148,7 +148,7 @@ export function InstallPrompt() {
             </p>
             <button
               className="mt-4 w-full rounded-xl py-3 text-[14px] font-bold text-white"
-              style={{ background: "#1e6b3a" }}
+              style={{ background: "#d96a1a" }}
               onClick={snooze}
             >
               わかった

@@ -140,8 +140,8 @@ export function OffersSection({
                   maxLength={40}
                 />
                 <button
-                  className="mb-2 w-full rounded-xl border border-dashed border-[#1e6b3a] py-2 text-sm font-bold"
-                  style={{ color: "#1e6b3a" }}
+                  className="mb-2 w-full rounded-xl border border-dashed border-[#d96a1a] py-2 text-sm font-bold"
+                  style={{ color: "#d96a1a" }}
                   onClick={() => fileRef.current?.click()}
                 >
                   {image ? `📷 ${image.name}` : "📷 写真をつける（おすすめ）"}
@@ -164,7 +164,7 @@ export function OffersSection({
             />
             <button
               className="w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
-              style={{ background: "#1e6b3a" }}
+              style={{ background: "#d96a1a" }}
               disabled={busy || !detail.trim() || (formKind === "goods" && !title.trim())}
               onClick={submit}
             >

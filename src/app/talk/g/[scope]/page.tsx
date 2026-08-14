@@ -107,7 +107,7 @@ export default function GroupTalkPage({
     <main className="flex h-dvh flex-col" style={{ background: "#faf6ee" }}>
       <header
         className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
-        style={{ background: "#1e6b3a" }}
+        style={{ background: "#d96a1a" }}
       >
         <Link href="/talk" className="text-xl text-white no-underline" aria-label="戻る">
           ←
@@ -149,7 +149,7 @@ export default function GroupTalkPage({
                   className={`inline-block rounded-2xl px-3 py-2 text-left text-sm ${
                     mine ? "text-white" : "bg-white shadow-sm"
                   }`}
-                  style={mine ? { background: "#1e6b3a" } : undefined}
+                  style={mine ? { background: "#d96a1a" } : undefined}
                 >
                   {m.body && <span className="whitespace-pre-wrap break-words">{m.body}</span>}
                   {m.image_url && (
@@ -203,7 +203,7 @@ export default function GroupTalkPage({
         />
         <button
           className="rounded-xl px-4 font-bold text-white disabled:opacity-50"
-          style={{ background: "#1e6b3a" }}
+          style={{ background: "#d96a1a" }}
           disabled={busy || !myId}
           onClick={() => send()}
         >

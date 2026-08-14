@@ -86,7 +86,7 @@ export default function TalkPage({
     return (
       <main className="p-6 text-center">
         <p className="mb-4">Talkを使うにはトップページから参加してください。</p>
-        <Link href="/" className="text-[#1e6b3a] font-bold underline">
+        <Link href="/" className="text-[#d96a1a] font-bold underline">
           ← トップへ戻る
         </Link>
       </main>
@@ -95,7 +95,7 @@ export default function TalkPage({
 
   return (
     <main className="flex flex-col h-dvh">
-      <header className="flex items-center gap-3 px-4 py-3 bg-[#1e6b3a] text-white sticky top-0">
+      <header className="flex items-center gap-3 px-4 py-3 bg-[#d96a1a] text-white sticky top-0">
         <Link href="/talk" className="text-xl" aria-label="戻る">
           ←
         </Link>
@@ -117,7 +117,7 @@ export default function TalkPage({
             >
               <div
                 className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${
-                  mine ? "bg-[#1e6b3a] text-white" : "bg-white shadow-sm"
+                  mine ? "bg-[#d96a1a] text-white" : "bg-white shadow-sm"
                 }`}
               >
                 {m.body}
@@ -148,7 +148,7 @@ export default function TalkPage({
           }}
         />
         <button
-          className="rounded-xl bg-[#1e6b3a] px-4 text-white font-bold disabled:opacity-50"
+          className="rounded-xl bg-[#d96a1a] px-4 text-white font-bold disabled:opacity-50"
           disabled={busy}
           onClick={send}
         >

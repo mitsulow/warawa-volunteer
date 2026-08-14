@@ -133,7 +133,7 @@ export function GroupFeed({
         />
         <button
           className="rounded-xl px-4 font-bold text-white disabled:opacity-50"
-          style={{ background: "#1e6b3a" }}
+          style={{ background: "#d96a1a" }}
           disabled={busy}
           onClick={() => send()}
         >

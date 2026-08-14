@@ -70,7 +70,7 @@ export function AdminSection({ userId }: { userId: string }) {
                   className={`text-xs px-3 py-1.5 rounded-full font-bold disabled:opacity-50 ${
                     isAdmin
                       ? "border border-gray-300 text-gray-600"
-                      : "bg-[#3a7d44] text-white"
+                      : "bg-[#d96a1a] text-white"
                   }`}
                   disabled={busy}
                   onClick={() => toggle(m)}

@@ -54,7 +54,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
   if (profile === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: "#faf6ee" }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1e6b3a] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#d96a1a] border-t-transparent" />
       </div>
     );
   }
@@ -63,7 +63,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
     return (
       <div className="px-4 py-16 text-center" style={{ background: "#faf6ee" }}>
         <p className="text-sm text-[#8a8070]">この参加者は見つかりませんでした</p>
-        <Link href="/" className="mt-4 inline-block text-sm underline" style={{ color: "#1e6b3a" }}>
+        <Link href="/" className="mt-4 inline-block text-sm underline" style={{ color: "#d96a1a" }}>
           ホームへもどる
         </Link>
       </div>
@@ -80,7 +80,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
         ) : (
           <div
             className="h-full w-full"
-            style={{ background: "linear-gradient(160deg,#1e6b3a 0%,#124a26 60%,#0d3a1c 100%)" }}
+            style={{ background: "linear-gradient(160deg,#d96a1a 0%,#a84e0e 60%,#7a3a0c 100%)" }}
           />
         )}
         <Link
@@ -134,7 +134,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                 onClick={() => avatarInput.current?.click()}
                 aria-label="アイコンを変える"
                 className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-md"
-                style={{ background: "#1e6b3a" }}
+                style={{ background: "#d96a1a" }}
               >
                 {busy === "avatar" ? "⏳" : <span className="text-[15px] leading-none">✏️</span>}
                 アイコンを変える
@@ -167,7 +167,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                 if (chatId) router.push(`/talk/${chatId}`);
               }}
               className="mt-2 inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1.5 text-[11.5px] font-extrabold"
-              style={{ borderColor: "#1e6b3a", color: "#1e6b3a" }}
+              style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icons/icon-talk-green.webp" alt="" style={{ width: 14, height: 14 }} /> 連絡を取る
@@ -227,7 +227,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
               まだ物資の登録がありません
               {isMe && (
                 <>
-                  。<Link href="/" className="underline" style={{ color: "#1e6b3a" }}>ホームの「物資を出す」</Link>から登録できます
+                  。<Link href="/" className="underline" style={{ color: "#d96a1a" }}>ホームの「物資を出す」</Link>から登録できます
                 </>
               )}
             </p>
@@ -239,7 +239,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                   className="relative flex h-full flex-col overflow-hidden rounded-md border border-[#ede5d8] shadow-sm"
                   style={{ background: "linear-gradient(180deg,#fffaf0,#fdf6e9)" }}
                 >
-                  <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#1e6b3a" }} />
+                  <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#d96a1a" }} />
                   <div className="relative aspect-square overflow-hidden bg-[#f2ede4]">
                     {o.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -247,7 +247,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                     ) : (
                       <div
                         className="flex h-full w-full items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#1e6b3a 0%,#d4a043 50%,#5a7d4a 100%)" }}
+                        style={{ background: "linear-gradient(135deg,#d96a1a 0%,#d4a043 50%,#5a7d4a 100%)" }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/waraeru-archangel.png" alt="" className="h-12 w-12 object-contain opacity-90" />

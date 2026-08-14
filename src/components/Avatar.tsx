@@ -27,7 +27,7 @@ export function Avatar({
   }
   return (
     <div
-      className="rounded-full bg-[#3a7d44] text-white flex items-center justify-center font-bold shrink-0"
+      className="rounded-full bg-[#d96a1a] text-white flex items-center justify-center font-bold shrink-0"
       style={{ width: size, height: size, fontSize: size * 0.45 }}
     >
       {initial}

@@ -65,7 +65,7 @@ export function PushSetup() {
     <div className="fixed bottom-[124px] left-1/2 z-50 w-[calc(100%-24px)] max-w-[496px] -translate-x-1/2">
       <div
         className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 shadow-xl"
-        style={{ background: "linear-gradient(120deg,#3a7d44,#2a5d34)" }}
+        style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
         <span className="text-2xl">🔔</span>
         <p className="min-w-0 flex-1 text-[13px] font-extrabold leading-tight text-white">
@@ -73,7 +73,7 @@ export function PushSetup() {
         </p>
         <button
           className="flex-shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold"
-          style={{ color: "#2a5d34" }}
+          style={{ color: "#a84e0e" }}
           onClick={enable}
         >
           オンにする

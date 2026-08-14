@@ -51,12 +51,12 @@ export function AvatarMenu({
             alt=""
             referrerPolicy="no-referrer"
             className="h-9 w-9 rounded-full object-cover"
-            style={{ boxShadow: "0 0 0 2px #1e6b3a" }}
+            style={{ boxShadow: "0 0 0 2px #d96a1a" }}
           />
         ) : (
           <span
             className="flex h-9 w-9 items-center justify-center rounded-full font-bold text-white"
-            style={{ background: "#1e6b3a" }}
+            style={{ background: "#d96a1a" }}
           >
             {profile.display_name.charAt(0) || "参"}
           </span>
