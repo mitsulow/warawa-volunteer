@@ -85,9 +85,9 @@ export default function Home() {
   const requireJoin = () => setShowJoin(true);
 
   const TABS: Array<[Tab, string, string]> = [
-    ["board", "掲示板", "ここまでの取り組み"],
-    ["offers", "助けたい", "私にできること"],
     ["voice", "助けて", "現地からの声"],
+    ["offers", "助けたい", "私にできること"],
+    ["board", "掲示板", "ここまでの取り組み"],
   ];
 
   return (
