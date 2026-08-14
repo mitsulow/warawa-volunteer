@@ -20,9 +20,7 @@ export function OrangeCorps() {
 
   return (
     <div>
-      <p className="mb-1.5 px-1 text-xs font-medium text-[#8a8070]">
-        🟠 オレンジ軍団 — 現地に行くことが決まった人
-      </p>
+      <p className="mb-1.5 px-1 text-xs font-medium text-[#8a8070]">現地入りメンバー</p>
       <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {profiles.map((p) => (
           <Link
