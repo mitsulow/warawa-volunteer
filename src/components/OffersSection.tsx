@@ -1,55 +1,234 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   addOffer,
   fetchOffers,
-  setOfferStatus,
-  uploadPhoto,
   type Offer,
   type OfferKind,
 } from "@/lib/db";
+import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { Avatar } from "@/components/Avatar";
 import { BodyApplyDialog } from "@/components/BodyApplyDialog";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import type { Profile } from "@/lib/db";
 
+/* eslint-disable @next/next/no-img-element */
+
 const KINDS: Record<
   OfferKind,
-  { icon: string; label: string; verb: string; help: string; placeholder: string }
+  { icon: string; label: string; verb: string }
 > = {
-  money: {
-    icon: "/icons/icon-yen.webp",
-    label: "お金を出す",
-    verb: "お金を出します",
-    help: "寄付の意思表明です。振込先のご案内は準備中で、決まり次第お知らせします。",
-    placeholder: "例: 1万円くらい / 金額未定でも「出します」だけでOK",
-  },
-  body: {
-    icon: "/icons/icon-tasukete.webp",
-    label: "体を出す",
-    verb: "体を出します",
-    help: "現地に行ける日程を書いてください。旅費は寄付金から支給されます。現地行きが決まると🟠オレンジ軍団に載ります。",
-    placeholder: "例: 8/20〜8/23 行けます。車あり。力仕事OK",
-  },
-  goods: {
-    icon: "/icons/icon-rice.webp",
-    label: "物資を出す",
-    verb: "物資を出します",
-    help: "体に優しい食材を募集しています（現地で炊き出しに使います）。送り先は決まり次第お知らせします。写真をつけるとトップの「本日の出せる物資一覧」に載ります。",
-    placeholder: "例: 今週中に送れます。無農薬です",
-  },
-  other: {
-    icon: "/icons/icon-gift.webp",
-    label: "その他",
-    verb: "できる事を出します",
-    help: "お金・体・物資以外でも大歓迎。あなたにできる事を教えてください（技術・場所・情報・車・翻訳など何でも）。",
-    placeholder: "例: 現地までの輸送を手伝えます / 医療の相談に乗れます",
-  },
+  money: { icon: "/icons/icon-yen.webp", label: "お金を出す", verb: "お金を出します" },
+  body: { icon: "/icons/icon-tasukete.webp", label: "体を出す", verb: "体を出します" },
+  goods: { icon: "/icons/icon-rice.webp", label: "物資を出す", verb: "物資を出します" },
+  other: { icon: "/icons/icon-gift.webp", label: "その他", verb: "持ち寄ります" },
 };
 
-/** 私にできる事: 3つの大ボタン + 意思表明一覧（物資は品名+写真つき） */
+function fmtTime(iso: string) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/** 💰 振込のご案内（表示のみ・フィードには並ばない） */
+function BankDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="flex items-center gap-2 text-lg font-bold">
+          <img src="/icons/icon-yen.webp" alt="" className="h-7 w-7 object-contain" />
+          お金を出す
+        </h3>
+        <p className="mt-2 text-sm text-[#5a5448]">以下への振り込みをお願い致します。</p>
+        <div
+          className="mt-3 space-y-1.5 rounded-xl border p-4 text-[14px] leading-relaxed"
+          style={{ borderColor: "#e8c890", background: "#fffaf0" }}
+        >
+          <p><span className="text-[11px] font-bold text-[#a09888]">銀行名　</span>準備中</p>
+          <p><span className="text-[11px] font-bold text-[#a09888]">支店　　</span>準備中</p>
+          <p><span className="text-[11px] font-bold text-[#a09888]">口座番号</span> 準備中</p>
+          <p><span className="text-[11px] font-bold text-[#a09888]">口座名義</span> わらわ〜ボランティア</p>
+        </div>
+        <p className="mt-2 text-[11.5px] text-[#a09888]">
+          ※正式な口座情報は確定し次第、ここに表示されます。
+        </p>
+        <button
+          className="mt-4 w-full rounded-xl py-3 font-bold text-white"
+          style={{ background: "#d96a1a" }}
+          onClick={onClose}
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** 🍚物資 / 🎁その他 の投稿フォーム（CotoZute型: テキスト+写真4枚） */
+function OfferDialog({
+  kind,
+  userId,
+  onClose,
+  onDone,
+}: {
+  kind: "goods" | "other";
+  userId: string;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [detail, setDetail] = useState("");
+  const [images, setImages] = useState<ImagePair[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const isGoods = kind === "goods";
+
+  const submit = async () => {
+    if (!detail.trim()) {
+      setError("内容を書いてください");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    const { error: e } = await addOffer(userId, kind, detail.trim(), null, null, {
+      imageUrls: images.map((i) => i.full),
+      thumbUrls: images.map((i) => i.thumb),
+    });
+    setBusy(false);
+    if (e) {
+      setError(`投稿できませんでした: ${e.message}`);
+      return;
+    }
+    setSent(true);
+    onDone();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {sent ? (
+          <div className="text-center">
+            <div className="text-3xl">{isGoods ? "🍀" : "🎁"}</div>
+            <h3 className="mt-2 text-lg font-bold">投稿しました</h3>
+            <p className="mt-2 text-sm text-[#8a8070]">
+              現地の人が欲しいモノと一致したら、送付をお願いする事があります。
+            </p>
+            <button
+              className="mt-4 w-full rounded-xl py-3 font-bold text-white"
+              style={{ background: "#d96a1a" }}
+              onClick={onClose}
+            >
+              閉じる
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3 className="flex items-center gap-2 text-lg font-bold">
+              <img src={KINDS[kind].icon} alt="" className="h-7 w-7 object-contain" />
+              {KINDS[kind].label}
+            </h3>
+            <label className="mt-3 block text-sm font-bold">
+              {isGoods ? "私に出せるもの" : "私が持ち寄れるもの・アイディア・その他"}
+            </label>
+            <textarea
+              className="mt-1 w-full rounded-xl border border-[#e8dcc4] px-3 py-2 text-[14px] leading-relaxed outline-none focus:border-[#d96a1a]"
+              rows={3}
+              autoFocus
+              placeholder={
+                isGoods
+                  ? "ナチュラルなお味噌、自然栽培の野菜"
+                  : "例: 炊き出しのレシピ提供できます / 現地までの輸送アイディアがあります"
+              }
+              value={detail}
+              onChange={(e) => setDetail(e.target.value)}
+            />
+
+            {/* 写真（CotoZuteと同じサムネ+本体2枚方式・最大4枚） */}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+              {images.map((img, i) => (
+                <div key={img.thumb} className="relative">
+                  <img src={img.thumb} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                  <button
+                    onClick={() => setImages(images.filter((_, j) => j !== i))}
+                    aria-label="画像を外す"
+                    className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[10px] text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              {images.length < 4 && (
+                <label className="flex h-16 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8dcc4] bg-white px-4 text-[12.5px] font-bold text-[#8a7a5a]">
+                  {uploading ? (
+                    "⏳ 圧縮中..."
+                  ) : (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M4 7h3l1.5-2.2A1 1 0 0 1 9.3 4.4h5.4a1 1 0 0 1 .8.4L17 7h3a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 18V8.5A1.5 1.5 0 0 1 4 7Z" />
+                        <circle cx="12" cy="13" r="3.6" />
+                      </svg>
+                      写真
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      if (!e.target.files?.length || uploading) return;
+                      setUploading(true);
+                      const files = Array.from(e.target.files).slice(0, 4 - images.length);
+                      const pairs: ImagePair[] = [];
+                      for (const f of files) {
+                        const pair = await uploadImagePair(userId, f);
+                        if (pair) pairs.push(pair);
+                      }
+                      if (pairs.length) setImages((prev) => [...prev, ...pairs].slice(0, 4));
+                      setUploading(false);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+
+            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+
+            <button
+              className="mt-4 w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
+              style={{ background: "#d96a1a" }}
+              disabled={busy || uploading || !detail.trim()}
+              onClick={submit}
+            >
+              {busy ? "投稿中…" : "投稿する"}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 助けたい（私にできる事）:
+ * 4ボタン: お金=振込案内表示 / 体=事務局への申請のみ / 物資・その他=投稿してフィードに並ぶ
+ */
 export function OffersSection({
   userId,
   profile,
@@ -63,13 +242,9 @@ export function OffersSection({
   requireJoin: () => void;
   openGoodsSignal?: number;
 }) {
+  void isAdmin;
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [formKind, setFormKind] = useState<OfferKind | null>(null);
-  const [detail, setDetail] = useState("");
-  const [title, setTitle] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [busy, setBusy] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [dialog, setDialog] = useState<OfferKind | null>(null);
 
   const reload = () => fetchOffers().then(setOffers);
   useEffect(() => {
@@ -82,43 +257,16 @@ export function OffersSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openGoodsSignal]);
 
-  const [showBodyApply, setShowBodyApply] = useState(false);
-
   const open = (kind: OfferKind) => {
-    if (!userId) {
+    if (kind !== "money" && !userId) {
       requireJoin();
       return;
     }
-    if (kind === "body") {
-      // 体を出す = 事務局への現地入りメンバー申請フォーム
-      setShowBodyApply(true);
-      return;
-    }
-    setFormKind(kind);
-    setDetail("");
-    setTitle("");
-    setImage(null);
+    setDialog(kind);
   };
 
-  const submit = async () => {
-    if (!userId || !formKind || !detail.trim()) return;
-    if (formKind === "goods" && !title.trim()) return;
-    setBusy(true);
-    let imageUrl: string | null = null;
-    if (formKind === "goods" && image) {
-      imageUrl = await uploadPhoto(image, userId);
-    }
-    await addOffer(userId, formKind, detail.trim(), title.trim() || null, imageUrl);
-    setBusy(false);
-    setFormKind(null);
-    reload();
-  };
-
-  const toggleConfirm = async (o: Offer) => {
-    if (!isAdmin) return;
-    await setOfferStatus(o.id, o.status === "confirmed" ? "open" : "confirmed");
-    reload();
-  };
+  // フィードに並ぶのは物資とその他だけ（体=事務局申請のみ・お金=案内のみ）
+  const feed = offers.filter((o) => o.kind === "goods" || o.kind === "other");
 
   return (
     <div>
@@ -129,142 +277,84 @@ export function OffersSection({
             className="rounded-2xl border border-[#ede5d8] bg-white py-3.5 shadow-sm transition-transform active:scale-95"
             onClick={() => open(k)}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={KINDS[k].icon} alt="" className="mx-auto h-10 w-10 object-contain" />
             <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
           </button>
         ))}
       </div>
 
-      {formKind && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setFormKind(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="flex items-center gap-2 text-lg font-bold">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={KINDS[formKind].icon} alt="" className="h-7 w-7 object-contain" />
-              {KINDS[formKind].label}
-            </h3>
-            <p className="mt-1 mb-3 text-sm text-[#8a8070]">{KINDS[formKind].help}</p>
-            {formKind === "goods" && (
-              <>
-                <input
-                  className="mb-2 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
-                  placeholder="品名（例: お米10kg / 味噌2kg）"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  maxLength={40}
-                />
-                <button
-                  className="mb-2 w-full rounded-xl border border-dashed border-[#d96a1a] py-2 text-sm font-bold"
-                  style={{ color: "#d96a1a" }}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  {image ? `📷 ${image.name}` : "📷 写真をつける（おすすめ）"}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => setImage(e.target.files?.[0] ?? null)}
-                />
-              </>
-            )}
-            <textarea
-              className="mb-3 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
-              rows={3}
-              placeholder={KINDS[formKind].placeholder}
-              value={detail}
-              onChange={(e) => setDetail(e.target.value)}
-            />
-            <button
-              className="w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
-              style={{ background: "#d96a1a" }}
-              disabled={busy || !detail.trim() || (formKind === "goods" && !title.trim())}
-              onClick={submit}
-            >
-              {busy ? "送信中…" : "意思表明する"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showBodyApply && userId && profile && (
+      {dialog === "money" && <BankDialog onClose={() => setDialog(null)} />}
+      {dialog === "body" && userId && profile && (
         <BodyApplyDialog
           userId={userId}
           profile={profile}
-          onClose={() => setShowBodyApply(false)}
+          onClose={() => setDialog(null)}
+          onDone={reload}
+        />
+      )}
+      {(dialog === "goods" || dialog === "other") && userId && (
+        <OfferDialog
+          kind={dialog}
+          userId={userId}
+          onClose={() => setDialog(null)}
           onDone={reload}
         />
       )}
 
+      <p className="mb-2 rounded-xl px-3 py-2 text-[11.5px] font-medium"
+         style={{ background: "#fdf0e0", color: "#a05a10", border: "1px solid #f0d0a8" }}>
+        現地の人が欲しいモノと一致したら、送付をお願いする事があります
+      </p>
+
       <div className="space-y-2">
-        {offers.map((o) => (
-          <div
-            key={o.id}
-            className="flex items-center gap-3 rounded-xl border border-[#ede5d8] bg-white px-3 py-2 shadow-sm"
-          >
-            <Link href={`/u/${o.user_id}`} className="shrink-0">
-              <Avatar
-                name={o.profiles?.display_name ?? "参加者"}
-                url={o.profiles?.avatar_url}
-                size={36}
-              />
-            </Link>
-            {o.kind === "goods" && o.image_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={o.image_url}
-                alt=""
-                className="h-10 w-10 shrink-0 rounded-lg object-cover"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1 text-sm font-bold text-[#3a3428]">
-                <span className="truncate">
-                  {o.profiles?.display_name ?? "参加者"}
-                </span>
-                <VerifiedBadge size={13} />
-                <span className="shrink-0 font-normal">さんが{KINDS[o.kind].verb}</span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={KINDS[o.kind].icon} alt="" className="h-4 w-4 shrink-0 object-contain" />
-              </p>
-              <p className="truncate text-xs text-[#8a8070]">
-                {o.kind === "goods" && o.title ? `${o.title} — ` : ""}
+        {feed.length === 0 && (
+          <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
+            まだ投稿がありません
+          </p>
+        )}
+        {feed.map((o) => {
+          const thumbs = o.thumb_urls?.length
+            ? o.thumb_urls
+            : o.image_url
+              ? [o.image_url]
+              : [];
+          return (
+            <div
+              key={o.id}
+              className="rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
+            >
+              <div className="flex items-center gap-2.5">
+                <Link href={`/u/${o.user_id}`} className="shrink-0">
+                  <Avatar
+                    name={o.profiles?.display_name ?? "参加者"}
+                    url={o.profiles?.avatar_url}
+                    size={36}
+                  />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1 text-[13px] font-bold text-[#3a3428]">
+                    <span className="truncate">{o.profiles?.display_name ?? "参加者"}</span>
+                    <VerifiedBadge size={13} />
+                    <span className="shrink-0 font-normal">さんが{KINDS[o.kind].verb}</span>
+                    <img src={KINDS[o.kind].icon} alt="" className="h-4 w-4 shrink-0 object-contain" />
+                  </p>
+                  <p className="text-[10px] text-[#c0b8a8]">{fmtTime(o.created_at)}</p>
+                </div>
+              </div>
+              <p className="mt-1.5 whitespace-pre-wrap break-words text-[14px] leading-relaxed text-[#3a3428]">
+                {o.title ? `${o.title}\n` : ""}
                 {o.detail}
               </p>
+              {thumbs.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {thumbs.map((t) => (
+                    <img key={t} src={t} alt="" className="h-24 w-24 rounded-lg object-cover" />
+                  ))}
+                </div>
+              )}
             </div>
-            {o.kind === "body" &&
-              (isAdmin ? (
-                <button
-                  className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold"
-                  style={
-                    o.status === "confirmed"
-                      ? { background: "#e8862c", color: "#fff" }
-                      : { border: "1px solid #e0d6c6", color: "#8a8070" }
-                  }
-                  onClick={() => toggleConfirm(o)}
-                >
-                  {o.status === "confirmed" ? "🟠 決定済" : "現地行き決定"}
-                </button>
-              ) : (
-                o.status === "confirmed" && (
-                  <span
-                    className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
-                    style={{ background: "#e8862c" }}
-                  >
-                    🟠 決定
-                  </span>
-                )
-              ))}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

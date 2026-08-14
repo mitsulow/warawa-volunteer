@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  deleteBoardMessage,
   fetchBoard,
   fetchBoardSince,
   markGroupRead,
@@ -12,6 +14,8 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostComposer } from "@/components/PostComposer";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
+import { DotsMenu } from "@/components/PostKit";
+import { ReportDialog } from "@/components/ReportDialog";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -29,17 +33,27 @@ export function GroupFeed({
   scope,
   userId,
   myAvatar = null,
+  isAdmin = false,
   requireJoin,
   placeholder,
 }: {
   scope: BoardScope;
   userId: string | null;
   myAvatar?: string | null;
+  isAdmin?: boolean;
   requireJoin: () => void;
   placeholder: string;
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<BoardMessage[]>([]);
+  const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   const cursorRef = useRef<string | null>(null);
+
+  const removeMessage = async (id: string) => {
+    if (!window.confirm("この投稿を削除しますか？")) return;
+    await deleteBoardMessage(id);
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  };
 
   const pull = async () => {
     const fresh = await fetchBoardSince(scope, cursorRef.current ?? "1970-01-01");
@@ -78,6 +92,11 @@ export function GroupFeed({
         scope={scope}
         prompt={placeholder}
         withLocation={scope === "voice"}
+        photoHint={
+          scope === "voice"
+            ? "「こんなイメージです」という写真があれば添付してください"
+            : undefined
+        }
         userId={userId}
         myAvatar={myAvatar}
         requireJoin={requireJoin}
@@ -127,6 +146,14 @@ export function GroupFeed({
                   <span className="shrink-0 self-start text-[10px] text-[#c0b8a8]">
                     {fmtTime(m.created_at)}
                   </span>
+                  {userId && (
+                    <DotsMenu
+                      canEdit={userId === m.user_id || isAdmin}
+                      onEdit={() => router.push(`/post/board/${m.id}?edit=1`)}
+                      onDelete={() => removeMessage(m.id)}
+                      onReport={() => setReport({ key: `board:${m.id}`, excerpt: m.body })}
+                    />
+                  )}
                 </div>
                 {m.body && (
                   <p className="mt-1.5 whitespace-pre-wrap break-words text-[14.5px] font-bold leading-relaxed text-[#3a3428]">
@@ -191,6 +218,16 @@ export function GroupFeed({
           );
         })}
       </div>
+
+      {/* 通報（→事務局/officeの通報受信箱へ届く） */}
+      {report && userId && (
+        <ReportDialog
+          itemKey={report.key}
+          excerpt={report.excerpt}
+          meId={userId}
+          onClose={() => setReport(null)}
+        />
+      )}
     </div>
   );
 }

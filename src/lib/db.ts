@@ -26,6 +26,8 @@ export interface Offer {
   title: string | null;
   detail: string;
   image_url: string | null;
+  image_urls: string[] | null;
+  thumb_urls: string[] | null;
   status: "open" | "confirmed" | "done";
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null; member_no?: number | null } | null;
@@ -131,17 +133,22 @@ export interface BodyApplication {
     avatar_url: string | null;
     member_no: number | null;
     sns: Record<string, string> | null;
-    profile_private: { phone: string | null; email: string | null } | null;
+    profile_private: {
+      phone: string | null;
+      email: string | null;
+      pref: string | null;
+      city: string | null;
+    } | null;
   } | null;
 }
 
-/** 体を出す申請一覧（電話・メールは管理者RLSでのみ返る） */
+/** 体を出す申請一覧（電話・メール・住まいは管理者RLSでのみ返る） */
 export async function fetchBodyApplications(): Promise<BodyApplication[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("offers")
     .select(
-      "id, user_id, detail, status, created_at, profiles(display_name, avatar_url, member_no, sns, profile_private(phone, email))"
+      "id, user_id, detail, status, created_at, profiles(display_name, avatar_url, member_no, sns, profile_private(phone, email, pref, city))"
     )
     .eq("kind", "body")
     .order("created_at", { ascending: false })
@@ -172,7 +179,7 @@ export async function fetchIsAdmin(userId: string): Promise<boolean> {
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
-  "id, user_id, kind, title, detail, image_url, status, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, status, created_at, profiles(display_name, avatar_url, member_no)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
@@ -200,7 +207,8 @@ export async function addOffer(
   kind: OfferKind,
   detail: string,
   title?: string | null,
-  imageUrl?: string | null
+  imageUrl?: string | null,
+  extras?: { imageUrls?: string[]; thumbUrls?: string[] }
 ) {
   const supabase = createClient();
   return supabase.from("offers").insert({
@@ -208,7 +216,9 @@ export async function addOffer(
     kind,
     detail,
     title: title ?? null,
-    image_url: imageUrl ?? null,
+    image_url: imageUrl ?? extras?.imageUrls?.[0] ?? null,
+    image_urls: extras?.imageUrls?.length ? extras.imageUrls : null,
+    thumb_urls: extras?.thumbUrls?.length ? extras.thumbUrls : null,
   });
 }
 

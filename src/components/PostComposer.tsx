@@ -56,6 +56,7 @@ export function PostComposer({
   scope,
   prompt,
   withLocation = false,
+  photoHint,
   userId,
   myAvatar,
   requireJoin,
@@ -64,6 +65,7 @@ export function PostComposer({
   scope: BoardScope;
   prompt: string;
   withLocation?: boolean;
+  photoHint?: string;
   userId: string | null;
   myAvatar: string | null;
   requireJoin: () => void;
@@ -230,6 +232,9 @@ export function PostComposer({
       />
 
       {/* 写真（サムネ+本体の2枚方式・最大4枚） */}
+      {photoHint && (
+        <p className="mt-1.5 text-[11.5px] font-medium text-[#8a7a5a]">{photoHint}</p>
+      )}
       <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
         {images.map((img, i) => (
           <div key={img.thumb} className="relative">

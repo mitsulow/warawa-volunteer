@@ -44,6 +44,7 @@ export default function VoicePage() {
           scope="voice"
           userId={session.userId}
           myAvatar={session.profile?.avatar_url ?? null}
+          isAdmin={session.isAdmin}
           requireJoin={() => setShowJoin(true)}
           placeholder="いま必要な物、やって欲しい事"
         />

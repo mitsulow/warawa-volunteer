@@ -9,7 +9,9 @@ import type { Offer } from "@/lib/db";
  * 画像つき物資から日替わりで最大6件、4.5秒ごとに自動回転・スワイプ可。
  */
 export function FeaturedGoods({ offers }: { offers: Offer[] }) {
-  const withImage = offers.filter((o) => o.kind === "goods" && o.image_url);
+  const withImage = offers.filter(
+    (o) => o.kind === "goods" && (o.image_urls?.length || o.image_url)
+  );
   const now = new Date();
   const dayOfYear = Math.floor(
     (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
@@ -106,7 +108,7 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
                 <div className="relative w-24 flex-shrink-0 overflow-hidden bg-[#f2ede4]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={o.image_url!}
+                    src={o.thumb_urls?.[0] ?? o.image_urls?.[0] ?? o.image_url!}
                     alt={o.title ?? ""}
                     className="absolute inset-0 h-full w-full object-cover"
                   />

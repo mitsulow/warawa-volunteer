@@ -156,28 +156,22 @@ export function ActivityFeed({
       thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
       embed: (m.embed as OGPEmbed | null) ?? null,
     })),
-    ...offers.map((o) => ({
-      key: `offer:${o.id}`,
-      userId: o.user_id,
-      name: o.profiles?.display_name ?? "参加者",
-      avatar: o.profiles?.avatar_url ?? null,
-      memberNo: o.profiles?.member_no ?? null,
-      createdAt: o.created_at,
-      chip:
-        o.kind === "money"
-          ? "お金を出します"
-          : o.kind === "goods"
-            ? "物資を出します"
-            : o.kind === "other"
-              ? "できる事を出します"
-              : o.status === "confirmed"
-                ? "🟠 現地入りメンバー"
-                : "現地入り申請中",
-      body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
-      images: o.image_url ? [o.image_url] : [],
-      thumbs: o.image_url ? [o.image_url] : [],
-      embed: null,
-    })),
+    // フィードに並ぶのは物資とその他だけ（体=事務局申請のみ・お金=案内のみ）
+    ...offers
+      .filter((o) => o.kind === "goods" || o.kind === "other")
+      .map((o) => ({
+        key: `offer:${o.id}`,
+        userId: o.user_id,
+        name: o.profiles?.display_name ?? "参加者",
+        avatar: o.profiles?.avatar_url ?? null,
+        memberNo: o.profiles?.member_no ?? null,
+        createdAt: o.created_at,
+        chip: o.kind === "goods" ? "物資を出します" : "持ち寄ります",
+        body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
+        images: o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [],
+        thumbs: o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [],
+        embed: null,
+      })),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   useEffect(() => {
