@@ -23,7 +23,6 @@ function fmtTime(iso: string | null) {
 }
 
 const GROUPS: Array<{ scope: BoardScope; name: string; emoji: string; sub: string }> = [
-  { scope: "voice", name: "現地からの声", emoji: "📣", sub: "欲しい物・やって欲しい事" },
   { scope: "board", name: "みんなの掲示板", emoji: "💬", sub: "全員の連絡板" },
 ];
 

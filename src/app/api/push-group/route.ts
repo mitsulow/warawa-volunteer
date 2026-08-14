@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       sendPushTo(admin, t, {
         title: `${room} — ${sender?.display_name ?? "参加者"}さん`,
         body: (body ?? "").slice(0, 120),
-        url: `/talk/g/${scope}`,
+        url: scope === "voice" ? "/voice" : `/talk/g/${scope}`,
         tag: `group-${scope}`,
       })
     )

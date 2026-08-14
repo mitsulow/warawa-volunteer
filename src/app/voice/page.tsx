@@ -26,16 +26,9 @@ export default function VoicePage() {
               現地からの声
             </h1>
             <p className="text-[10px] leading-tight text-[#8a8070]">
-              欲しい物・やって欲しい事（TalKと同期）
+              現地の人の「いま欲しい物・やって欲しい事」の掲示板
             </p>
           </div>
-          <Link
-            href="/talk/g/voice"
-            className="ml-auto shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold text-white no-underline"
-            style={{ background: "#d96a1a" }}
-          >
-            💬 Talk表示
-          </Link>
         </div>
       </header>
 
@@ -46,7 +39,7 @@ export default function VoicePage() {
           myAvatar={session.profile?.avatar_url ?? null}
           isAdmin={session.isAdmin}
           requireJoin={() => setShowJoin(true)}
-          placeholder="いま必要な物、やって欲しい事"
+          placeholder="こちらにお書きください"
         />
       </div>
 

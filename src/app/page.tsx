@@ -157,21 +157,16 @@ export default function Home() {
 
         {tab === "voice" && (
           <div>
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-medium text-[#8a8070]">
-                現地の「欲しい物・やって欲しい事」。TalKのグループトークと同期しています
-              </p>
-              <Link href="/voice" className="shrink-0 text-[11px] font-bold underline" style={{ color: "#d96a1a" }}>
-                全画面で見る
-              </Link>
-            </div>
+            <p className="mb-2 text-xs font-medium text-[#8a8070]">
+              現地の人の「いま欲しい物・やって欲しい事」の掲示板です。
+            </p>
             <GroupFeed
               scope="voice"
               userId={session.userId}
               myAvatar={session.profile?.avatar_url ?? null}
               isAdmin={session.isAdmin}
               requireJoin={requireJoin}
-              placeholder="いま必要な物、やって欲しい事"
+              placeholder="こちらにお書きください"
             />
           </div>
         )}

@@ -541,7 +541,7 @@ export async function fetchUnreadTotal(myId: string): Promise<number> {
       .neq("sender_id", myId),
     fetchGroupSummaries(myId).catch(() => null),
   ]);
-  const g = groups ? groups.board.unread + groups.voice.unread : 0;
+  const g = groups ? groups.board.unread : 0; // 助けてはTalK非同期のため掲示板のみ
   return (count ?? 0) + g;
 }
 
