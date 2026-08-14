@@ -84,6 +84,7 @@ export function PostComposer({
   const [pref, setPref] = useState(DEFAULT_PREF);
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<Record<string, string[]>>({});
+  const [toast, setToast] = useState<string | null>(null);
   const lastFetchedUrl = useRef<string | null>(null);
 
   useEffect(() => {
@@ -157,13 +158,41 @@ export function PostComposer({
     setImages([]);
     lastFetchedUrl.current = null;
     setExpanded(false);
-    setMessage("投稿しました");
+    setMessage(null);
     onPosted();
+    // 投稿できたことをはっきり見せる（無反応が一番のクレーム源）
+    setToast("✅ 投稿しました");
+    setTimeout(() => setToast(null), 2500);
   };
+
+  const overlay = (
+    <>
+      {sending && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40">
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-8 py-6 shadow-2xl">
+            <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#d96a1a] border-t-transparent" />
+            <p className="text-[13.5px] font-bold text-[#5a5448]">投稿しています…</p>
+          </div>
+        </div>
+      )}
+      {toast && (
+        <div className="fixed left-1/2 top-[14vh] z-[140] -translate-x-1/2">
+          <div
+            className="whitespace-nowrap rounded-full px-5 py-2.5 text-[14px] font-extrabold text-white shadow-xl"
+            style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
+          >
+            {toast}
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   // 折りたたみ: アバター + 丸ボックス（CotoZuteのFB型）
   if (!expanded) {
     return (
+      <>
+      {overlay}
       <div className="flex items-center gap-2.5 py-2.5">
         {myAvatar ? (
           <img
@@ -184,11 +213,13 @@ export function PostComposer({
           {prompt}<span className="caret-blink" aria-hidden />
         </button>
       </div>
+      </>
     );
   }
 
   return (
     <div className="mb-2">
+      {overlay}
       {/* まず場所（県を選ぶと隣が市町村に連動・OneSea方式） */}
       {withLocation && (
         <p className="mb-1 text-[13px] font-bold text-[#5a5448]">助けて欲しい場所</p>
