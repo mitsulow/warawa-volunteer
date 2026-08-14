@@ -28,6 +28,7 @@ export interface Offer {
   image_url: string | null;
   image_urls: string[] | null;
   thumb_urls: string[] | null;
+  embed: { url: string; title?: string; description?: string; image?: string; platform?: string } | null;
   status: "open" | "confirmed" | "done";
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null; member_no?: number | null } | null;
@@ -179,7 +180,7 @@ export async function fetchIsAdmin(userId: string): Promise<boolean> {
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
-  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, status, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, created_at, profiles(display_name, avatar_url, member_no)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
@@ -208,7 +209,7 @@ export async function addOffer(
   detail: string,
   title?: string | null,
   imageUrl?: string | null,
-  extras?: { imageUrls?: string[]; thumbUrls?: string[] }
+  extras?: { imageUrls?: string[]; thumbUrls?: string[]; embed?: Offer["embed"] }
 ) {
   const supabase = createClient();
   return supabase.from("offers").insert({
@@ -219,6 +220,7 @@ export async function addOffer(
     image_url: imageUrl ?? extras?.imageUrls?.[0] ?? null,
     image_urls: extras?.imageUrls?.length ? extras.imageUrls : null,
     thumb_urls: extras?.thumbUrls?.length ? extras.thumbUrls : null,
+    embed: extras?.embed ?? null,
   });
 }
 

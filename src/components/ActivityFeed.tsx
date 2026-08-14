@@ -169,7 +169,7 @@ export function ActivityFeed({
         body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
         images: o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [],
         thumbs: o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [],
-        embed: null,
+        embed: (o.embed as OGPEmbed | null) ?? null,
       })),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 

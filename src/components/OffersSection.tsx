@@ -12,7 +12,47 @@ import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { Avatar } from "@/components/Avatar";
 import { BodyApplyDialog } from "@/components/BodyApplyDialog";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
+import { SnsIcon } from "@/components/SnsIcon";
 import type { Profile } from "@/lib/db";
+import { useRef } from "react";
+
+const URL_REGEX = /https?:\/\/[^\s]+/g;
+const SNS_PLATFORMS: Array<[string, string]> = [
+  ["instagram", "Instagram"], ["x", "X"], ["youtube", "YouTube"],
+  ["tiktok", "TikTok"], ["note", "note"], ["ameblo", "アメブロ"], ["facebook", "Facebook"],
+];
+
+function detectPlatform(url: string): string | undefined {
+  if (/instagram\.com/.test(url)) return "instagram";
+  if (/x\.com|twitter\.com/.test(url)) return "x";
+  if (/youtube\.com|youtu\.be/.test(url)) return "youtube";
+  if (/tiktok\.com/.test(url)) return "tiktok";
+  if (/facebook\.com/.test(url)) return "facebook";
+  if (/note\.com/.test(url)) return "note";
+  if (/ameblo\.jp/.test(url)) return "ameblo";
+  return undefined;
+}
+
+async function fetchOGP(url: string): Promise<OGPEmbed | null> {
+  try {
+    const res = await fetch(`/api/ogp?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.title && !data.description && !data.image) {
+      return { url, title: new URL(url).hostname, platform: detectPlatform(url) };
+    }
+    return {
+      url,
+      title: data.title || new URL(url).hostname,
+      description: data.description,
+      image: data.image,
+      platform: detectPlatform(url),
+    };
+  } catch {
+    return null;
+  }
+}
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -100,9 +140,39 @@ function OfferDialog({
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [embed, setEmbed] = useState<OGPEmbed | null>(null);
+  const [loadingOGP, setLoadingOGP] = useState(false);
+  const lastFetchedUrl = useRef<string | null>(null);
 
   const isGoods = kind === "goods";
   const draftKey = `warawa-draft-offer-${kind}`;
+
+  // URLを貼ると自動でOGP取り込み（CotoZuteと同じ）
+  useEffect(() => {
+    const urlFromInput = linkUrl.trim().match(URL_REGEX)?.[0];
+    const urlFromBody = detail.match(URL_REGEX)?.[0];
+    const firstUrl = urlFromInput || urlFromBody || null;
+    if (!firstUrl) {
+      setEmbed(null);
+      lastFetchedUrl.current = null;
+      return;
+    }
+    if (firstUrl === lastFetchedUrl.current) return;
+    lastFetchedUrl.current = firstUrl;
+    const timer = setTimeout(async () => {
+      setLoadingOGP(true);
+      setEmbed(await fetchOGP(firstUrl));
+      setLoadingOGP(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [detail, linkUrl]);
+
+  const removeEmbed = () => {
+    setEmbed(null);
+    setLinkUrl("");
+    lastFetchedUrl.current = "__removed__";
+  };
 
   /* 下書き保存（CotoZuteと同じ: アプリ切替でも本文が消えない） */
   useEffect(() => {
@@ -129,6 +199,7 @@ function OfferDialog({
     const { error: e } = await addOffer(userId, kind, detail.trim(), null, null, {
       imageUrls: images.map((i) => i.full),
       thumbUrls: images.map((i) => i.thumb),
+      embed: embed ?? null,
     });
     setBusy(false);
     if (e) {
@@ -172,8 +243,17 @@ function OfferDialog({
               <img src={KINDS[kind].icon} alt="" className="h-7 w-7 object-contain" />
               {KINDS[kind].label}
             </h3>
+            {isGoods && (
+              <p className="mt-2 text-[12px] leading-relaxed text-[#5a5448]">
+                現地の人と相談し、「現地のNeeds」に見合った場合、メールか、アプリ内のTalk機能にてメッセージを送ります。
+                そこに送付先の住所（炊き出しの場所や、現地の受け入れ拠点）を記載しますので、
+                送料はお客さまで負担の上でお送りください。
+                <br />
+                <span className="font-bold">※採用の連絡が来た後に送付をお願い致します。</span>
+              </p>
+            )}
             <label className="mt-3 block text-sm font-bold">
-              {isGoods ? "私に出せるもの" : "私が持ち寄れるもの・アイディア・その他"}
+              {isGoods ? "私はこういう物を出せます" : "私が持ち寄れるもの・アイディア・その他"}
             </label>
             <textarea
               className="mt-1 w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#d96a1a]"
@@ -237,6 +317,50 @@ function OfferDialog({
                   />
                 </label>
               )}
+            </div>
+
+            {/* OGPプレビュー */}
+            {loadingOGP && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#b0a898]">
+                <span className="animate-pulse">⏳</span> リンクを取り込んでいます...
+              </div>
+            )}
+            {embed && !loadingOGP && (
+              <div className="relative mt-1">
+                <div className="px-1 py-0.5 text-[10px] font-medium text-[#4a8a5c]">✓ 取り込みました</div>
+                <EmbedCard embed={embed} />
+                <button
+                  type="button"
+                  onClick={removeEmbed}
+                  aria-label="埋め込みを外す"
+                  className="absolute right-1 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* SNSリンク貼り付け（CotoZuteと同じ） */}
+            <div className="mt-2.5 rounded-xl border-2 border-dashed p-3" style={{ borderColor: "#d96a1a4d", background: "#d96a1a0d" }}>
+              <div className="mb-1.5 flex items-center gap-1.5">
+                <img src="/icons/icon-link.webp" alt="" style={{ width: 17, height: 17 }} onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                <span className="text-xs font-medium text-[#5a5448]">SNS取り込めます</span>
+              </div>
+              <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                {SNS_PLATFORMS.map(([id, label]) => (
+                  <span key={id} className="inline-flex items-center gap-1 rounded-full border border-[#ede5d8] bg-white px-2 py-0.5 text-[10.5px] text-[#b0a898]">
+                    <SnsIcon platform={id} size={12} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="URLをここに貼り付け（https://...）"
+                className="w-full rounded-lg border border-[#ede5d8] bg-white px-3 py-2 text-xs outline-none focus:border-[#d96a1a]"
+              />
             </div>
 
             {/* 送信バー（CotoZuteと同じ: 文字数カウンター + キャンセル/投稿） */}
