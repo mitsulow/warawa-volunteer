@@ -59,47 +59,19 @@ export function BottomNav({
     }`;
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-[520px] -translate-x-1/2 border-t border-[#ede5d8] bg-white pb-[env(safe-area-inset-bottom)]">
-      {/* マイページ */}
-      {userId ? (
-        <Link href={`/u/${userId}`} className={cls("my")}>
-          {avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatar}
-              alt=""
-              referrerPolicy="no-referrer"
-              className="h-6 w-6 rounded-full object-cover"
-              style={active === "my" ? { boxShadow: "0 0 0 2px #d96a1a" } : undefined}
-            />
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src="/icons/icon-meishi.webp" alt="" className="h-6 w-6 object-contain" />
-          )}
-          <span className="mt-0.5 text-[10px]">マイページ</span>
-        </Link>
-      ) : (
-        <button className={cls("my")} onClick={requireJoin}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/icon-meishi.webp" alt="" className="h-6 w-6 object-contain" />
-          <span className="mt-0.5 text-[10px]">マイページ</span>
-        </button>
-      )}
-
-      {/* ホーム */}
-      <Link href="/" className={cls("home")}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icons/tab-home.png" alt="" className="h-6 w-6 object-contain" />
-        <span className="mt-0.5 text-[10px]">ホーム</span>
-      </Link>
-
-      {/* TalK */}
-      <Link href="/talk" className={cls("talk")}>
+    <nav className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-[520px] -translate-x-1/2 justify-end border-t border-[#ede5d8] bg-white pb-[env(safe-area-inset-bottom)] pr-3">
+      {/* TalK（右詰め・未読数はOneSea式の赤丸数字） */}
+      <Link
+        href="/talk"
+        className={`flex flex-col items-center px-4 py-1.5 no-underline ${
+          active === "talk" ? "text-[#d96a1a] font-bold" : "text-[#8a8070]"
+        }`}
+      >
         <span className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" />
           {unread > 0 && (
-            <span className="absolute -right-2.5 -top-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+            <span className="num absolute -right-3 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white">
               {unread > 99 ? "99+" : unread}
             </span>
           )}

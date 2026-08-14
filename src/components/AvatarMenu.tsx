@@ -75,14 +75,6 @@ export function AvatarMenu({
               </p>
             )}
           </div>
-          <Link href="/" className={item} onClick={() => setOpen(false)}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/tab-home.png" alt="" className="h-5 w-5 object-contain" />
-            ホーム
-          </Link>
-          <Link href="/voice" className={item} onClick={() => setOpen(false)}>
-            📣 現地からの声
-          </Link>
           <Link href="/talk" className={item} onClick={() => setOpen(false)}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icons/icon-talk-green.webp" alt="" className="h-5 w-5 object-contain" />

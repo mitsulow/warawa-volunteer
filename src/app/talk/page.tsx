@@ -67,6 +67,9 @@ export default function TalkListPage() {
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <h1 className="flex items-center gap-2 text-lg font-bold" style={{ color: "#d96a1a" }}>
+          <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="ホームへ">
+            ←
+          </Link>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" /> TalK
         </h1>
