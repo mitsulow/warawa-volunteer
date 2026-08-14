@@ -99,10 +99,12 @@ async function fetchOGP(url: string): Promise<OGPEmbed | null> {
 
 function TorikumiComposer({
   userId,
+  myAvatar,
   requireJoin,
   onPosted,
 }: {
   userId: string | null;
+  myAvatar: string | null;
   requireJoin: () => void;
   onPosted: () => void;
 }) {
@@ -181,32 +183,29 @@ function TorikumiComposer({
     onPosted();
   };
 
-  if (!userId) {
-    return (
-      <div className="mb-2 rounded-xl border border-[#e8dcc4] bg-white p-3 text-center">
-        <p className="mb-2 text-[12.5px] leading-relaxed text-[#8a8070]">
-          いまの取り組みを、ひとこと。
-        </p>
-        <button
-          onClick={requireJoin}
-          className="w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
-          style={{ background: "#d96a1a" }}
-        >
-          ログインして投稿する
-        </button>
-      </div>
-    );
-  }
-
+  // 投稿ボックス（CotoZuteと同じFB型: アバター + 丸ボックス「書き込む|」）
   if (!expanded) {
     return (
-      <button
-        onClick={() => setExpanded(true)}
-        className="mb-2 w-full rounded-xl border border-[#e8dcc4] px-3.5 py-3 text-left text-[13.5px] text-[#8a8070]"
-        style={{ background: "linear-gradient(135deg,#fffaf0 0%,#fdf6e9 100%)" }}
-      >
-        いまの取り組みを、ひとこと。<span className="caret-blink" aria-hidden />
-      </button>
+      <div className="flex items-center gap-2.5 py-2.5">
+        {myAvatar ? (
+          <img
+            src={myAvatar}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5]">
+            <img src="/icons/icon-leaf.webp" alt="" style={{ width: 18, height: 18 }} />
+          </span>
+        )}
+        <button
+          onClick={() => (userId ? setExpanded(true) : requireJoin())}
+          className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14.5px] text-[#65676b]"
+        >
+          書き込む<span className="caret-blink" aria-hidden />
+        </button>
+      </div>
     );
   }
 
@@ -366,10 +365,12 @@ interface FeedItem {
  */
 export function ActivityFeed({
   userId,
+  myAvatar = null,
   isAdmin = false,
   requireJoin,
 }: {
   userId: string | null;
+  myAvatar?: string | null;
   isAdmin?: boolean;
   requireJoin: () => void;
 }) {
@@ -510,7 +511,12 @@ export function ActivityFeed({
 
   return (
     <div>
-      <TorikumiComposer userId={userId} requireJoin={requireJoin} onPosted={pullBoard} />
+      <TorikumiComposer
+        userId={userId}
+        myAvatar={myAvatar}
+        requireJoin={requireJoin}
+        onPosted={pullBoard}
+      />
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div className="-mx-4 bg-white px-4">

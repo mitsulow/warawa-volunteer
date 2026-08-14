@@ -181,6 +181,7 @@ export default function Home() {
         {tab === "board" && (
           <ActivityFeed
             userId={session.userId}
+            myAvatar={session.profile?.avatar_url ?? null}
             isAdmin={session.isAdmin}
             requireJoin={requireJoin}
           />
