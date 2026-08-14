@@ -100,7 +100,7 @@ export default function Home() {
               className="whitespace-nowrap font-semibold"
               style={{ fontSize: 10, letterSpacing: "0.04em", lineHeight: 1.2, opacity: 0.9 }}
             >
-              届けるのは、大丈夫。配るのは、笑顔。
+              届けたいのは「大丈夫」、配りたいのは「笑顔」。
             </p>
             <span className="mt-0.5 inline-flex items-center justify-center" style={{ gap: 7 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
