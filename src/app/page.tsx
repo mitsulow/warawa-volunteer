@@ -136,9 +136,9 @@ export default function Home() {
       </header>
 
       <div className="space-y-3 px-4 pt-3">
-        {/* フォルダ型タブ: 選択中のタブが下のセクションとつながって見える */}
-        <div>
-          <div className="flex gap-1">
+        {/* フォルダ型タブ: 選択中のタブが下のセクションとつながって見える（画面フチまで全幅） */}
+        <div className="-mx-4">
+          <div className="flex gap-1 px-1">
             {TABS.map(([id, label, sub]) => (
               <button
                 key={id}
@@ -162,8 +162,8 @@ export default function Home() {
             ))}
           </div>
           <div
-            className="overflow-hidden rounded-b-2xl border-2 px-4 py-3"
-            style={{ borderColor: "#d96a1a", background: "#fffdf8" }}
+            className="overflow-hidden rounded-b-2xl"
+            style={{ border: "3px solid #d96a1a", background: "#fffdf8" }}
           >
 
         {tab === "voice" && (

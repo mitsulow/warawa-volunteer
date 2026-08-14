@@ -55,7 +55,7 @@ function relTime(iso: string): string {
 
 /** 投稿の区切り線（CotoZute文法・色はオレンジ・左右いっぱい） */
 function Band() {
-  return <div className="-mx-4 h-px" style={{ background: "#d96a1a", opacity: 0.22 }} />;
+  return <div className="-mx-3 h-px" style={{ background: "#d96a1a", opacity: 0.22 }} />;
 }
 
 /* ============ フィード ============ */
@@ -235,7 +235,7 @@ export function ActivityFeed({
       />
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
-      <div className="-mx-4 bg-white px-4">
+      <div className="bg-white px-3">
         {items.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
             まだ取り組みがありません。最初のひとことをどうぞ
@@ -322,7 +322,7 @@ export function ActivityFeed({
 
                 {/* 写真（左右いっぱい）。複数枚はインスタ式: 横スワイプ+●ドット */}
                 {it.images.length === 1 && (
-                  <div className="-mx-4 mt-2">
+                  <div className="-mx-3 mt-2">
                     <button
                       onClick={() => setLightbox({ urls: it.images, idx: 0 })}
                       className="block w-full"
@@ -333,7 +333,7 @@ export function ActivityFeed({
                   </div>
                 )}
                 {it.images.length > 1 && (
-                  <div className="-mx-4 mt-2">
+                  <div className="-mx-3 mt-2">
                     <div
                       className="hide-scrollbar flex snap-x snap-mandatory overflow-x-auto"
                       onScroll={(e) => {
