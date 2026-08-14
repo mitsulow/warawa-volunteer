@@ -136,24 +136,35 @@ export default function Home() {
       </header>
 
       <div className="space-y-3 px-4 pt-3">
-        {/* 3タブ切り替え（楽市/楽座/この指とまれ の移植） */}
-        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
-          {TABS.map(([id, label, sub]) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className="rounded-xl py-2 text-center transition-colors"
-              style={
-                tab === id
-                  ? { background: "#d96a1a", color: "#fff", boxShadow: "0 2px 8px rgba(217,106,26,.35)" }
-                  : { background: "transparent", color: "#8a8070" }
-              }
-            >
-              <div className="text-[13px] font-extrabold leading-tight">{label}</div>
-              <div className="text-[9px] leading-tight opacity-85">{sub}</div>
-            </button>
-          ))}
-        </div>
+        {/* フォルダ型タブ: 選択中のタブが下のセクションとつながって見える */}
+        <div>
+          <div className="flex gap-1">
+            {TABS.map(([id, label, sub]) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className="relative flex-1 rounded-t-xl py-2 text-center transition-colors"
+                style={
+                  tab === id
+                    ? {
+                        background: "#d96a1a",
+                        color: "#fff",
+                        marginBottom: -2,
+                        zIndex: 1,
+                        boxShadow: "0 -2px 6px rgba(217,106,26,.25)",
+                      }
+                    : { background: "#f0e9da", color: "#8a8070" }
+                }
+              >
+                <div className="text-[13px] font-extrabold leading-tight">{label}</div>
+                <div className="text-[9px] leading-tight opacity-85">{sub}</div>
+              </button>
+            ))}
+          </div>
+          <div
+            className="overflow-hidden rounded-b-2xl border-2 px-4 py-3"
+            style={{ borderColor: "#d96a1a", background: "#fffdf8" }}
+          >
 
         {tab === "voice" && (
           <div>
@@ -188,6 +199,8 @@ export default function Home() {
             requireJoin={requireJoin}
           />
         )}
+          </div>
+        </div>
 
         {/* 本日の出せる物資一覧 */}
         <FeaturedGoods offers={offers} />
