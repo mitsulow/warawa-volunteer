@@ -214,7 +214,8 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
-      {/* 出せる物資（OneSeaの出品一覧グリッドを移植） */}
+      {/* 出せる物資（登録がある人だけ表示・OneSeaの出品一覧グリッドを移植） */}
+      {goods.length > 0 && (
       <div className="px-4 pt-5">
         <div className="rounded-2xl bg-white p-3 shadow-sm">
           <div className="mb-2.5 flex items-center gap-1.5 text-[13px] font-extrabold text-[#5a5448]">
@@ -222,16 +223,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
             <img src="/icons/icon-listing.webp" alt="" style={{ width: 18, height: 18 }} />
             <span>{`${profile.display_name || "この人"}さんの出せる物資`}</span>
           </div>
-          {goods.length === 0 ? (
-            <p className="py-2 text-[13px] text-[#b8b0a0]">
-              まだ物資の登録がありません
-              {isMe && (
-                <>
-                  。<Link href="/" className="underline" style={{ color: "#d96a1a" }}>ホームの「物資を出す」</Link>から登録できます
-                </>
-              )}
-            </p>
-          ) : (
+          {(
             <div className="grid grid-cols-2 gap-3">
               {goods.map((o) => (
                 <div
@@ -274,6 +266,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
           )}
         </div>
       </div>
+      )}
 
       {/* 事務局ページへの入り口（事務局に認定された本人のマイページだけに出る） */}
       {isMe && session.isAdmin && (
