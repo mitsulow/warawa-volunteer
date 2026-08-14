@@ -514,6 +514,39 @@ export async function fetchUnreadTotal(myId: string): Promise<number> {
   return (count ?? 0) + g;
 }
 
+/* ---------- 取り組みフィードのいいね（🌱ハート） ---------- */
+
+export async function fetchFeedLikes(
+  keys: string[],
+  myId?: string | null
+): Promise<{ counts: Map<string, number>; mine: Set<string> }> {
+  const counts = new Map<string, number>();
+  const mine = new Set<string>();
+  if (keys.length === 0) return { counts, mine };
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("feed_likes")
+    .select("item_key, user_id")
+    .in("item_key", keys);
+  for (const r of (data ?? []) as Array<{ item_key: string; user_id: string }>) {
+    counts.set(r.item_key, (counts.get(r.item_key) ?? 0) + 1);
+    if (myId && r.user_id === myId) mine.add(r.item_key);
+  }
+  return { counts, mine };
+}
+
+export async function toggleFeedLike(itemKey: string, myId: string, on: boolean) {
+  const supabase = createClient();
+  if (on) {
+    return supabase.from("feed_likes").insert({ item_key: itemKey, user_id: myId });
+  }
+  return supabase
+    .from("feed_likes")
+    .delete()
+    .eq("item_key", itemKey)
+    .eq("user_id", myId);
+}
+
 /* ---------- 管理者の管理 ---------- */
 
 export async function fetchAdminIds(): Promise<Set<string>> {

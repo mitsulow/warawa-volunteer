@@ -12,6 +12,7 @@ import { FeaturedGoods } from "@/components/FeaturedGoods";
 import { OrangeCorps } from "@/components/OrangeCorps";
 import { OffersSection } from "@/components/OffersSection";
 import { GroupFeed } from "@/components/GroupFeed";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -25,7 +26,7 @@ export default function Home() {
     avatar: string | null;
     email: string;
   } | null>(null);
-  const [tab, setTab] = useState<Tab>("voice");
+  const [tab, setTab] = useState<Tab>("board");
   const [offers, setOffers] = useState<Offer[]>([]);
   const [goodsSignal, setGoodsSignal] = useState(0);
 
@@ -72,9 +73,9 @@ export default function Home() {
   const requireJoin = () => setShowJoin(true);
 
   const TABS: Array<[Tab, string, string]> = [
-    ["voice", "現地からの声", "欲しい物・やって欲しい事"],
-    ["offers", "私にできる事", "お金・体・物資"],
-    ["board", "掲示板", "みんなの連絡板"],
+    ["board", "掲示板", "取り組みフィード"],
+    ["offers", "助けたい", "お金・物資・行動"],
+    ["voice", "助けて", "現地からの声"],
   ];
 
   return (
@@ -182,12 +183,7 @@ export default function Home() {
         )}
 
         {tab === "board" && (
-          <GroupFeed
-            scope="board"
-            userId={session.userId}
-            requireJoin={requireJoin}
-            placeholder="メッセージを書く"
-          />
+          <ActivityFeed userId={session.userId} requireJoin={requireJoin} />
         )}
 
         {/* 物資登録CTA（フィードの下・楽市楽座の出品CTAを移植） */}
