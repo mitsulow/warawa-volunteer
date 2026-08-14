@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
-import { upsertMyProfile } from "@/lib/db";
+import { fetchOffers, type Offer } from "@/lib/db";
 import { JoinDialog } from "@/components/JoinDialog";
-import { NeedsSection } from "@/components/NeedsSection";
+import { RegisterDialog } from "@/components/RegisterDialog";
+import { FeaturedGoods } from "@/components/FeaturedGoods";
+import { OrangeCorps } from "@/components/OrangeCorps";
 import { OffersSection } from "@/components/OffersSection";
-import { BoardSection } from "@/components/BoardSection";
-import { MembersSection } from "@/components/MembersSection";
+import { GroupFeed } from "@/components/GroupFeed";
 import { AdminSection } from "@/components/AdminSection";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -18,139 +20,247 @@ const MAP_URL =
   "https://www.google.com/maps/search/?api=1&query=" +
   encodeURIComponent(`西福寺 ${TEMPLE_ADDRESS}`);
 
+type Tab = "voice" | "offers" | "board";
+
 export default function Home() {
   const session = useSession();
   const [showJoin, setShowJoin] = useState(false);
-  const [renaming, setRenaming] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [googleMeta, setGoogleMeta] = useState<{ name: string; avatar: string | null } | null>(null);
+  const [tab, setTab] = useState<Tab>("voice");
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [goodsSignal, setGoodsSignal] = useState(0);
 
-  // Googleログイン直後: Googleの名前とアイコンでプロフィールを自動作成
   useEffect(() => {
-    if (session.loading || !session.userId || session.profile) return;
+    fetchOffers().then(setOffers);
+  }, [tab]);
+
+  // Googleログイン直後でプロフィール未作成 → 登録フォームを出す
+  useEffect(() => {
+    if (session.loading || !session.userId || session.profile) {
+      setGoogleMeta(null);
+      return;
+    }
     const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data }: { data: { user: User | null } }) => {
-      const user = data.user;
-      if (!user) return;
-      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-      const name =
-        (meta.full_name as string) || (meta.name as string) || "参加者";
-      const avatar = (meta.picture as string) || (meta.avatar_url as string) || null;
-      await supabase
-        .from("profiles")
-        .upsert({ id: user.id, display_name: name, avatar_url: avatar });
-      session.refresh();
+    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
+      const meta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
+      setGoogleMeta({
+        name: (meta.full_name as string) || (meta.name as string) || "",
+        avatar: (meta.picture as string) || (meta.avatar_url as string) || null,
+      });
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.userId, session.profile, session.loading]);
 
   const requireJoin = () => setShowJoin(true);
 
-  const saveRename = async () => {
-    if (!session.userId || !newName.trim()) return;
-    await upsertMyProfile(session.userId, newName.trim());
-    setRenaming(false);
-    session.refresh();
-  };
+  const TABS: Array<[Tab, string, string]> = [
+    ["voice", "現地からの声", "欲しい物・やって欲しい事"],
+    ["offers", "私にできる事", "お金・体・物資"],
+    ["board", "掲示板", "みんなの連絡板"],
+  ];
 
   return (
-    <main className="pb-20">
-      {/* ヒーロー */}
-      <header className="bg-[#d96c2c] text-white px-5 pt-10 pb-8 rounded-b-3xl">
-        <p className="text-sm opacity-90">熊本地震 被災地支援</p>
-        <h1 className="text-3xl font-bold mt-1 leading-tight">
-          わらわ〜
-          <br />
-          ボランティア
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed opacity-95">
-          出せるものを、出せる人が、出せるだけ。
-          <br />
-          お金・体・物資 — 三つの支援を持ち寄って、現地を支えます。
-        </p>
-        <div className="mt-4 rounded-xl bg-white/15 p-3 text-sm">
-          <p className="font-bold">🏠 受け入れ先: 西福寺（さいふくじ）</p>
-          <p className="mt-1">{TEMPLE_ADDRESS}</p>
+    <main className="overflow-x-clip pb-24" style={{ background: "#faf6ee" }}>
+      {/* ヘッダー（楽市楽座スタイル: エンブレム + タイトル + 右上アバター） */}
+      <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
+        <div className="flex h-[52px] items-center justify-between px-4">
+          <span className="inline-flex select-none items-center" style={{ color: "#c94d3a", gap: 8 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/waraeru-archangel.png"
+              alt=""
+              className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
+            />
+            <span
+              className="whitespace-nowrap font-bold"
+              style={{ fontSize: 19, letterSpacing: "0.02em", lineHeight: 1 }}
+            >
+              わらわ〜ボランティア
+            </span>
+            <span
+              className="whitespace-nowrap font-semibold"
+              style={{ fontSize: 10, letterSpacing: "-0.02em", lineHeight: 1, marginLeft: 2, opacity: 0.85 }}
+            >
+              熊本地震 被災地支援
+            </span>
+          </span>
+          {session.profile?.avatar_url ? (
+            <Link href={`/u/${session.userId}`} className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={session.profile.avatar_url}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-9 w-9 rounded-full object-cover"
+                style={{ boxShadow: "0 0 0 2px #c94d3a" }}
+              />
+            </Link>
+          ) : session.profile ? (
+            <Link
+              href={`/u/${session.userId}`}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-bold text-white no-underline"
+              style={{ background: "#c94d3a" }}
+            >
+              {session.profile.display_name.charAt(0)}
+            </Link>
+          ) : (
+            <button
+              className="flex h-9 shrink-0 items-center rounded-full px-3 text-[12px] font-bold text-white"
+              style={{ background: "#c94d3a" }}
+              onClick={requireJoin}
+            >
+              参加
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="space-y-3 px-4 pt-3">
+        {/* 受け入れ先 */}
+        <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2 text-[12px] text-[#5a5448]">
+          <span className="shrink-0">🏠</span>
+          <span className="min-w-0 flex-1 truncate">
+            受け入れ先: <b>西福寺</b>（{TEMPLE_ADDRESS}）
+          </span>
           <a
             href={MAP_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-block mt-2 rounded-lg bg-white text-[#d96c2c] px-3 py-1.5 font-bold"
+            className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white no-underline"
+            style={{ background: "#c94d3a" }}
           >
-            📍 地図を開く
+            📍 地図
           </a>
         </div>
-        {session.profile ? (
-          <p className="mt-4 text-sm">
-            ようこそ、<b>{session.profile.display_name}</b> さん{" "}
-            <button
-              className="underline opacity-80"
-              onClick={() => {
-                setNewName(session.profile?.display_name ?? "");
-                setRenaming(true);
-              }}
-            >
-              名前を変える
-            </button>
-          </p>
-        ) : (
-          <button
-            className="mt-4 w-full rounded-xl bg-white py-3 text-[#d96c2c] font-bold text-lg shadow"
-            onClick={requireJoin}
+
+        {/* 本日の出せる物資一覧 */}
+        <FeaturedGoods offers={offers} />
+
+        {/* オレンジ軍団 */}
+        <OrangeCorps />
+
+        {/* 物資登録CTA（楽市楽座の出品CTAを移植） */}
+        <button
+          className="block w-full text-left"
+          onClick={() => {
+            setTab("offers");
+            if (!session.userId) requireJoin();
+            else setGoodsSignal((n) => n + 1);
+          }}
+        >
+          <div
+            className="flex items-center gap-2.5 rounded-xl px-3 py-3 shadow-md"
+            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
           >
-            Googleでログインして参加
-          </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/waraeru-archangel.png"
+              alt=""
+              className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-extrabold leading-tight text-white">
+                出せる物資を登録する
+              </div>
+              <div className="text-[10.5px] leading-tight text-white/85">
+                体に優しい食材を現地の炊き出しへ。写真つきでトップに載ります
+              </div>
+            </div>
+            <div
+              className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold"
+              style={{ color: "#c94d3a" }}
+            >
+              登録する →
+            </div>
+          </div>
+        </button>
+
+        {/* 3タブ切り替え（楽市/楽座/この指とまれ の移植） */}
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
+          {TABS.map(([id, label, sub]) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className="rounded-xl py-2 text-center transition-colors"
+              style={
+                tab === id
+                  ? { background: "#c94d3a", color: "#fff", boxShadow: "0 2px 8px rgba(201,77,58,.35)" }
+                  : { background: "transparent", color: "#8a8070" }
+              }
+            >
+              <div className="text-[13px] font-extrabold leading-tight">{label}</div>
+              <div className="text-[9px] leading-tight opacity-85">{sub}</div>
+            </button>
+          ))}
+        </div>
+
+        {tab === "voice" && (
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-medium text-[#8a8070]">
+                現地の「欲しい物・やって欲しい事」。TalKのグループトークと同期しています
+              </p>
+              <Link href="/voice" className="shrink-0 text-[11px] font-bold underline" style={{ color: "#c94d3a" }}>
+                全画面で見る
+              </Link>
+            </div>
+            <GroupFeed
+              scope="voice"
+              userId={session.userId}
+              requireJoin={requireJoin}
+              placeholder="欲しい物・やって欲しい事を書く"
+            />
+          </div>
         )}
-      </header>
 
-      <NeedsSection userId={session.userId} isAdmin={session.isAdmin} />
-      <OffersSection userId={session.userId} requireJoin={requireJoin} />
-      <BoardSection userId={session.userId} requireJoin={requireJoin} />
-      <MembersSection userId={session.userId} requireJoin={requireJoin} />
-      {session.isAdmin && session.userId && (
-        <AdminSection userId={session.userId} />
-      )}
+        {tab === "offers" && (
+          <OffersSection
+            userId={session.userId}
+            isAdmin={session.isAdmin}
+            requireJoin={requireJoin}
+            openGoodsSignal={goodsSignal}
+          />
+        )}
 
-      {/* フッター: PWA案内 */}
-      <footer className="px-5 py-8 text-center text-sm text-gray-600">
-        <p className="font-bold mb-2">📱 アプリのように使えます</p>
-        <p>
-          iPhone: 共有ボタン →「ホーム画面に追加」
-          <br />
-          Android: メニュー →「ホーム画面に追加」
-        </p>
-        <p className="mt-6 text-xs text-gray-400">わらわ〜ボランティア 熊本</p>
-      </footer>
+        {tab === "board" && (
+          <GroupFeed
+            scope="board"
+            userId={session.userId}
+            requireJoin={requireJoin}
+            placeholder="メッセージを書く"
+          />
+        )}
+
+        {session.isAdmin && session.userId && <AdminSection userId={session.userId} />}
+
+        <footer className="py-6 text-center text-sm text-[#8a8070]">
+          <p className="mb-1 font-bold">📱 アプリのように使えます</p>
+          <p className="text-xs">
+            iPhone: 共有ボタン →「ホーム画面に追加」 / Android: メニュー →「ホーム画面に追加」
+          </p>
+          <p className="mt-4 text-xs text-[#b8b0a0]">わらわ〜ボランティア 熊本</p>
+        </footer>
+      </div>
 
       {showJoin && <JoinDialog onClose={() => setShowJoin(false)} />}
 
-      {renaming && (
-        <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-          onClick={() => setRenaming(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-bold mb-3">表示名を変える</h3>
-            <input
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 mb-3"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              maxLength={30}
-            />
-            <button
-              className="w-full rounded-xl bg-[#3a7d44] py-3 text-white font-bold disabled:opacity-50"
-              disabled={!newName.trim()}
-              onClick={saveRename}
-            >
-              保存する
-            </button>
-          </div>
-        </div>
+      {googleMeta && session.userId && (
+        <RegisterDialog
+          userId={session.userId}
+          initial={{
+            display_name: googleMeta.name,
+            avatar_url: googleMeta.avatar,
+            bio: null,
+            sns: null,
+          }}
+          isFirst
+          onDone={() => {
+            setGoogleMeta(null);
+            session.refresh();
+          }}
+        />
       )}
 
-      <BottomNav userId={session.userId} active="home" />
+      <BottomNav userId={session.userId} active="home" requireJoin={requireJoin} />
     </main>
   );
 }

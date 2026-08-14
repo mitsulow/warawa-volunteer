@@ -6,17 +6,15 @@ export interface Profile {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  cover_url: string | null;
+  bio: string | null;
+  sns: Record<string, string> | null;
+  member_no: number | null;
   created_at: string;
 }
 
-export interface Need {
-  id: string;
-  author: string | null;
-  title: string;
-  body: string | null;
-  status: "open" | "doing" | "done";
-  created_at: string;
-}
+const PROFILE_SELECT =
+  "id, display_name, avatar_url, cover_url, bio, sns, member_no, created_at";
 
 export type OfferKind = "money" | "body" | "goods";
 
@@ -24,17 +22,22 @@ export interface Offer {
   id: string;
   user_id: string;
   kind: OfferKind;
+  title: string | null;
   detail: string;
-  status: string;
+  image_url: string | null;
+  status: "open" | "confirmed" | "done";
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null } | null;
 }
+
+export type BoardScope = "board" | "voice";
 
 export interface BoardMessage {
   id: string;
   user_id: string;
   body: string;
   image_url: string | null;
+  scope: BoardScope;
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null } | null;
 }
@@ -51,29 +54,34 @@ export interface DmMessage {
 
 /* ---------- profile ---------- */
 
-export async function fetchMyProfile(userId: string): Promise<Profile | null> {
+export async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_url, created_at")
+    .select(PROFILE_SELECT)
     .eq("id", userId)
     .maybeSingle();
   return (data as Profile | null) ?? null;
 }
 
-export async function upsertMyProfile(userId: string, displayName: string) {
+export async function fetchMyProfile(userId: string): Promise<Profile | null> {
+  return fetchProfile(userId);
+}
+
+export async function upsertMyProfile(
+  userId: string,
+  patch: Partial<Omit<Profile, "id" | "created_at" | "member_no">>
+) {
   const supabase = createClient();
-  return supabase
-    .from("profiles")
-    .upsert({ id: userId, display_name: displayName });
+  return supabase.from("profiles").upsert({ id: userId, ...patch });
 }
 
 export async function fetchMembers(): Promise<Profile[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_url, created_at")
-    .order("created_at", { ascending: true })
+    .select(PROFILE_SELECT)
+    .order("member_no", { ascending: true })
     .limit(500);
   return (data as Profile[]) ?? [];
 }
@@ -88,68 +96,101 @@ export async function fetchIsAdmin(userId: string): Promise<boolean> {
   return !!data;
 }
 
-/* ---------- needs（現地の要望） ---------- */
-
-export async function fetchNeeds(): Promise<Need[]> {
-  const supabase = createClient();
-  const { data } = await supabase
-    .from("needs")
-    .select("id, author, title, body, status, created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
-  return (data as Need[]) ?? [];
-}
-
-export async function addNeed(author: string, title: string, body: string) {
-  const supabase = createClient();
-  return supabase.from("needs").insert({ author, title, body });
-}
-
-export async function setNeedStatus(id: string, status: Need["status"]) {
-  const supabase = createClient();
-  return supabase.from("needs").update({ status }).eq("id", id);
-}
-
 /* ---------- offers（私にできる事） ---------- */
+
+const OFFER_SELECT =
+  "id, user_id, kind, title, detail, image_url, status, created_at, profiles(display_name, avatar_url)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("offers")
-    .select(
-      "id, user_id, kind, detail, status, created_at, profiles(display_name, avatar_url)"
-    )
+    .select(OFFER_SELECT)
     .order("created_at", { ascending: false })
     .limit(200);
   return (data as unknown as Offer[]) ?? [];
 }
 
-export async function addOffer(userId: string, kind: OfferKind, detail: string) {
+export async function fetchOffersByUser(userId: string): Promise<Offer[]> {
   const supabase = createClient();
-  return supabase.from("offers").insert({ user_id: userId, kind, detail });
+  const { data } = await supabase
+    .from("offers")
+    .select(OFFER_SELECT)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  return (data as unknown as Offer[]) ?? [];
 }
 
-/* ---------- board（掲示板 = グループTalk。増分取得が鉄則） ---------- */
+export async function addOffer(
+  userId: string,
+  kind: OfferKind,
+  detail: string,
+  title?: string | null,
+  imageUrl?: string | null
+) {
+  const supabase = createClient();
+  return supabase.from("offers").insert({
+    user_id: userId,
+    kind,
+    detail,
+    title: title ?? null,
+    image_url: imageUrl ?? null,
+  });
+}
+
+export async function setOfferStatus(id: string, status: Offer["status"]) {
+  const supabase = createClient();
+  return supabase.from("offers").update({ status }).eq("id", id);
+}
+
+/** オレンジ軍団: 現地に行くことが決まった人（body offerがconfirmed） */
+export async function fetchOrangeCorps(): Promise<Profile[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("offers")
+    .select("user_id, profiles(id, display_name, avatar_url, cover_url, bio, sns, member_no, created_at)")
+    .eq("kind", "body")
+    .eq("status", "confirmed")
+    .order("created_at", { ascending: true })
+    .limit(60);
+  const seen = new Set<string>();
+  const out: Profile[] = [];
+  for (const r of (data ?? []) as unknown as Array<{ user_id: string; profiles: Profile | null }>) {
+    if (r.profiles && !seen.has(r.user_id)) {
+      seen.add(r.user_id);
+      out.push(r.profiles);
+    }
+  }
+  return out;
+}
+
+/* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
 
 const BOARD_SELECT =
-  "id, user_id, body, image_url, created_at, profiles(display_name, avatar_url)";
+  "id, user_id, body, image_url, scope, created_at, profiles(display_name, avatar_url)";
 
-export async function fetchBoard(): Promise<BoardMessage[]> {
+export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("board_messages")
     .select(BOARD_SELECT)
+    .eq("scope", scope)
     .order("created_at", { ascending: true })
     .limit(200);
   return (data as unknown as BoardMessage[]) ?? [];
 }
 
-/** cursor(=最後に受け取ったcreated_at)より後の新着だけを取る */
-export async function fetchBoardSince(sinceIso: string): Promise<BoardMessage[]> {
+/** cursor(=最後に受け取ったcreated_at)より後の新着だけを取る（増分取得の鉄則） */
+export async function fetchBoardSince(
+  scope: BoardScope,
+  sinceIso: string
+): Promise<BoardMessage[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("board_messages")
     .select(BOARD_SELECT)
+    .eq("scope", scope)
     .gt("created_at", sinceIso)
     .order("created_at", { ascending: true })
     .limit(200);
@@ -157,6 +198,7 @@ export async function fetchBoardSince(sinceIso: string): Promise<BoardMessage[]>
 }
 
 export async function sendBoardMessage(
+  scope: BoardScope,
   userId: string,
   body: string,
   imageUrl?: string | null
@@ -164,7 +206,56 @@ export async function sendBoardMessage(
   const supabase = createClient();
   return supabase
     .from("board_messages")
-    .insert({ user_id: userId, body, image_url: imageUrl ?? null });
+    .insert({ scope, user_id: userId, body, image_url: imageUrl ?? null });
+}
+
+export async function markGroupRead(scope: BoardScope, userId: string) {
+  const supabase = createClient();
+  await supabase
+    .from("group_reads")
+    .upsert({ user_id: userId, scope, last_read_at: new Date().toISOString() });
+  window.dispatchEvent(new Event("warawa:unreadRefresh"));
+}
+
+/** グループ2部屋の最新+未読（Talk一覧のピン留め行用） */
+export async function fetchGroupSummaries(userId: string): Promise<
+  Record<BoardScope, { lastBody: string | null; lastAt: string | null; unread: number }>
+> {
+  const supabase = createClient();
+  const [{ data: msgs }, { data: reads }] = await Promise.all([
+    supabase
+      .from("board_messages")
+      .select("scope, user_id, body, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase.from("group_reads").select("scope, last_read_at").eq("user_id", userId),
+  ]);
+  const readBy = new Map(
+    ((reads ?? []) as Array<{ scope: string; last_read_at: string }>).map((r) => [
+      r.scope,
+      r.last_read_at,
+    ])
+  );
+  const out: Record<string, { lastBody: string | null; lastAt: string | null; unread: number }> = {
+    board: { lastBody: null, lastAt: null, unread: 0 },
+    voice: { lastBody: null, lastAt: null, unread: 0 },
+  };
+  for (const m of (msgs ?? []) as Array<{
+    scope: string;
+    user_id: string;
+    body: string;
+    created_at: string;
+  }>) {
+    const o = out[m.scope];
+    if (!o) continue;
+    if (!o.lastAt) {
+      o.lastAt = m.created_at;
+      o.lastBody = m.body;
+    }
+    const lr = readBy.get(m.scope);
+    if (m.user_id !== userId && (!lr || m.created_at > lr)) o.unread++;
+  }
+  return out as Record<BoardScope, { lastBody: string | null; lastAt: string | null; unread: number }>;
 }
 
 /* ---------- 1対1 Talk ---------- */
@@ -203,7 +294,7 @@ export async function fetchChatPartner(
     .maybeSingle();
   if (!chat) return null;
   const partnerId = chat.a === myId ? (chat.b as string) : (chat.a as string);
-  return fetchMyProfile(partnerId);
+  return fetchProfile(partnerId);
 }
 
 const DM_SELECT = "id, chat_id, sender_id, body, image_url, read_at, created_at";
@@ -280,7 +371,6 @@ export interface ChatSummary {
   unread: number;
 }
 
-/** 自分のTalk一覧（相手・最新メッセージ・未読数つき。OneSea方式） */
 export async function fetchChatList(myId: string): Promise<ChatSummary[]> {
   const supabase = createClient();
   const { data: chats } = await supabase
@@ -334,6 +424,21 @@ export async function fetchChatList(myId: string): Promise<ChatSummary[]> {
       unread: unreadBy.get(c.id) ?? 0,
     };
   });
+}
+
+/** ナビバッジ用: DM未読 + グループ未読の合計 */
+export async function fetchUnreadTotal(myId: string): Promise<number> {
+  const supabase = createClient();
+  const [{ count }, groups] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null)
+      .neq("sender_id", myId),
+    fetchGroupSummaries(myId).catch(() => null),
+  ]);
+  const g = groups ? groups.board.unread + groups.voice.unread : 0;
+  return (count ?? 0) + g;
 }
 
 /* ---------- 管理者の管理 ---------- */

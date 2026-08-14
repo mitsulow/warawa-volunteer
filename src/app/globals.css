@@ -27,3 +27,21 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* 横スクロール列のスクロールバーを隠す（OneSea流儀） */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 数字は等幅で */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  text-decoration: none;
+}
