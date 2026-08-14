@@ -191,6 +191,9 @@ export function PostComposer({
     <div className="mb-2">
       {/* まず場所（県を選ぶと隣が市町村に連動・OneSea方式） */}
       {withLocation && (
+        <p className="mb-1 text-[13px] font-bold text-[#5a5448]">助けて欲しい場所</p>
+      )}
+      {withLocation && (
         <div className="mb-2 flex gap-2">
           <select
             value={pref}
