@@ -226,7 +226,7 @@ export default function Home() {
           <p className="text-xs">
             iPhone: 共有ボタン →「ホーム画面に追加」 / Android: メニュー →「ホーム画面に追加」
           </p>
-          <p className="mt-4 text-xs text-[#b8b0a0]">わらわ〜ボランティア 熊本</p>
+          <p className="mt-4 text-xs text-[#b8b0a0]">わらわ〜ボランティア</p>
         </footer>
       </div>
 
