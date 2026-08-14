@@ -105,16 +105,31 @@ export function GroupFeed({
                 key={m.id}
                 className="rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
               >
-                <div className="flex items-baseline gap-2">
-                  <span className="min-w-0 text-[15.5px] font-extrabold leading-tight" style={{ color: "#c05e14" }}>
+                <div className="flex items-center gap-2.5">
+                  {m.profiles?.avatar_url ? (
+                    <img
+                      src={m.profiles.avatar_url}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white"
+                      style={{ background: "#c05e14" }}
+                    >
+                      現地
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-tight" style={{ color: "#c05e14" }}>
                     {m.pref ?? ""}{m.city ? ` ${m.city}` : ""}からの投稿
                   </span>
-                  <span className="ml-auto shrink-0 text-[10px] text-[#c0b8a8]">
+                  <span className="shrink-0 self-start text-[10px] text-[#c0b8a8]">
                     {fmtTime(m.created_at)}
                   </span>
                 </div>
                 {m.body && (
-                  <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] font-bold leading-relaxed text-[#3a3428]">
+                  <p className="mt-1.5 whitespace-pre-wrap break-words text-[14.5px] font-bold leading-relaxed text-[#3a3428]">
                     {m.body}
                   </p>
                 )}
