@@ -127,42 +127,6 @@ export default function Home() {
         {/* オレンジ軍団 */}
         <OrangeCorps />
 
-        {/* 物資登録CTA（楽市楽座の出品CTAを移植） */}
-        <button
-          className="block w-full text-left"
-          onClick={() => {
-            setTab("offers");
-            if (!session.userId) requireJoin();
-            else setGoodsSignal((n) => n + 1);
-          }}
-        >
-          <div
-            className="flex items-center gap-2.5 rounded-xl px-3 py-3 shadow-md"
-            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/waraeru-archangel.png"
-              alt=""
-              className="h-9 w-9 flex-shrink-0 object-contain"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-extrabold leading-tight text-white">
-                出せる物資を登録する
-              </div>
-              <div className="text-[10.5px] leading-tight text-white/85">
-                体に優しい食材を現地の炊き出しへ。写真つきでトップに載ります
-              </div>
-            </div>
-            <div
-              className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold"
-              style={{ color: "#c94d3a" }}
-            >
-              登録する →
-            </div>
-          </div>
-        </button>
-
         {/* 3タブ切り替え（楽市/楽座/この指とまれ の移植） */}
         <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
           {TABS.map(([id, label, sub]) => (
@@ -218,6 +182,42 @@ export default function Home() {
             placeholder="メッセージを書く"
           />
         )}
+
+        {/* 物資登録CTA（フィードの下・楽市楽座の出品CTAを移植） */}
+        <button
+          className="block w-full text-left"
+          onClick={() => {
+            setTab("offers");
+            if (!session.userId) requireJoin();
+            else setGoodsSignal((n) => n + 1);
+          }}
+        >
+          <div
+            className="flex items-center gap-2.5 rounded-xl px-3 py-3 shadow-md"
+            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/waraeru-archangel.png"
+              alt=""
+              className="h-9 w-9 flex-shrink-0 object-contain"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-extrabold leading-tight text-white">
+                出せる物資を登録する
+              </div>
+              <div className="text-[10.5px] leading-tight text-white/85">
+                体に優しい食材を現地の炊き出しへ。写真つきでトップに載ります
+              </div>
+            </div>
+            <div
+              className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold"
+              style={{ color: "#c94d3a" }}
+            >
+              登録する →
+            </div>
+          </div>
+        </button>
 
         {session.isAdmin && session.userId && <AdminSection userId={session.userId} />}
 
