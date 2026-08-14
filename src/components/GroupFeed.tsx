@@ -106,8 +106,8 @@ export function GroupFeed({
                 className="rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
               >
                 <div className="flex items-baseline gap-2">
-                  <span className="shrink-0 text-[13px] font-extrabold" style={{ color: "#c05e14" }}>
-                    📍 {m.pref ?? ""}{m.city ? ` ${m.city}` : ""}
+                  <span className="min-w-0 text-[15.5px] font-extrabold leading-tight" style={{ color: "#c05e14" }}>
+                    {m.pref ?? ""}{m.city ? ` ${m.city}` : ""}からの投稿
                   </span>
                   <span className="ml-auto shrink-0 text-[10px] text-[#c0b8a8]">
                     {fmtTime(m.created_at)}
