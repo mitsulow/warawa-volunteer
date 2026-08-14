@@ -20,6 +20,7 @@ import { PostComposer } from "@/components/PostComposer";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
+import { KYUSHU_PREFS, PREF_ORDER, fetchMunicipalities } from "@/lib/prefs";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -71,7 +72,25 @@ export function GroupFeed({
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
+  // エリア絞り込み（助けて）: どこの県・市で困っているかをセクション分けで確認できる
+  const [fPref, setFPref] = useState("九州全域");
+  const [fCity, setFCity] = useState("全市町村");
+  const [cityMap, setCityMap] = useState<Record<string, string[]>>({});
   const cursorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (scope === "voice") fetchMunicipalities().then(setCityMap);
+  }, [scope]);
+
+  const matchArea = (m: BoardMessage): boolean => {
+    if (scope !== "voice") return true;
+    if (fPref === "九州全域") {
+      return !m.pref || KYUSHU_PREFS.includes(m.pref);
+    }
+    if (m.pref !== fPref) return false;
+    if (fCity === "全域" || fCity === "全市町村") return true;
+    return m.city === fCity;
+  };
 
   // いいね・コメント数の読み込み（CotoZuteと同じ仕組み）
   useEffect(() => {
@@ -153,6 +172,47 @@ export function GroupFeed({
 
   return (
     <div>
+      {scope === "voice" && (
+        <div className="mb-2">
+          <p className="mb-1 text-[13px] font-bold text-[#5a5448]">助けて欲しい場所</p>
+          <div className="flex gap-2">
+            <select
+              value={fPref}
+              onChange={(e) => {
+                setFPref(e.target.value);
+                setFCity(e.target.value === "九州全域" ? "全市町村" : "全域");
+              }}
+              className="w-[42%] rounded-xl border border-[#e8dcc4] bg-white px-2 py-2 text-[13.5px] outline-none focus:border-[#d96a1a]"
+            >
+              <option value="九州全域">九州全域</option>
+              {PREF_ORDER.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+            <select
+              value={fCity}
+              onChange={(e) => setFCity(e.target.value)}
+              className="min-w-0 flex-1 rounded-xl border border-[#e8dcc4] bg-white px-2 py-2 text-[13.5px] outline-none focus:border-[#d96a1a]"
+            >
+              {fPref === "九州全域" ? (
+                <option value="全市町村">全市町村</option>
+              ) : (
+                <>
+                  <option value="全域">全域</option>
+                  {(cityMap[fPref] ?? []).map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+          </div>
+        </div>
+      )}
+
       <PostComposer
         scope={scope}
         prompt={placeholder}
@@ -169,12 +229,12 @@ export function GroupFeed({
       />
 
       <div className="space-y-2">
-        {messages.length === 0 && (
+        {messages.filter(matchArea).length === 0 && (
           <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
-            まだ書き込みがありません
+            {scope === "voice" ? "このエリアの投稿はまだありません" : "まだ書き込みがありません"}
           </p>
         )}
-        {[...messages].reverse().map((m) => {
+        {[...messages].filter(matchArea).reverse().map((m) => {
           const images = m.image_urls?.length
             ? m.image_urls
             : m.image_url

@@ -16,6 +16,9 @@ const JIS_ORDER = [
 
 const PRIORITY = ["熊本県", "福岡県", "大分県", "鹿児島県", "長崎県", "宮崎県", "佐賀県"];
 
+/** 九州全域フィルタの対象県 */
+export const KYUSHU_PREFS = PRIORITY;
+
 export const PREF_ORDER: string[] = [
   ...PRIORITY,
   ...JIS_ORDER.filter((p) => !PRIORITY.includes(p)),
