@@ -75,7 +75,7 @@ export default function Home() {
               <img
                 src="/waraeru-archangel.png"
                 alt=""
-                className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                className="h-8 w-8 flex-shrink-0 object-contain"
               />
               <span
                 className="whitespace-nowrap font-bold"
@@ -144,7 +144,7 @@ export default function Home() {
             <img
               src="/waraeru-archangel.png"
               alt=""
-              className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+              className="h-9 w-9 flex-shrink-0 object-contain"
             />
             <div className="min-w-0 flex-1">
               <div className="text-[15px] font-extrabold leading-tight text-white">

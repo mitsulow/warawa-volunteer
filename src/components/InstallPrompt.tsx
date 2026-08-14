@@ -95,22 +95,17 @@ export function InstallPrompt() {
           <img
             src="/waraeru-archangel.png"
             alt=""
-            className="h-9 w-9 flex-shrink-0 rounded-xl object-cover"
+            className="h-9 w-9 flex-shrink-0 object-contain"
           />
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-extrabold leading-tight text-white">
-              アプリとして使えます
-            </p>
-            <p className="text-[10.5px] leading-tight text-white/85">
-              アドレスバーなしの全画面 + ホーム画面にアイコン
-            </p>
-          </div>
+          <p className="min-w-0 flex-1 text-[13px] font-extrabold leading-tight text-white">
+            ホーム画面に追加できます
+          </p>
           <button
             className="flex-shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold"
             style={{ color: "#c94d3a" }}
             onClick={install}
           >
-            {isIos ? "方法を見る" : "アプリにする"}
+            アプリにする
           </button>
           <button
             className="flex-shrink-0 px-1 text-[18px] text-white/70"

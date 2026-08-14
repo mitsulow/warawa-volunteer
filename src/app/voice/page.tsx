@@ -20,7 +20,7 @@ export default function VoicePage() {
             ←
           </Link>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/waraeru-archangel.png" alt="" className="h-8 w-8 rounded-full object-cover" />
+          <img src="/waraeru-archangel.png" alt="" className="h-8 w-8 object-contain" />
           <div className="min-w-0">
             <h1 className="truncate text-[16px] font-bold leading-tight" style={{ color: "#c94d3a" }}>
               現地からの声
