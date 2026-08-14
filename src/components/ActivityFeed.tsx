@@ -246,7 +246,15 @@ export function ActivityFeed({
           const idx = imgIdx.get(it.key) ?? 0;
           return (
             <div key={it.key}>
-              <div className="py-2.5">
+              <div className="relative isolate py-2.5">
+                {/* 透かしワラエル */}
+                <img
+                  src="/waraeru-v2.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute bottom-1 right-1 -z-10 h-24 w-24 object-contain"
+                  style={{ opacity: 0.1 }}
+                />
                 {/* ヘッダー */}
                 <div className="flex items-center gap-2.5">
                   <Link href={`/u/${it.userId}`} className="flex-shrink-0">

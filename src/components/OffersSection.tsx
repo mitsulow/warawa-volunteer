@@ -372,8 +372,16 @@ export function OffersSection({
           return (
             <div
               key={o.id}
-              className="rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
+              className="relative isolate overflow-hidden rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
             >
+                {/* 透かしワラエル */}
+                <img
+                  src="/waraeru-v2.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute bottom-1 right-1 -z-10 h-24 w-24 object-contain"
+                  style={{ opacity: 0.1 }}
+                />
               <div className="flex items-center gap-2.5">
                 <Link href={`/u/${o.user_id}`} className="shrink-0">
                   <Avatar
