@@ -214,11 +214,13 @@ export default function Home() {
         <OrangeCorps />
 
         <footer className="py-6 text-center text-sm text-[#8a8070]">
-          <p className="mb-1 font-bold">📱 アプリのように使えます</p>
-          <p className="text-xs">
-            iPhone: 共有ボタン →「ホーム画面に追加」 / Android: メニュー →「ホーム画面に追加」
-          </p>
-          <p className="mt-4 text-xs text-[#b8b0a0]">わらわ〜ボランティア</p>
+          <Link
+            href="/guide"
+            className="mb-3 inline-block rounded-full border-2 px-5 py-2.5 text-[15px] font-extrabold no-underline"
+            style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
+          >
+            📖 使い方（かんたん3ステップ）
+          </Link>
         </footer>
       </div>
 

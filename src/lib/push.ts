@@ -59,7 +59,7 @@ export async function requestAndSubscribe(userId: string): Promise<NotificationP
 }
 
 /** 送信後の裏側プッシュ発火（失敗しても本文送信には影響させない） */
-export async function firePush(path: "/api/push" | "/api/push-group", payload: object) {
+export async function firePush(path: string, payload: object) {
   try {
     const supabase = createClient();
     const {

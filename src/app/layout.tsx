@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { BadgeSync } from "@/components/BadgeSync";
 import { InAppBrowserGuard } from "@/components/InAppBrowserGuard";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { PopupAnnouncement } from "@/components/PopupAnnouncement";
 import { PushSetup } from "@/components/PushSetup";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
         <InAppBrowserGuard />
         <InstallPrompt />
         <PushSetup />
+        <PopupAnnouncement />
         <BadgeSync />
         <div className="mx-auto min-h-screen max-w-[520px] bg-washi shadow-xl">
           {children}

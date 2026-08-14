@@ -93,6 +93,9 @@ export function AvatarMenu({
             <img src="/icons/icon-meishi.webp" alt="" className="h-5 w-5 object-contain" />
             マイページ
           </Link>
+          <Link href="/guide" className={item} onClick={() => setOpen(false)}>
+            📖 使い方
+          </Link>
           <button
             className={`${item} border-t border-[#f0e9dc] text-[#c04030]`}
             onClick={logout}

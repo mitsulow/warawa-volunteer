@@ -4,13 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
+  createPopup,
+  deletePopup,
+  fetchAllPopups,
   fetchBodyApplications,
   fetchReports,
   resolveReport,
   setOfferStatus,
+  setPopupActive,
   type BodyApplication,
   type PostReport,
+  type Popup,
 } from "@/lib/db";
+import { uploadImagePair } from "@/lib/images";
 import { Avatar } from "@/components/Avatar";
 import { AdminSection } from "@/components/AdminSection";
 import { SnsIcon } from "@/components/SnsIcon";
@@ -27,10 +33,40 @@ export default function OfficePage() {
   const [apps, setApps] = useState<BodyApplication[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [popups, setPopups] = useState<Popup[]>([]);
+  const [pBody, setPBody] = useState("");
+  const [pLink, setPLink] = useState("");
+  const [pPlace, setPPlace] = useState("");
+  const [pImage, setPImage] = useState<string | null>(null);
+  const [pUploading, setPUploading] = useState(false);
+  const [pSending, setPSending] = useState(false);
 
   const reload = () => {
     fetchBodyApplications().then(setApps);
     fetchReports().then(setReports);
+    fetchAllPopups().then(setPopups);
+  };
+
+  const sendPopup = async () => {
+    if (!session.userId || !pBody.trim() || pSending) return;
+    setPSending(true);
+    const { error } = await createPopup(
+      session.userId,
+      pBody.trim(),
+      pImage,
+      pLink.trim() || null,
+      pPlace.trim() || null
+    );
+    setPSending(false);
+    if (error) {
+      alert("作成できませんでした: " + error.message);
+      return;
+    }
+    setPBody("");
+    setPLink("");
+    setPPlace("");
+    setPImage(null);
+    reload();
   };
   useEffect(() => {
     if (session.isAdmin) reload();
@@ -141,6 +177,14 @@ export default function OfficePage() {
       </header>
 
       <div className="space-y-5 px-4 pt-4">
+        <Link
+          href="/talk/broadcast"
+          className="flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-extrabold text-white no-underline shadow-md"
+          style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
+        >
+          📢 全員へお知らせを配信する
+        </Link>
+
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
             🏃 現地入り申請 {open.length > 0 && `（未対応 ${open.length}件）`}
@@ -218,6 +262,100 @@ export default function OfficePage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">🚨 全面ポップアップ通知</h2>
+          <p className="mb-2 text-[11.5px] text-[#8a8070]">
+            重要なお知らせを、アプリを開いた全員の画面前面に全面表示します（例: 9月12日、◯◯で炊き出しをします！）。
+            画像・リンク・場所（Googleマップ自動埋め込み）が使えます。
+          </p>
+          <div className="rounded-xl border border-[#ede5d8] bg-white p-3 shadow-sm">
+            <textarea
+              className="w-full rounded-xl border border-[#e0d6c6] px-3 py-2 text-[14px]"
+              rows={3}
+              placeholder="お知らせ本文（例: 9月12日、西園寺で炊き出しをします！）"
+              value={pBody}
+              onChange={(e) => setPBody(e.target.value)}
+            />
+            <input
+              className="mt-2 w-full rounded-xl border border-[#e0d6c6] px-3 py-2 text-[13px]"
+              placeholder="場所（例: 西園寺 熊本県◯◯市… → 地図が自動で埋め込まれます）※任意"
+              value={pPlace}
+              onChange={(e) => setPPlace(e.target.value)}
+            />
+            <input
+              className="mt-2 w-full rounded-xl border border-[#e0d6c6] px-3 py-2 text-[13px]"
+              placeholder="リンク（https://...）※任意"
+              value={pLink}
+              onChange={(e) => setPLink(e.target.value)}
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <label className="cursor-pointer rounded-xl border border-dashed px-3 py-2 text-[12.5px] font-bold"
+                     style={{ borderColor: "#d96a1a", color: "#d96a1a" }}>
+                {pUploading ? "⏳ 圧縮中..." : pImage ? "📷 画像を差し替え" : "📷 画像をつける（任意）"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f || !session.userId) return;
+                    setPUploading(true);
+                    const pair = await uploadImagePair(session.userId, f);
+                    setPUploading(false);
+                    if (pair) setPImage(pair.full);
+                  }}
+                />
+              </label>
+              {pImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={pImage} alt="" className="h-12 w-12 rounded-lg object-cover" />
+              )}
+              <button
+                className="ml-auto rounded-xl px-5 py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#d96a1a" }}
+                disabled={pSending || pUploading || !pBody.trim()}
+                onClick={sendPopup}
+              >
+                {pSending ? "配信中..." : "全員に表示する"}
+              </button>
+            </div>
+          </div>
+
+          {popups.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {popups.map((p) => (
+                <div key={p.id} className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2 text-[12.5px]">
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${p.active ? "bg-[#e8862c] text-white" : "bg-gray-200 text-gray-500"}`}>
+                    {p.active ? "表示中" : "停止中"}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[#4a4438]">{p.body}</span>
+                  <button
+                    className="shrink-0 font-bold underline"
+                    style={{ color: "#d96a1a" }}
+                    onClick={async () => {
+                      await setPopupActive(p.id, !p.active);
+                      reload();
+                    }}
+                  >
+                    {p.active ? "停止" : "再開"}
+                  </button>
+                  <button
+                    className="shrink-0 font-bold text-[#c04030] underline"
+                    onClick={async () => {
+                      if (!window.confirm("このお知らせを削除しますか？")) return;
+                      await deletePopup(p.id);
+                      reload();
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </section>

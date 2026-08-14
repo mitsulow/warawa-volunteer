@@ -391,6 +391,139 @@ export async function fetchGroupSummaries(userId: string): Promise<
   return out as Record<BoardScope, { lastBody: string | null; lastAt: string | null; unread: number }>;
 }
 
+/* ---------- 事務局からのお知らせ（一斉配信・OneSea broadcast方式） ---------- */
+
+export interface Broadcast {
+  id: string;
+  sender: string | null;
+  body: string;
+  created_at: string;
+  profiles: { display_name: string; avatar_url: string | null } | null;
+}
+
+export async function fetchBroadcasts(): Promise<Broadcast[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("broadcasts")
+    .select("id, sender, body, created_at, profiles(display_name, avatar_url)")
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return (data as unknown as Broadcast[]) ?? [];
+}
+
+/** 事務局のみ送信可（RLS）。全購読者へプッシュも発火 */
+export async function sendBroadcast(myId: string, body: string) {
+  const supabase = createClient();
+  const result = await supabase.from("broadcasts").insert({ sender: myId, body });
+  if (!result.error) {
+    firePush("/api/push-broadcast", { body });
+  }
+  return result;
+}
+
+export async function markBroadcastRead(userId: string) {
+  const supabase = createClient();
+  await supabase
+    .from("broadcast_reads")
+    .upsert({ user_id: userId, last_read_at: new Date().toISOString() });
+  window.dispatchEvent(new Event("warawa:unreadRefresh"));
+}
+
+/** お知らせの最新1件と未読数（TalK一覧のピン留め行用） */
+export async function fetchBroadcastSummary(
+  userId: string
+): Promise<{ lastBody: string | null; lastAt: string | null; unread: number }> {
+  const supabase = createClient();
+  const [{ data: last }, { data: read }] = await Promise.all([
+    supabase
+      .from("broadcasts")
+      .select("body, created_at, sender")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("broadcast_reads")
+      .select("last_read_at")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  let unread = 0;
+  if (last) {
+    let q = supabase
+      .from("broadcasts")
+      .select("id", { count: "exact", head: true })
+      .neq("sender", userId);
+    if (read?.last_read_at) q = q.gt("created_at", read.last_read_at);
+    const { count } = await q;
+    unread = count ?? 0;
+  }
+  return {
+    lastBody: (last?.body as string) ?? null,
+    lastAt: (last?.created_at as string) ?? null,
+    unread,
+  };
+}
+
+/* ---------- 全面ポップアップ通知（事務局の重要なお知らせ） ---------- */
+
+export interface Popup {
+  id: string;
+  body: string;
+  image_url: string | null;
+  link_url: string | null;
+  place: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+export async function fetchActivePopups(): Promise<Popup[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("popups")
+    .select("id, body, image_url, link_url, place, active, created_at")
+    .eq("active", true)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  return (data as Popup[]) ?? [];
+}
+
+export async function fetchAllPopups(): Promise<Popup[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("popups")
+    .select("id, body, image_url, link_url, place, active, created_at")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return (data as Popup[]) ?? [];
+}
+
+export async function createPopup(
+  senderId: string,
+  body: string,
+  imageUrl: string | null,
+  linkUrl: string | null,
+  place: string | null
+) {
+  const supabase = createClient();
+  return supabase.from("popups").insert({
+    sender: senderId,
+    body,
+    image_url: imageUrl,
+    link_url: linkUrl,
+    place,
+  });
+}
+
+export async function setPopupActive(id: string, active: boolean) {
+  const supabase = createClient();
+  return supabase.from("popups").update({ active }).eq("id", id);
+}
+
+export async function deletePopup(id: string) {
+  const supabase = createClient();
+  return supabase.from("popups").delete().eq("id", id);
+}
+
 /* ---------- 1対1 Talk ---------- */
 
 export async function getOrCreateChat(
@@ -561,19 +694,20 @@ export async function fetchChatList(myId: string): Promise<ChatSummary[]> {
   });
 }
 
-/** ナビバッジ用: DM未読 + グループ未読の合計 */
+/** ナビバッジ用: DM未読 + 掲示板グループ未読 + お知らせ未読の合計 */
 export async function fetchUnreadTotal(myId: string): Promise<number> {
   const supabase = createClient();
-  const [{ count }, groups] = await Promise.all([
+  const [{ count }, groups, bc] = await Promise.all([
     supabase
       .from("messages")
       .select("id", { count: "exact", head: true })
       .is("read_at", null)
       .neq("sender_id", myId),
     fetchGroupSummaries(myId).catch(() => null),
+    fetchBroadcastSummary(myId).catch(() => null),
   ]);
   const g = groups ? groups.board.unread : 0; // 助けてはTalK非同期のため掲示板のみ
-  return (count ?? 0) + g;
+  return (count ?? 0) + g + (bc?.unread ?? 0);
 }
 
 /* ---------- 投稿の編集・削除・通報 ---------- */
