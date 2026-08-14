@@ -134,7 +134,7 @@ export function BodyApplyDialog({
             <h3 className="flex items-center gap-2 text-lg font-bold">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icons/icon-tasukete.webp" alt="" className="h-7 w-7 object-contain" />
-              現地入りメンバーになる
+              現地入りするメンバーに立候補
             </h3>
             <p className="mt-1 mb-3 text-sm text-[#8a8070]">
               旅費は寄付金から支給されます。連絡先と住まいは事務局だけが見られます（公開されません）。
