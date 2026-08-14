@@ -13,6 +13,7 @@ import { OrangeCorps } from "@/components/OrangeCorps";
 import { OffersSection } from "@/components/OffersSection";
 import { GroupFeed } from "@/components/GroupFeed";
 import { AdminSection } from "@/components/AdminSection";
+import { AvatarMenu } from "@/components/AvatarMenu";
 import { BottomNav } from "@/components/BottomNav";
 
 type Tab = "voice" | "offers" | "board";
@@ -87,25 +88,8 @@ export default function Home() {
           </div>
 
           <span className="absolute right-3 top-1/2 -translate-y-1/2">
-            {session.profile?.avatar_url ? (
-              <Link href={`/u/${session.userId}`} className="block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={session.profile.avatar_url}
-                  alt=""
-                  referrerPolicy="no-referrer"
-                  className="h-9 w-9 rounded-full object-cover"
-                  style={{ boxShadow: "0 0 0 2px #1e6b3a" }}
-                />
-              </Link>
-            ) : session.profile ? (
-              <Link
-                href={`/u/${session.userId}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full font-bold text-white no-underline"
-                style={{ background: "#1e6b3a" }}
-              >
-                {session.profile.display_name.charAt(0)}
-              </Link>
+            {session.profile && session.userId ? (
+              <AvatarMenu userId={session.userId} profile={session.profile} />
             ) : (
               <button
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-bold text-white"
