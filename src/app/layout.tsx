@@ -6,12 +6,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "わらわ〜ボランティア",
   description:
-    "熊本地震の被災地支援。届けるのは「大丈夫」、配るのは「笑顔」。お金・体・物資 — 出せるものを持ち寄って支え合う。",
+    "届けるのは、大丈夫。配るのは、笑顔。",
   metadataBase: new URL("https://warawa-volunteer.vercel.app"),
   openGraph: {
     title: "わらわ〜ボランティア",
     description:
-      "熊本地震の被災地支援。お金・体・物資 — 出せるものを持ち寄って支え合う。",
+      "届けるのは、大丈夫。配るのは、笑顔。",
     url: "https://warawa-volunteer.vercel.app",
     siteName: "わらわ〜ボランティア",
     images: ["/icon-512.png"],
