@@ -425,10 +425,10 @@ export function ActivityFeed({
                   src="/waraeru-v2.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none absolute -right-4 h-32 w-32 object-contain"
+                  className="pointer-events-none absolute -right-6 h-28 w-28 object-contain"
                   style={{
-                    opacity: it.images.length > 0 ? 0.55 : 0.12,
-                    bottom: -6,
+                    opacity: it.images.length > 0 ? 0.3 : 0.12,
+                    bottom: -18,
                     transform: "rotate(-8deg)",
                   }}
                 />
