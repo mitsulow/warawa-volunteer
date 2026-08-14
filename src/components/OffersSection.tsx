@@ -288,6 +288,7 @@ export function OffersSection({
   void isAdmin;
   const [offers, setOffers] = useState<Offer[]>([]);
   const [dialog, setDialog] = useState<OfferKind | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const reload = () => fetchOffers().then(setOffers);
   useEffect(() => {
@@ -313,18 +314,28 @@ export function OffersSection({
 
   return (
     <div>
-      <div className="mb-3 grid grid-cols-4 gap-2">
-        {(Object.keys(KINDS) as OfferKind[]).map((k) => (
-          <button
-            key={k}
-            className="rounded-xl border border-[#ede5d8] bg-white py-1.5 shadow-sm transition-transform active:scale-95"
-            onClick={() => open(k)}
-          >
-            <img src={KINDS[k].icon} alt="" className="mx-auto h-7 w-7 object-contain" />
-            <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
-          </button>
-        ))}
-      </div>
+      {/* 折り畳み: 押すと4つのボタンが出てくる */}
+      <button
+        className="mb-2 flex w-full items-center justify-between rounded-xl border border-[#ede5d8] bg-white px-3.5 py-2.5 shadow-sm"
+        onClick={() => setPickerOpen(!pickerOpen)}
+      >
+        <span className="text-[13.5px] font-bold text-[#5a5448]">何ができるかを選ぶ</span>
+        <span className="text-[#b0a898]">{pickerOpen ? "△" : "▽"}</span>
+      </button>
+      {pickerOpen && (
+        <div className="mb-3 grid grid-cols-4 gap-2">
+          {(Object.keys(KINDS) as OfferKind[]).map((k) => (
+            <button
+              key={k}
+              className="rounded-xl border border-[#ede5d8] bg-white py-1.5 shadow-sm transition-transform active:scale-95"
+              onClick={() => open(k)}
+            >
+              <img src={KINDS[k].icon} alt="" className="mx-auto h-7 w-7 object-contain" />
+              <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {dialog === "money" && <BankDialog onClose={() => setDialog(null)} />}
       {dialog === "body" && userId && profile && (
