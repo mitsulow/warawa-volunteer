@@ -17,7 +17,7 @@ export interface Profile {
 const PROFILE_SELECT =
   "id, display_name, avatar_url, cover_url, bio, sns, member_no, created_at";
 
-export type OfferKind = "money" | "body" | "goods";
+export type OfferKind = "money" | "body" | "goods" | "other";
 
 export interface Offer {
   id: string;

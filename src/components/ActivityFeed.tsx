@@ -452,12 +452,14 @@ export function ActivityFeed({
       createdAt: o.created_at,
       chip:
         o.kind === "money"
-          ? "💰 お金を出します"
+          ? "お金を出します"
           : o.kind === "goods"
-            ? "🍚 物資を出します"
-            : o.status === "confirmed"
-              ? "🟠 現地入りメンバー"
-              : "🏃 現地入り申請中",
+            ? "物資を出します"
+            : o.kind === "other"
+              ? "できる事を出します"
+              : o.status === "confirmed"
+                ? "🟠 現地入りメンバー"
+                : "現地入り申請中",
       body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
       images: o.image_url ? [o.image_url] : [],
       thumbs: o.image_url ? [o.image_url] : [],

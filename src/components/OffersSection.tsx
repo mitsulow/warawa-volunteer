@@ -17,28 +17,35 @@ import type { Profile } from "@/lib/db";
 
 const KINDS: Record<
   OfferKind,
-  { emoji: string; label: string; verb: string; help: string; placeholder: string }
+  { icon: string; label: string; verb: string; help: string; placeholder: string }
 > = {
   money: {
-    emoji: "💰",
+    icon: "/icons/icon-yen.webp",
     label: "お金を出す",
     verb: "お金を出します",
     help: "寄付の意思表明です。振込先のご案内は準備中で、決まり次第お知らせします。",
     placeholder: "例: 1万円くらい / 金額未定でも「出します」だけでOK",
   },
   body: {
-    emoji: "🏃",
+    icon: "/icons/icon-tasukete.webp",
     label: "体を出す",
     verb: "体を出します",
     help: "現地に行ける日程を書いてください。旅費は寄付金から支給されます。現地行きが決まると🟠オレンジ軍団に載ります。",
     placeholder: "例: 8/20〜8/23 行けます。車あり。力仕事OK",
   },
   goods: {
-    emoji: "🍚",
+    icon: "/icons/icon-rice.webp",
     label: "物資を出す",
     verb: "物資を出します",
     help: "体に優しい食材を募集しています（現地で炊き出しに使います）。送り先は決まり次第お知らせします。写真をつけるとトップの「本日の出せる物資一覧」に載ります。",
     placeholder: "例: 今週中に送れます。無農薬です",
+  },
+  other: {
+    icon: "/icons/icon-gift.webp",
+    label: "その他",
+    verb: "できる事を出します",
+    help: "お金・体・物資以外でも大歓迎。あなたにできる事を教えてください（技術・場所・情報・車・翻訳など何でも）。",
+    placeholder: "例: 現地までの輸送を手伝えます / 医療の相談に乗れます",
   },
 };
 
@@ -115,15 +122,16 @@ export function OffersSection({
 
   return (
     <div>
-      <div className="mb-3 grid grid-cols-3 gap-2">
+      <div className="mb-3 grid grid-cols-4 gap-2">
         {(Object.keys(KINDS) as OfferKind[]).map((k) => (
           <button
             key={k}
-            className="rounded-2xl border border-[#ede5d8] bg-white py-4 shadow-sm transition-transform active:scale-95"
+            className="rounded-2xl border border-[#ede5d8] bg-white py-3.5 shadow-sm transition-transform active:scale-95"
             onClick={() => open(k)}
           >
-            <div className="text-3xl">{KINDS[k].emoji}</div>
-            <div className="mt-1 text-sm font-bold text-[#3a3428]">{KINDS[k].label}</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={KINDS[k].icon} alt="" className="mx-auto h-10 w-10 object-contain" />
+            <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
           </button>
         ))}
       </div>
@@ -137,8 +145,10 @@ export function OffersSection({
             className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold">
-              {KINDS[formKind].emoji} {KINDS[formKind].label}
+            <h3 className="flex items-center gap-2 text-lg font-bold">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={KINDS[formKind].icon} alt="" className="h-7 w-7 object-contain" />
+              {KINDS[formKind].label}
             </h3>
             <p className="mt-1 mb-3 text-sm text-[#8a8070]">{KINDS[formKind].help}</p>
             {formKind === "goods" && (
@@ -221,9 +231,9 @@ export function OffersSection({
                   {o.profiles?.display_name ?? "参加者"}
                 </span>
                 <VerifiedBadge size={13} />
-                <span className="shrink-0 font-normal">
-                  さんが{KINDS[o.kind].verb} {KINDS[o.kind].emoji}
-                </span>
+                <span className="shrink-0 font-normal">さんが{KINDS[o.kind].verb}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={KINDS[o.kind].icon} alt="" className="h-4 w-4 shrink-0 object-contain" />
               </p>
               <p className="truncate text-xs text-[#8a8070]">
                 {o.kind === "goods" && o.title ? `${o.title} — ` : ""}
