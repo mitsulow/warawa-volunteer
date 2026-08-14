@@ -53,11 +53,6 @@ function relTime(iso: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-/** 投稿の区切り線（CotoZute文法・色はオレンジ・左右いっぱい） */
-function Band() {
-  return <div className="-mx-2 h-px" style={{ background: "#d96a1a", opacity: 0.22 }} />;
-}
-
 /* ============ フィード ============ */
 
 interface FeedItem {
@@ -235,7 +230,7 @@ export function ActivityFeed({
       />
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
-      <div className="-mx-2 bg-white px-2">
+      <div className="space-y-2.5">
         {items.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
             まだ取り組みがありません。最初のひとことをどうぞ
@@ -245,16 +240,13 @@ export function ActivityFeed({
           const bodyExpanded = expandedBody.has(it.key);
           const idx = imgIdx.get(it.key) ?? 0;
           return (
-            <div key={it.key}>
-              <div className="relative isolate py-2.5">
-                {/* 透かしワラエル */}
-                <img
-                  src="/waraeru-v2.png"
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none absolute bottom-1 right-1 -z-10 h-24 w-24 object-contain"
-                  style={{ opacity: 0.1 }}
-                />
+            <div
+              key={it.key}
+              className="overflow-hidden rounded-2xl shadow-sm"
+              style={{ background: "linear-gradient(160deg,#f2a35c,#e0803a)", padding: "5px 5px 0" }}
+            >
+              <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
+                <div className="relative">
                 {/* ヘッダー */}
                 <div className="flex items-center gap-2.5">
                   <Link href={`/u/${it.userId}`} className="flex-shrink-0">
@@ -330,7 +322,7 @@ export function ActivityFeed({
 
                 {/* 写真（左右いっぱい）。複数枚はインスタ式: 横スワイプ+●ドット */}
                 {it.images.length === 1 && (
-                  <div className="-mx-2 mt-2">
+                  <div className="-mx-3 mt-2">
                     <button
                       onClick={() => setLightbox({ urls: it.images, idx: 0 })}
                       className="block w-full"
@@ -341,7 +333,7 @@ export function ActivityFeed({
                   </div>
                 )}
                 {it.images.length > 1 && (
-                  <div className="-mx-2 mt-2">
+                  <div className="-mx-3 mt-2">
                     <div
                       className="hide-scrollbar flex snap-x snap-mandatory overflow-x-auto"
                       onScroll={(e) => {
@@ -427,8 +419,23 @@ export function ActivityFeed({
                     }
                   />
                 )}
+                </div>
+                {/* 透かしワラエル: 左に少し倒す。写真ありは写真の上に重なる */}
+                <img
+                  src="/waraeru-v2.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute -right-4 h-32 w-32 object-contain"
+                  style={{
+                    opacity: it.images.length > 0 ? 0.55 : 0.12,
+                    bottom: -6,
+                    transform: "rotate(-8deg)",
+                  }}
+                />
               </div>
-              <Band />
+              <div className="flex h-[24px] items-center justify-end pr-2.5">
+                <img src="/warawa-logo.png" alt="わらわ〜" className="h-[16px] w-auto object-contain" />
+              </div>
             </div>
           );
         })}

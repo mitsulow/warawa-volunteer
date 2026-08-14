@@ -372,16 +372,11 @@ export function OffersSection({
           return (
             <div
               key={o.id}
-              className="relative isolate overflow-hidden rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 shadow-sm"
+              className="overflow-hidden rounded-2xl shadow-sm"
+              style={{ background: "linear-gradient(160deg,#f2a35c,#e0803a)", padding: "5px 5px 0" }}
             >
-                {/* 透かしワラエル */}
-                <img
-                  src="/waraeru-v2.png"
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none absolute bottom-1 right-1 -z-10 h-24 w-24 object-contain"
-                  style={{ opacity: 0.1 }}
-                />
+              <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
+              <div className="relative">
               <div className="flex items-center gap-2.5">
                 <Link href={`/u/${o.user_id}`} className="shrink-0">
                   <Avatar
@@ -411,6 +406,23 @@ export function OffersSection({
                   ))}
                 </div>
               )}
+              </div>
+              {/* 透かしワラエル */}
+              <img
+                src="/waraeru-v2.png"
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute -right-4 h-32 w-32 object-contain"
+                style={{
+                  opacity: thumbs.length > 0 ? 0.55 : 0.12,
+                  bottom: -6,
+                  transform: "rotate(-8deg)",
+                }}
+              />
+              </div>
+              <div className="flex h-[24px] items-center justify-end pr-2.5">
+                <img src="/warawa-logo.png" alt="わらわ〜" className="h-[16px] w-auto object-contain" />
+              </div>
             </div>
           );
         })}
