@@ -210,7 +210,7 @@ export function PostComposer({
               style={{ background: "#d96a1a" }}
               onClick={() => setAlertMsg(null)}
             >
-              わかった
+              戻る
             </button>
           </div>
         </div>
