@@ -97,7 +97,7 @@ export function BottomNav({
       <Link href="/talk" className={cls("talk")}>
         <span className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/tab-talk.png" alt="" className="h-6 w-6 object-contain" />
+          <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" />
           {unread > 0 && (
             <span className="absolute -right-2.5 -top-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
               {unread > 99 ? "99+" : unread}

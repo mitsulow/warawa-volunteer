@@ -33,10 +33,10 @@ export function InstallPrompt() {
       (navigator as unknown as { standalone?: boolean }).standalone === true;
     if (standalone) return;
 
-    // 「あとで」から7日間は出さない
+    // ×を押したらそのセッション中だけ出さない（次に開いたらまた出る）
     try {
-      const snoozed = localStorage.getItem("warawa-install-snooze");
-      if (snoozed && Date.now() - Number(snoozed) < 7 * 86400000) return;
+      localStorage.removeItem("warawa-install-snooze"); // 旧7日スヌーズの掃除
+      if (sessionStorage.getItem("warawa-install-snooze")) return;
     } catch {}
 
     const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -75,7 +75,7 @@ export function InstallPrompt() {
 
   const snooze = () => {
     try {
-      localStorage.setItem("warawa-install-snooze", String(Date.now()));
+      sessionStorage.setItem("warawa-install-snooze", "1");
     } catch {}
     setShow(false);
     setIosGuide(false);

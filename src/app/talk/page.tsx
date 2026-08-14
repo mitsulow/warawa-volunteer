@@ -65,7 +65,7 @@ export default function TalkListPage() {
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <h1 className="flex items-center gap-2 text-lg font-bold" style={{ color: "#c94d3a" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/tab-talk.png" alt="" className="h-6 w-6 object-contain" /> TalK
+          <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" /> TalK
         </h1>
       </header>
 
