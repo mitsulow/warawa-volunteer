@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   fetchBoard,
   fetchBoardSince,
+  fetchCommentCounts,
   fetchFeedLikes,
   fetchOffers,
   markGroupRead,
@@ -13,6 +14,7 @@ import {
   type BoardMessage,
   type Offer,
 } from "@/lib/db";
+import { CommentSection } from "@/components/CommentSection";
 import { deleteBoardMessage, deleteOffer } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -93,6 +95,8 @@ export function ActivityFeed({
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [expandedBody, setExpandedBody] = useState<Set<string>>(new Set());
+  const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
+  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
@@ -181,6 +185,7 @@ export function ActivityFeed({
       setLikeCounts(counts);
       setMyLikes(mine);
     });
+    fetchCommentCounts(keys).then(setCommentCounts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boards.length, offers.length, userId]);
 
@@ -381,17 +386,39 @@ export function ActivityFeed({
                     )}
                   </button>
                   <button
-                    className="flex items-center"
+                    className="flex items-center gap-1"
                     onClick={() =>
-                      it.key.startsWith("board:")
-                        ? router.push("/talk/g/board")
-                        : router.push(`/u/${it.userId}`)
+                      setOpenComments((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(it.key)) next.delete(it.key);
+                        else next.add(it.key);
+                        return next;
+                      })
                     }
-                    aria-label="話す"
+                    aria-label="コメント"
                   >
                     <IcoBubble />
+                    {(commentCounts.get(it.key) ?? 0) > 0 && (
+                      <span className="num text-[12.5px] font-bold text-[#8a8070]">
+                        {commentCounts.get(it.key)}
+                      </span>
+                    )}
                   </button>
                 </div>
+                {openComments.has(it.key) && (
+                  <CommentSection
+                    itemKey={it.key}
+                    userId={userId}
+                    requireJoin={requireJoin}
+                    onAdded={() =>
+                      setCommentCounts((prev) => {
+                        const next = new Map(prev);
+                        next.set(it.key, (next.get(it.key) ?? 0) + 1);
+                        return next;
+                      })
+                    }
+                  />
+                )}
               </div>
               <Band />
             </div>

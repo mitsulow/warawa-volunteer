@@ -6,10 +6,14 @@ import {
   deleteBoardMessage,
   fetchBoard,
   fetchBoardSince,
+  fetchCommentCounts,
+  fetchFeedLikes,
   markGroupRead,
+  toggleFeedLike,
   type BoardMessage,
   type BoardScope,
 } from "@/lib/db";
+import { CommentSection } from "@/components/CommentSection";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostComposer } from "@/components/PostComposer";
@@ -18,6 +22,22 @@ import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 
 /* eslint-disable @next/next/no-img-element */
+
+/* CotoZuteと同じアイコン文法（ハート白抜き→赤 / 吹き出し） */
+function IcoHeart({ on }: { on: boolean }) {
+  return (
+    <svg width="25" height="25" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#d96a1a"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
+      <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
+    </svg>
+  );
+}
+function IcoBubble() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d96a1a" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
+    </svg>
+  );
+}
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -47,7 +67,52 @@ export function GroupFeed({
   const router = useRouter();
   const [messages, setMessages] = useState<BoardMessage[]>([]);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
+  const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
+  const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
+  const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
+  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const cursorRef = useRef<string | null>(null);
+
+  // いいね・コメント数の読み込み（CotoZuteと同じ仕組み）
+  useEffect(() => {
+    const keys = messages.map((m) => `board:${m.id}`).slice(0, 100);
+    if (keys.length === 0) return;
+    fetchFeedLikes(keys, userId).then(({ counts, mine }) => {
+      setLikeCounts(counts);
+      setMyLikes(mine);
+    });
+    fetchCommentCounts(keys).then(setCommentCounts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, userId]);
+
+  const like = async (key: string) => {
+    if (!userId) {
+      requireJoin();
+      return;
+    }
+    const on = !myLikes.has(key);
+    setMyLikes((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+    setLikeCounts((prev) => {
+      const next = new Map(prev);
+      next.set(key, Math.max(0, (next.get(key) ?? 0) + (on ? 1 : -1)));
+      return next;
+    });
+    await toggleFeedLike(key, userId, on);
+  };
+
+  const toggleComments = (key: string) => {
+    setOpenComments((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const removeMessage = async (id: string) => {
     if (!window.confirm("この投稿を削除しますか？")) return;
@@ -173,6 +238,40 @@ export function GroupFeed({
                     className="mt-2 w-full rounded-lg object-cover"
                   />
                 ))}
+                {/* いいね+コメント（CotoZuteと同じ。「私は出せます」と返して、あとはTalKで） */}
+                <div className="mt-2 flex items-center gap-4">
+                  <button className="flex items-center gap-1" onClick={() => like(`board:${m.id}`)} aria-label="いいね">
+                    <IcoHeart on={myLikes.has(`board:${m.id}`)} />
+                    {(likeCounts.get(`board:${m.id}`) ?? 0) > 0 && (
+                      <span className="num text-[12px] font-bold text-[#8a8070]">
+                        {likeCounts.get(`board:${m.id}`)}
+                      </span>
+                    )}
+                  </button>
+                  <button className="flex items-center gap-1" onClick={() => toggleComments(`board:${m.id}`)} aria-label="コメント">
+                    <IcoBubble />
+                    {(commentCounts.get(`board:${m.id}`) ?? 0) > 0 && (
+                      <span className="num text-[12px] font-bold text-[#8a8070]">
+                        {commentCounts.get(`board:${m.id}`)}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                {openComments.has(`board:${m.id}`) && (
+                  <CommentSection
+                    itemKey={`board:${m.id}`}
+                    userId={userId}
+                    requireJoin={requireJoin}
+                    onAdded={() =>
+                      setCommentCounts((prev) => {
+                        const next = new Map(prev);
+                        const k = `board:${m.id}`;
+                        next.set(k, (next.get(k) ?? 0) + 1);
+                        return next;
+                      })
+                    }
+                  />
+                )}
               </div>
             );
           }

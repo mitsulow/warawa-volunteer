@@ -644,6 +644,47 @@ export async function fetchFeedLikes(
   return { counts, mine };
 }
 
+export interface FeedComment {
+  id: string;
+  item_key: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  profiles: { display_name: string; avatar_url: string | null } | null;
+}
+
+export async function fetchCommentCounts(keys: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (keys.length === 0) return counts;
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("feed_comments")
+    .select("item_key")
+    .in("item_key", keys);
+  for (const r of (data ?? []) as Array<{ item_key: string }>) {
+    counts.set(r.item_key, (counts.get(r.item_key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+export async function fetchComments(itemKey: string): Promise<FeedComment[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("feed_comments")
+    .select("id, item_key, user_id, body, created_at, profiles(display_name, avatar_url)")
+    .eq("item_key", itemKey)
+    .order("created_at", { ascending: true })
+    .limit(100);
+  return (data as unknown as FeedComment[]) ?? [];
+}
+
+export async function addComment(itemKey: string, userId: string, body: string) {
+  const supabase = createClient();
+  return supabase
+    .from("feed_comments")
+    .insert({ item_key: itemKey, user_id: userId, body });
+}
+
 export async function toggleFeedLike(itemKey: string, myId: string, on: boolean) {
   const supabase = createClient();
   if (on) {
