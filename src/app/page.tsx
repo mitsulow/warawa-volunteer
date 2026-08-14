@@ -164,7 +164,7 @@ export default function Home() {
               userId={session.userId}
               myAvatar={session.profile?.avatar_url ?? null}
               requireJoin={requireJoin}
-              placeholder="今欲しいモノ、あったら助かるもの、やって欲しい事"
+              placeholder="いま必要な物、やって欲しい事"
             />
           </div>
         )}

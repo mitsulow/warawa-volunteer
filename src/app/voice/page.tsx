@@ -45,7 +45,7 @@ export default function VoicePage() {
           userId={session.userId}
           myAvatar={session.profile?.avatar_url ?? null}
           requireJoin={() => setShowJoin(true)}
-          placeholder="今欲しいモノ、あったら助かるもの、やって欲しい事"
+          placeholder="いま必要な物、やって欲しい事"
         />
       </div>
 
