@@ -159,7 +159,7 @@ export function BodyApplyDialog({
             <input
               type="tel"
               className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
-              placeholder="090-0000-0000"
+              placeholder="090-1234-5678"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
