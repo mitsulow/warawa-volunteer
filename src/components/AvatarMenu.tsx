@@ -12,9 +12,11 @@ import type { Profile } from "@/lib/db";
 export function AvatarMenu({
   userId,
   profile,
+  isAdmin = false,
 }: {
   userId: string;
   profile: Profile;
+  isAdmin?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -93,6 +95,13 @@ export function AvatarMenu({
             <img src="/icons/icon-meishi.webp" alt="" className="h-5 w-5 object-contain" />
             マイページ
           </Link>
+          {isAdmin && (
+            <Link href="/office" className={item} onClick={() => setOpen(false)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/icon-megaphone.webp" alt="" className="h-5 w-5 object-contain" />
+              事務局
+            </Link>
+          )}
           <button
             className={`${item} border-t border-[#f0e9dc] text-[#c04030]`}
             onClick={logout}

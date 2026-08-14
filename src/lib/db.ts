@@ -93,6 +93,57 @@ export async function saveMyEmail(userId: string, email: string) {
   return supabase.from("profile_private").upsert({ id: userId, email });
 }
 
+export async function fetchMyPrivate(
+  userId: string
+): Promise<{ phone: string | null; email: string | null }> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("profile_private")
+    .select("phone, email")
+    .eq("id", userId)
+    .maybeSingle();
+  return {
+    phone: (data?.phone as string | null) ?? null,
+    email: (data?.email as string | null) ?? null,
+  };
+}
+
+export async function saveMyPrivate(userId: string, phone: string, email: string) {
+  const supabase = createClient();
+  return supabase.from("profile_private").upsert({ id: userId, phone, email });
+}
+
+/* ---------- 事務局: 現地入り申請 ---------- */
+
+export interface BodyApplication {
+  id: string;
+  user_id: string;
+  detail: string;
+  status: "open" | "confirmed" | "done";
+  created_at: string;
+  profiles: {
+    display_name: string;
+    avatar_url: string | null;
+    member_no: number | null;
+    sns: Record<string, string> | null;
+    profile_private: { phone: string | null; email: string | null } | null;
+  } | null;
+}
+
+/** 体を出す申請一覧（電話・メールは管理者RLSでのみ返る） */
+export async function fetchBodyApplications(): Promise<BodyApplication[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("offers")
+    .select(
+      "id, user_id, detail, status, created_at, profiles(display_name, avatar_url, member_no, sns, profile_private(phone, email))"
+    )
+    .eq("kind", "body")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return (data as unknown as BodyApplication[]) ?? [];
+}
+
 export async function fetchMyEmail(userId: string): Promise<string | null> {
   const supabase = createClient();
   const { data } = await supabase

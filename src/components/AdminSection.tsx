@@ -45,7 +45,7 @@ export function AdminSection({ userId }: { userId: string }) {
   };
 
   return (
-    <section className="px-4 py-6">
+    <section className="py-1">
       <button
         className="w-full rounded-xl bg-white shadow-sm px-4 py-3 flex items-center justify-between"
         onClick={() => setOpen(!open)}

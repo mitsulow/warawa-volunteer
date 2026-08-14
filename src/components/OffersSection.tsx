@@ -11,7 +11,9 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
+import { BodyApplyDialog } from "@/components/BodyApplyDialog";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import type { Profile } from "@/lib/db";
 
 const KINDS: Record<
   OfferKind,
@@ -43,11 +45,13 @@ const KINDS: Record<
 /** 私にできる事: 3つの大ボタン + 意思表明一覧（物資は品名+写真つき） */
 export function OffersSection({
   userId,
+  profile,
   isAdmin,
   requireJoin,
   openGoodsSignal = 0,
 }: {
   userId: string | null;
+  profile: Profile | null;
   isAdmin: boolean;
   requireJoin: () => void;
   openGoodsSignal?: number;
@@ -71,9 +75,16 @@ export function OffersSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openGoodsSignal]);
 
+  const [showBodyApply, setShowBodyApply] = useState(false);
+
   const open = (kind: OfferKind) => {
     if (!userId) {
       requireJoin();
+      return;
+    }
+    if (kind === "body") {
+      // 体を出す = 事務局への現地入りメンバー申請フォーム
+      setShowBodyApply(true);
       return;
     }
     setFormKind(kind);
@@ -172,6 +183,15 @@ export function OffersSection({
             </button>
           </div>
         </div>
+      )}
+
+      {showBodyApply && userId && profile && (
+        <BodyApplyDialog
+          userId={userId}
+          profile={profile}
+          onClose={() => setShowBodyApply(false)}
+          onDone={reload}
+        />
       )}
 
       <div className="space-y-2">
