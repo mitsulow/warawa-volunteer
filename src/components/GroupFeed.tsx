@@ -228,6 +228,11 @@ export function GroupFeed({
         requireJoin={requireJoin}
         onPosted={pull}
         onExpandedChange={setComposerOpen}
+        examplePlaceholder={
+          scope === "voice"
+            ? "ナチュラルな発酵食品が食べたい/マッサージをして欲しい/不安なので九州を出てプチ贅沢な温泉旅行に行きたい/など、どんな要望でも良いので遠慮せずにお書きください。"
+            : undefined
+        }
       />
 
       <div className="space-y-2">

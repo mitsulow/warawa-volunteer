@@ -62,6 +62,7 @@ export function PostComposer({
   requireJoin,
   onPosted,
   onExpandedChange,
+  examplePlaceholder,
 }: {
   scope: BoardScope;
   prompt: string;
@@ -72,6 +73,8 @@ export function PostComposer({
   requireJoin: () => void;
   onPosted: () => void;
   onExpandedChange?: (open: boolean) => void;
+  /** 展開後のテキスト欄に出す具体例（未指定ならpromptと同じ） */
+  examplePlaceholder?: string;
 }) {
   const draftKey = `warawa-draft-${scope}`;
   const [body, setBody] = useState("");
@@ -289,7 +292,7 @@ export function PostComposer({
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder={prompt}
+        placeholder={examplePlaceholder ?? prompt}
         maxLength={500}
         rows={3}
         autoFocus
