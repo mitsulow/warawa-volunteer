@@ -15,10 +15,13 @@ import {
   type Offer,
 } from "@/lib/db";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
+import { deleteBoardMessage, deleteOffer } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { SnsIcon } from "@/components/SnsIcon";
+import { DotsMenu } from "@/components/PostKit";
+import { ReportDialog } from "@/components/ReportDialog";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -26,7 +29,7 @@ import { SnsIcon } from "@/components/SnsIcon";
 
 function IcoHeart({ on }: { on: boolean }) {
   return (
-    <svg width="27" height="27" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#0abab5"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
+    <svg width="27" height="27" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#d96a1a"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
       <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
     </svg>
   );
@@ -34,7 +37,7 @@ function IcoHeart({ on }: { on: boolean }) {
 
 function IcoBubble() {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0abab5" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d96a1a" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
     </svg>
   );
@@ -50,9 +53,9 @@ function relTime(iso: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-/** 投稿の区切り線（CotoZuteと同じ: 細いティファニーブルー・左右いっぱい） */
+/** 投稿の区切り線（CotoZute文法・色はオレンジ・左右いっぱい） */
 function Band() {
-  return <div className="-mx-4 h-px" style={{ background: "#0abab5", opacity: 0.22 }} />;
+  return <div className="-mx-4 h-px" style={{ background: "#d96a1a", opacity: 0.22 }} />;
 }
 
 const URL_REGEX = /https?:\/\/[^\s]+/g;
@@ -363,9 +366,11 @@ interface FeedItem {
  */
 export function ActivityFeed({
   userId,
+  isAdmin = false,
   requireJoin,
 }: {
   userId: string | null;
+  isAdmin?: boolean;
   requireJoin: () => void;
 }) {
   const router = useRouter();
@@ -376,6 +381,7 @@ export function ActivityFeed({
   const [expandedBody, setExpandedBody] = useState<Set<string>>(new Set());
   const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
+  const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   const cursorRef = useRef<string | null>(null);
 
   const pullBoard = async () => {
@@ -490,6 +496,18 @@ export function ActivityFeed({
 
   const needsFold = (b: string) => b.length > 60 || b.includes("\n");
 
+  const removeItem = async (it: FeedItem) => {
+    if (!window.confirm("この投稿を削除しますか？")) return;
+    const [t, rawId] = it.key.split(":");
+    if (t === "board") {
+      await deleteBoardMessage(rawId);
+      setBoards((prev) => prev.filter((m) => m.id !== rawId));
+    } else {
+      await deleteOffer(rawId);
+      setOffers((prev) => prev.filter((o) => o.id !== rawId));
+    }
+  };
+
   return (
     <div>
       <TorikumiComposer userId={userId} requireJoin={requireJoin} onPosted={pullBoard} />
@@ -534,6 +552,17 @@ export function ActivityFeed({
                     >
                       {it.chip}
                     </span>
+                  )}
+                  {userId && (
+                    <DotsMenu
+                      canEdit={userId === it.userId || isAdmin}
+                      onEdit={() => {
+                        const [t, rawId] = it.key.split(":");
+                        router.push(`/post/${t}/${rawId}?edit=1`);
+                      }}
+                      onDelete={() => removeItem(it)}
+                      onReport={() => setReport({ key: it.key, excerpt: it.body })}
+                    />
                   )}
                 </div>
 
@@ -616,7 +645,7 @@ export function ActivityFeed({
                           style={{
                             width: 6,
                             height: 6,
-                            background: i === idx ? "#0abab5" : "#d8d4c8",
+                            background: i === idx ? "#d96a1a" : "#d8d4c8",
                           }}
                         />
                       ))}
@@ -652,6 +681,16 @@ export function ActivityFeed({
           );
         })}
       </div>
+
+      {/* 通報（→事務局/officeの通報受信箱へ届く） */}
+      {report && userId && (
+        <ReportDialog
+          itemKey={report.key}
+          excerpt={report.excerpt}
+          meId={userId}
+          onClose={() => setReport(null)}
+        />
+      )}
 
       {/* ライトボックス（タップでフル画質） */}
       {lightbox && (

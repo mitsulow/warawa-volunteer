@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
   fetchBodyApplications,
+  fetchReports,
+  resolveReport,
   setOfferStatus,
   type BodyApplication,
+  type PostReport,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { AdminSection } from "@/components/AdminSection";
@@ -22,9 +25,13 @@ function fmtDate(iso: string) {
 export default function OfficePage() {
   const session = useSession();
   const [apps, setApps] = useState<BodyApplication[]>([]);
+  const [reports, setReports] = useState<PostReport[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const reload = () => fetchBodyApplications().then(setApps);
+  const reload = () => {
+    fetchBodyApplications().then(setApps);
+    fetchReports().then(setReports);
+  };
   useEffect(() => {
     if (session.isAdmin) reload();
   }, [session.isAdmin]);
@@ -150,6 +157,63 @@ export default function OfficePage() {
             <p className="text-sm text-[#a09888]">まだ決定した人はいません</p>
           ) : (
             <div className="space-y-2.5">{confirmed.map(card)}</div>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
+            ⚑ 通報受信箱 {reports.length > 0 && `（${reports.length}件）`}
+          </h2>
+          {reports.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-5 text-center text-sm text-[#a09888]">
+              通報はありません
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {reports.map((r) => {
+                const [t, rawId] = r.item_key.split(":");
+                return (
+                  <div key={r.id} className="rounded-xl border border-[#ede5d8] bg-white p-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        name={r.profiles?.display_name ?? "参加者"}
+                        url={r.profiles?.avatar_url}
+                        size={28}
+                      />
+                      <span className="text-[12.5px] font-bold text-[#3a3428]">
+                        {r.profiles?.display_name ?? "参加者"}さんから
+                      </span>
+                      <span className="ml-auto text-[10px] text-[#b8b0a0]">{fmtDate(r.created_at)}</span>
+                    </div>
+                    <p className="mt-1.5 text-[13px] font-bold text-[#4a4438]">理由: {r.reason}</p>
+                    {r.excerpt && (
+                      <p className="mt-1 rounded-lg bg-[#faf6ee] px-2.5 py-1.5 text-[12px] text-[#8a8070]">
+                        対象: 「{r.excerpt}」
+                      </p>
+                    )}
+                    <div className="mt-2 flex gap-2">
+                      <Link
+                        href={`/post/${t}/${rawId}`}
+                        className="rounded-full border px-3 py-1.5 text-[11px] font-bold no-underline"
+                        style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
+                      >
+                        投稿を見る
+                      </Link>
+                      <button
+                        className="rounded-full px-3 py-1.5 text-[11px] font-bold text-white"
+                        style={{ background: "#d96a1a" }}
+                        onClick={async () => {
+                          await resolveReport(r.id);
+                          reload();
+                        }}
+                      >
+                        対応済みにする
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </section>
 

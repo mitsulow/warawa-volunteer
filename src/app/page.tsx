@@ -183,7 +183,11 @@ export default function Home() {
         )}
 
         {tab === "board" && (
-          <ActivityFeed userId={session.userId} requireJoin={requireJoin} />
+          <ActivityFeed
+            userId={session.userId}
+            isAdmin={session.isAdmin}
+            requireJoin={requireJoin}
+          />
         )}
 
         {/* 物資登録CTA（フィードの下・楽市楽座の出品CTAを移植） */}

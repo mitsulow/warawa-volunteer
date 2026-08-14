@@ -240,6 +240,7 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
 
 const BOARD_SELECT =
   "id, user_id, body, image_url, image_urls, thumb_urls, embed, scope, created_at, profiles(display_name, avatar_url, member_no)";
+const BOARD_SELECT_FULL = BOARD_SELECT;
 
 export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
   const supabase = createClient();
@@ -526,6 +527,84 @@ export async function fetchUnreadTotal(myId: string): Promise<number> {
   ]);
   const g = groups ? groups.board.unread + groups.voice.unread : 0;
   return (count ?? 0) + g;
+}
+
+/* ---------- 投稿の編集・削除・通報 ---------- */
+
+export async function fetchBoardMessageById(id: string): Promise<BoardMessage | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("board_messages")
+    .select(BOARD_SELECT_FULL)
+    .eq("id", id)
+    .maybeSingle();
+  return (data as unknown as BoardMessage | null) ?? null;
+}
+
+export async function updateBoardMessage(
+  id: string,
+  body: string,
+  imageUrls?: string[],
+  thumbUrls?: string[]
+) {
+  const supabase = createClient();
+  const patch: Record<string, unknown> = { body };
+  if (imageUrls) {
+    patch.image_urls = imageUrls.length ? imageUrls : null;
+    patch.thumb_urls = thumbUrls?.length ? thumbUrls : null;
+    patch.image_url = null;
+  }
+  return supabase.from("board_messages").update(patch).eq("id", id);
+}
+
+export async function deleteBoardMessage(id: string) {
+  const supabase = createClient();
+  return supabase.from("board_messages").delete().eq("id", id);
+}
+
+export async function fetchOfferById(id: string): Promise<Offer | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("offers")
+    .select(OFFER_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  return (data as unknown as Offer | null) ?? null;
+}
+
+export async function updateOfferDetail(id: string, detail: string) {
+  const supabase = createClient();
+  return supabase.from("offers").update({ detail }).eq("id", id);
+}
+
+export async function deleteOffer(id: string) {
+  const supabase = createClient();
+  return supabase.from("offers").delete().eq("id", id);
+}
+
+export interface PostReport {
+  id: string;
+  item_key: string;
+  excerpt: string | null;
+  reason: string;
+  created_at: string;
+  profiles: { display_name: string; avatar_url: string | null } | null;
+}
+
+/** 通報受信箱（事務局のみ・RLS） */
+export async function fetchReports(): Promise<PostReport[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("post_reports")
+    .select("id, item_key, excerpt, reason, created_at, profiles(display_name, avatar_url)")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  return (data as unknown as PostReport[]) ?? [];
+}
+
+export async function resolveReport(id: string) {
+  const supabase = createClient();
+  return supabase.from("post_reports").delete().eq("id", id);
 }
 
 /* ---------- 取り組みフィードのいいね（🌱ハート） ---------- */
