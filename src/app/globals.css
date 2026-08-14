@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+:root {
+  --washi: #faf6ee;
+  --sumi: #33302b;
+  --accent: #d96c2c;
+  --green: #3a7d44;
+}
+
+html {
+  background: #efe8db;
+}
+
+body {
+  background: var(--washi);
+  color: var(--sumi);
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-washi {
+  background: var(--washi);
+}
+
+/* iOSのタップハイライトを消す */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
