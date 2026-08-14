@@ -87,7 +87,7 @@ export default function Home() {
   const TABS: Array<[Tab, string, string]> = [
     ["offers", "助けたい", "私にできること"],
     ["voice", "助けて", "現地からの声"],
-    ["board", "掲示板", "ここまでの取り組み"],
+    ["board", "掲示板", "これまでの取り組み"],
   ];
 
   return (
