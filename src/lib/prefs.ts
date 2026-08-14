@@ -19,6 +19,9 @@ const PRIORITY = ["熊本県", "福岡県", "大分県", "鹿児島県", "長崎
 /** 九州全域フィルタの対象県 */
 export const KYUSHU_PREFS = PRIORITY;
 
+/** 通常順（北海道から）: 住まい入力用 */
+export const PREF_ORDER_STANDARD = JIS_ORDER;
+
 export const PREF_ORDER: string[] = [
   ...PRIORITY,
   ...JIS_ORDER.filter((p) => !PRIORITY.includes(p)),

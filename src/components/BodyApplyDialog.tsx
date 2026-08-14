@@ -10,7 +10,7 @@ import {
   type Profile,
 } from "@/lib/db";
 import { detectPlatform, getPlatformLabel } from "@/components/SnsIcon";
-import { DEFAULT_PREF, PREF_ORDER, fetchMunicipalities } from "@/lib/prefs";
+import { PREF_ORDER_STANDARD, fetchMunicipalities } from "@/lib/prefs";
 
 /**
  * 🏃 体を出す = 現地入りメンバー申請フォーム。
@@ -32,7 +32,7 @@ export function BodyApplyDialog({
   const [name, setName] = useState(profile.display_name);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [pref, setPref] = useState(DEFAULT_PREF);
+  const [pref, setPref] = useState("北海道");
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<Record<string, string[]>>({});
   const [snsLines, setSnsLines] = useState(
@@ -136,8 +136,15 @@ export function BodyApplyDialog({
               <img src="/icons/icon-tasukete.webp" alt="" className="h-7 w-7 object-contain" />
               現地入りするメンバーに立候補
             </h3>
-            <p className="mt-1 mb-3 text-sm text-[#8a8070]">
-              旅費は寄付金から支給されます。連絡先と住まいは事務局だけが見られます（公開されません）。
+            <p className="mt-2 mb-3 text-[12.5px] leading-relaxed text-[#5a5448]">
+              わらわ〜ボランティアのスローガン、届けたいのは「大丈夫」、配りたいのは「笑顔」の通り、
+              現地での炊き出しやマッサージ、傾聴や整体などの施術において、現地の人へ笑顔で寄り添える人であり、
+              かつ安心を伝播できる人を一定数募集します。
+              8月下旬〜9月下旬までの約1カ月の期間、自由に動ける人のみお申し込みください。
+              現地までの交通費や現地での宿泊、食事などは事務局から支給いたします。
+              以下の項目を入力後、お申し込みください。
+              連絡先と住まいは公開されません（事務局確認用です）。
+              審査後にメールかアプリ内のTalKにてご連絡差し上げます。
             </p>
 
             <label className="block text-sm font-bold">お名前（本名）</label>
@@ -177,7 +184,7 @@ export function BodyApplyDialog({
                 }}
                 className="w-[42%] rounded-xl border border-[#e0d6c6] bg-white px-2 py-2.5 text-[13.5px]"
               >
-                {[...PREF_ORDER, "海外"].map((p) => (
+                {[...PREF_ORDER_STANDARD, "海外"].map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>
@@ -231,7 +238,7 @@ export function BodyApplyDialog({
               </p>
             )}
 
-            <label className="mt-3 block text-sm font-bold">私にできる事</label>
+            <label className="mt-3 block text-sm font-bold">現地で私にできること</label>
             <textarea
               className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
               rows={2}
