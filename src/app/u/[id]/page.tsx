@@ -133,10 +133,11 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
               <button
                 onClick={() => avatarInput.current?.click()}
                 aria-label="アイコンを変える"
-                className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full text-[12px] text-white shadow"
+                className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-md"
                 style={{ background: "#c94d3a" }}
               >
-                {busy === "avatar" ? "⏳" : "📷"}
+                {busy === "avatar" ? "⏳" : <span className="text-[15px] leading-none">✏️</span>}
+                アイコンを変える
               </button>
               <input
                 ref={avatarInput}

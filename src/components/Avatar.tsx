@@ -19,6 +19,7 @@ export function Avatar({
         alt={name}
         width={size}
         height={size}
+        referrerPolicy="no-referrer"
         className="rounded-full object-cover shrink-0"
         style={{ width: size, height: size }}
       />
