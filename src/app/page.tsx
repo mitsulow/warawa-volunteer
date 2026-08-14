@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
 import { upsertMyProfile } from "@/lib/db";
 import { JoinDialog } from "@/components/JoinDialog";
@@ -8,6 +10,8 @@ import { NeedsSection } from "@/components/NeedsSection";
 import { OffersSection } from "@/components/OffersSection";
 import { BoardSection } from "@/components/BoardSection";
 import { MembersSection } from "@/components/MembersSection";
+import { AdminSection } from "@/components/AdminSection";
+import { BottomNav } from "@/components/BottomNav";
 
 const TEMPLE_ADDRESS = "熊本県八代郡氷川町宮原598-1";
 const MAP_URL =
@@ -17,32 +21,39 @@ const MAP_URL =
 export default function Home() {
   const session = useSession();
   const [showJoin, setShowJoin] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState("");
 
-  // メールMagic Linkで戻ってきた人: 参加時に入れた名前でプロフィールを作る
+  // Googleログイン直後: Googleの名前とアイコンでプロフィールを自動作成
   useEffect(() => {
-    if (session.userId && !session.profile && !session.loading) {
-      let pending = "";
-      try {
-        pending = localStorage.getItem("warawa-pending-name") ?? "";
-      } catch {}
-      if (pending) {
-        upsertMyProfile(session.userId, pending).then(() => {
-          try {
-            localStorage.removeItem("warawa-pending-name");
-          } catch {}
-          session.refresh();
-        });
-      } else {
-        setShowJoin(true);
-      }
-    }
+    if (session.loading || !session.userId || session.profile) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }: { data: { user: User | null } }) => {
+      const user = data.user;
+      if (!user) return;
+      const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+      const name =
+        (meta.full_name as string) || (meta.name as string) || "参加者";
+      const avatar = (meta.picture as string) || (meta.avatar_url as string) || null;
+      await supabase
+        .from("profiles")
+        .upsert({ id: user.id, display_name: name, avatar_url: avatar });
+      session.refresh();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.userId, session.profile, session.loading]);
 
   const requireJoin = () => setShowJoin(true);
 
+  const saveRename = async () => {
+    if (!session.userId || !newName.trim()) return;
+    await upsertMyProfile(session.userId, newName.trim());
+    setRenaming(false);
+    session.refresh();
+  };
+
   return (
-    <main className="pb-16">
+    <main className="pb-20">
       {/* ヒーロー */}
       <header className="bg-[#d96c2c] text-white px-5 pt-10 pb-8 rounded-b-3xl">
         <p className="text-sm opacity-90">熊本地震 被災地支援</p>
@@ -70,14 +81,23 @@ export default function Home() {
         </div>
         {session.profile ? (
           <p className="mt-4 text-sm">
-            ようこそ、<b>{session.profile.display_name}</b> さん
+            ようこそ、<b>{session.profile.display_name}</b> さん{" "}
+            <button
+              className="underline opacity-80"
+              onClick={() => {
+                setNewName(session.profile?.display_name ?? "");
+                setRenaming(true);
+              }}
+            >
+              名前を変える
+            </button>
           </p>
         ) : (
           <button
             className="mt-4 w-full rounded-xl bg-white py-3 text-[#d96c2c] font-bold text-lg shadow"
             onClick={requireJoin}
           >
-            参加する（無料・30秒）
+            Googleでログインして参加
           </button>
         )}
       </header>
@@ -86,6 +106,9 @@ export default function Home() {
       <OffersSection userId={session.userId} requireJoin={requireJoin} />
       <BoardSection userId={session.userId} requireJoin={requireJoin} />
       <MembersSection userId={session.userId} requireJoin={requireJoin} />
+      {session.isAdmin && session.userId && (
+        <AdminSection userId={session.userId} />
+      )}
 
       {/* フッター: PWA案内 */}
       <footer className="px-5 py-8 text-center text-sm text-gray-600">
@@ -98,12 +121,36 @@ export default function Home() {
         <p className="mt-6 text-xs text-gray-400">わらわ〜ボランティア 熊本</p>
       </footer>
 
-      {showJoin && (
-        <JoinDialog
-          onClose={() => setShowJoin(false)}
-          onJoined={() => session.refresh()}
-        />
+      {showJoin && <JoinDialog onClose={() => setShowJoin(false)} />}
+
+      {renaming && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setRenaming(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold mb-3">表示名を変える</h3>
+            <input
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 mb-3"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              maxLength={30}
+            />
+            <button
+              className="w-full rounded-xl bg-[#3a7d44] py-3 text-white font-bold disabled:opacity-50"
+              disabled={!newName.trim()}
+              onClick={saveRename}
+            >
+              保存する
+            </button>
+          </div>
+        </div>
       )}
+
+      <BottomNav userId={session.userId} active="home" />
     </main>
   );
 }

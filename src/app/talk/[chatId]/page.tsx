@@ -96,7 +96,7 @@ export default function TalkPage({
   return (
     <main className="flex flex-col h-dvh">
       <header className="flex items-center gap-3 px-4 py-3 bg-[#d96c2c] text-white sticky top-0">
-        <Link href="/" className="text-xl" aria-label="戻る">
+        <Link href="/talk" className="text-xl" aria-label="戻る">
           ←
         </Link>
         {partner && (

@@ -160,7 +160,7 @@ export function BoardSection({
         />
         <input
           className="flex-1 rounded-xl border border-gray-300 px-3 py-2"
-          placeholder={userId ? "メッセージを書く" : "参加すると書き込めます"}
+          placeholder={userId ? "メッセージを書く" : "ログインすると書き込めます"}
           value={body}
           onChange={(e) => setBody(e.target.value)}
           onKeyDown={(e) => {

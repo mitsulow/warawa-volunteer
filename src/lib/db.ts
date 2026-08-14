@@ -256,6 +256,102 @@ export async function markDmRead(chatId: string, myId: string) {
     .eq("chat_id", chatId)
     .is("read_at", null)
     .neq("sender_id", myId);
+  window.dispatchEvent(new Event("warawa:unreadRefresh"));
+}
+
+/* ---------- Talk一覧 ---------- */
+
+interface ChatRow {
+  id: string;
+  a: string;
+  b: string;
+  last_message_at: string | null;
+  pa: { display_name: string; avatar_url: string | null } | null;
+  pb: { display_name: string; avatar_url: string | null } | null;
+}
+
+export interface ChatSummary {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  partnerAvatar: string | null;
+  lastBody: string | null;
+  lastAt: string | null;
+  unread: number;
+}
+
+/** 自分のTalk一覧（相手・最新メッセージ・未読数つき。OneSea方式） */
+export async function fetchChatList(myId: string): Promise<ChatSummary[]> {
+  const supabase = createClient();
+  const { data: chats } = await supabase
+    .from("chats")
+    .select(
+      "id, a, b, last_message_at, pa:profiles!chats_a_fkey(display_name, avatar_url), pb:profiles!chats_b_fkey(display_name, avatar_url)"
+    )
+    .or(`a.eq.${myId},b.eq.${myId}`)
+    .order("last_message_at", { ascending: false, nullsFirst: false });
+  const rows = (chats as unknown as ChatRow[]) ?? [];
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((c) => c.id);
+  const [{ data: lasts }, { data: unreads }] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("chat_id, body, created_at")
+      .in("chat_id", ids)
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase
+      .from("messages")
+      .select("chat_id")
+      .in("chat_id", ids)
+      .is("read_at", null)
+      .neq("sender_id", myId),
+  ]);
+  const lastBy = new Map<string, { body: string; created_at: string }>();
+  for (const m of lasts ?? []) {
+    if (!lastBy.has(m.chat_id)) lastBy.set(m.chat_id, m);
+  }
+  const unreadBy = new Map<string, number>();
+  for (const m of unreads ?? []) {
+    unreadBy.set(m.chat_id, (unreadBy.get(m.chat_id) ?? 0) + 1);
+  }
+
+  return rows.map((c) => {
+    const partnerIsA = c.b === myId;
+    const partner = (partnerIsA ? c.pa : c.pb) ?? {
+      display_name: "参加者",
+      avatar_url: null,
+    };
+    const last = lastBy.get(c.id);
+    return {
+      id: c.id,
+      partnerId: partnerIsA ? c.a : c.b,
+      partnerName: partner.display_name || "参加者",
+      partnerAvatar: partner.avatar_url,
+      lastBody: last?.body ?? null,
+      lastAt: last?.created_at ?? c.last_message_at,
+      unread: unreadBy.get(c.id) ?? 0,
+    };
+  });
+}
+
+/* ---------- 管理者の管理 ---------- */
+
+export async function fetchAdminIds(): Promise<Set<string>> {
+  const supabase = createClient();
+  const { data } = await supabase.from("admins").select("user_id");
+  return new Set(((data ?? []) as { user_id: string }[]).map((r) => r.user_id));
+}
+
+export async function addAdmin(userId: string) {
+  const supabase = createClient();
+  return supabase.from("admins").insert({ user_id: userId });
+}
+
+export async function removeAdmin(userId: string) {
+  const supabase = createClient();
+  return supabase.from("admins").delete().eq("user_id", userId);
 }
 
 /* ---------- 画像アップロード（Supabase Storage） ---------- */
