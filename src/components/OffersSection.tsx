@@ -244,13 +244,14 @@ function OfferDialog({
               {KINDS[kind].label}
             </h3>
             {isGoods && (
-              <p className="mt-2 text-[12px] leading-relaxed text-[#5a5448]">
-                現地の人と相談し、「現地のNeeds」に見合った場合、メールか、アプリ内のTalk機能にてメッセージを送ります。
-                そこに送付先の住所（炊き出しの場所や、現地の受け入れ拠点）を記載しますので、
-                送料はお客さまで負担の上でお送りください。
-                <br />
-                <span className="font-bold">※採用の連絡が来た後に送付をお願い致します。</span>
-              </p>
+              <div className="mt-2 space-y-1.5 text-[12.5px] leading-relaxed text-[#5a5448]">
+                <p>① 何を送れるか、写真イメージなどと一緒に投稿</p>
+                <p>② 現地の人とニーズを確認し、「必要」と判断された物資の投稿者へ事務局から連絡（アプリ内のTalk機能）</p>
+                <p>③ 記載された住所（炊き出し場所など）へ、送料はお客様負担にてお送り下さい</p>
+                <p className="font-bold" style={{ color: "#c05e14" }}>
+                  ※発送は必ず「必要」の連絡が来た後にお願い致します。
+                </p>
+              </div>
             )}
             <label className="mt-3 block text-sm font-bold">
               {isGoods ? "私はこういう物を出せます" : "私が持ち寄れるもの・アイディア・その他"}
