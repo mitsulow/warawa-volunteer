@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { InAppBrowserGuard } from "@/components/InAppBrowserGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -42,6 +43,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
+        <InAppBrowserGuard />
         <div className="mx-auto min-h-screen max-w-[520px] bg-washi shadow-xl">
           {children}
         </div>
