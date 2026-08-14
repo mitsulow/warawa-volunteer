@@ -74,7 +74,7 @@ export default function Home() {
 
   const TABS: Array<[Tab, string, string]> = [
     ["board", "掲示板", "取り組みフィード"],
-    ["offers", "助けたい", "お金・物資・行動"],
+    ["offers", "助けたい", "私にできる事"],
     ["voice", "助けて", "現地からの声"],
   ];
 
