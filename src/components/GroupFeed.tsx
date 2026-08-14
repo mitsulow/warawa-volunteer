@@ -264,8 +264,8 @@ export function GroupFeed({
                   src="/waraeru-v2.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none absolute -bottom-3 -right-3 h-28 w-28 object-contain"
-                  style={{ opacity: 0.1 }}
+                  className="pointer-events-none absolute -right-4 h-32 w-32 object-contain"
+                  style={{ opacity: 0.12, bottom: -6 }}
                 />
                 <div className="relative">
                 <div className="flex items-center gap-2.5">
@@ -354,8 +354,8 @@ export function GroupFeed({
                 </div>
               </div>
               {/* 枠の外・右下に手書きロゴ */}
-              <div className="flex h-[20px] items-center justify-end pr-2">
-                <img src="/warawa-logo.png" alt="わらわ〜" className="h-[13px] w-auto object-contain" />
+              <div className="flex h-[24px] items-center justify-end pr-2.5">
+                <img src="/warawa-logo.png" alt="わらわ〜" className="h-[16px] w-auto object-contain" />
               </div>
               </div>
             );
