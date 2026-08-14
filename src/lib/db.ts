@@ -77,6 +77,32 @@ export async function fetchMyProfile(userId: string): Promise<Profile | null> {
   return fetchProfile(userId);
 }
 
+/**
+ * 書き込み前の保証: プロフィール（マイページ）が無ければGoogleの名前・写真・メールで自動作成。
+ * 登録フォームを飛ばした人でも、投稿した瞬間に必ずマイページを持つ（OneSeaのensureProfile方式）。
+ */
+export async function ensureProfile(userId: string): Promise<void> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (data) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  await supabase.from("profiles").insert({
+    id: userId,
+    display_name: (meta.full_name as string) || (meta.name as string) || "参加者",
+    avatar_url: (meta.picture as string) || (meta.avatar_url as string) || null,
+  });
+  if (user?.email) {
+    await supabase.from("profile_private").upsert({ id: userId, email: user.email });
+  }
+}
+
 export async function upsertMyProfile(
   userId: string,
   patch: Partial<Omit<Profile, "id" | "created_at" | "member_no">>
@@ -211,6 +237,7 @@ export async function addOffer(
   imageUrl?: string | null,
   extras?: { imageUrls?: string[]; thumbUrls?: string[]; embed?: Offer["embed"] }
 ) {
+  await ensureProfile(userId);
   const supabase = createClient();
   return supabase.from("offers").insert({
     user_id: userId,
@@ -296,6 +323,7 @@ export async function sendBoardMessage(
     city?: string | null;
   }
 ) {
+  await ensureProfile(userId);
   const supabase = createClient();
   const result = await supabase.from("board_messages").insert({
     scope,
@@ -369,6 +397,7 @@ export async function getOrCreateChat(
   myId: string,
   otherId: string
 ): Promise<string | null> {
+  await ensureProfile(myId);
   const supabase = createClient();
   const [a, b] = [myId, otherId].sort();
   const { data: existing } = await supabase
@@ -681,6 +710,7 @@ export async function fetchComments(itemKey: string): Promise<FeedComment[]> {
 }
 
 export async function addComment(itemKey: string, userId: string, body: string) {
+  await ensureProfile(userId);
   const supabase = createClient();
   return supabase
     .from("feed_comments")
@@ -690,6 +720,7 @@ export async function addComment(itemKey: string, userId: string, body: string) 
 export async function toggleFeedLike(itemKey: string, myId: string, on: boolean) {
   const supabase = createClient();
   if (on) {
+    await ensureProfile(myId);
     return supabase.from("feed_likes").insert({ item_key: itemKey, user_id: myId });
   }
   return supabase
