@@ -607,7 +607,7 @@ export function OffersSection({
               className="-mx-2 overflow-hidden"
               style={{ background: "#f9dfc2", padding: "5px 5px 0" }}
             >
-              <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
+              <div className="relative overflow-hidden rounded-b-xl bg-white px-3 py-2.5">
                 <div className="relative">
                 {/* ヘッダー（ActivityFeedと同一） */}
                 <div className="flex items-center gap-2.5">
