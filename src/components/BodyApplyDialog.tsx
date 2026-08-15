@@ -131,21 +131,22 @@ export function BodyApplyDialog({
           </div>
         ) : (
           <>
-            <h3 className="flex items-center gap-2 text-lg font-bold">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/icon-tasukete.webp" alt="" className="h-7 w-7 object-contain" />
-              現地入りするメンバーに立候補
-            </h3>
-            <p className="mt-2 mb-3 text-[12.5px] leading-relaxed text-[#5a5448]">
-              わらわ〜ボランティアのスローガン、届けたいのは「大丈夫」、配りたいのは「笑顔」の通り、
-              現地での炊き出しやマッサージ、傾聴や整体などの施術において、現地の人へ笑顔で寄り添える人であり、
-              かつ安心を伝播できる人を一定数募集します。
-              8月下旬〜9月下旬までの約1カ月の期間、自由に動ける人のみお申し込みください。
-              現地までの交通費や現地での宿泊、食費などは事務局から支給いたします。
-              以下の項目を入力後、お申し込みください。
-              連絡先と住まいは公開されません（事務局確認用です）。
-              審査後にメールかアプリ内のTalKにてご連絡差し上げます。
-            </p>
+            <h3 className="text-lg font-bold">現地入りするメンバーに立候補する</h3>
+            <div className="mt-2 mb-3 space-y-1.5 text-[12.5px] leading-relaxed text-[#5a5448]">
+              <p>① 8月下旬〜10月初旬までの約1か月間、自由に動ける人</p>
+              <p>② 整体師やマッサージ資格、傾聴など、現地の人を心身から癒せるセラピストを優先募集</p>
+              <p>
+                ③ 炊き出しなどを行なう際に「届けたいのは大丈夫、配りたいのは笑顔」という
+                わらわ〜ボランティアのスローガン通りに、現地の人の心に寄り添える人（愛嬌が良い人など優先）
+              </p>
+              <p>※現地までの交通費や現地での宿泊、食費などは事務局から支給いたします。</p>
+              <p>
+                以下の項目をご入力の上、ご応募ください（連絡先と住所は事務局確認用であり公開されません）
+              </p>
+              <p>
+                ※審査後に、採用者にのみメールか「TalK（アプリ内のメッセージツール）」にてご連絡を差し上げます。
+              </p>
+            </div>
 
             <label className="block text-sm font-bold">お名前（本名）</label>
             <input
