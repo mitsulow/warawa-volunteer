@@ -85,7 +85,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
         )}
         <Link
           href="/"
-          className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white no-underline backdrop-blur-sm"
+          className="absolute left-14 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white no-underline backdrop-blur-sm"
         >
           ← ホーム
         </Link>

@@ -56,7 +56,7 @@ export default function BroadcastPage() {
   return (
     <main className="flex h-dvh flex-col" style={{ background: "#faf6ee" }}>
       <header
-        className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
+        className="sticky top-0 flex items-center gap-3 py-3 pl-14 pr-4 text-white"
         style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
         <Link href="/talk" className="text-xl text-white no-underline" aria-label="戻る">

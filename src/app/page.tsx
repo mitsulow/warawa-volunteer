@@ -30,6 +30,14 @@ export default function Home() {
   // タブ位置を記憶: リロードしても選んでいたタブから始まる
   useEffect(() => {
     try {
+      // ☰メニューからの ?tab= 指定が最優先
+      const q = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+      if (q === "board" || q === "offers" || q === "voice") {
+        setTabState(q);
+        localStorage.setItem("warawa-tab3", q);
+        window.history.replaceState(null, "", "/");
+        return;
+      }
       const t = localStorage.getItem("warawa-tab3") as Tab | null;
       if (t === "board" || t === "offers" || t === "voice") setTabState(t);
     } catch {}

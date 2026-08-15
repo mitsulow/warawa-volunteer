@@ -5,9 +5,9 @@ import Link from "next/link";
 import { fetchUnreadTotal } from "@/lib/db";
 
 /**
- * 下部ナビ（TalKのみ・右詰め）。
- * Windowsタスクバー式の自動非表示: 普段は隠れていて、
- * ①TalK未読がある時は常時表示 ②上へスクロールした時 ③画面下端に触れた/カーソルを寄せた時 に出てくる。
+ * 右下のTalKアイコン（バーなし・アイコンだけの浮きボタン）。
+ * 普段は隠れていて、①TalK未読がある時は常時表示
+ * ②上へスクロールした時 ③画面下端に触れた/カーソルを寄せた時 に出てくる。
  */
 export function BottomNav({
   userId,
@@ -19,6 +19,7 @@ export function BottomNav({
   requireJoin?: () => void;
 }) {
   void requireJoin;
+  void active;
   const [unread, setUnread] = useState(0);
   const [shown, setShown] = useState(true);
   const hideTimer = useRef<number | null>(null);
@@ -86,28 +87,25 @@ export function BottomNav({
   const visible = unread > 0 || shown;
 
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-[520px] justify-end border-t border-[#ede5d8] bg-white pb-[env(safe-area-inset-bottom)] pr-3 transition-transform duration-300"
-      style={{ transform: visible ? "translateY(0)" : "translateY(110%)" }}
+    <Link
+      href="/talk"
+      aria-label="TalK"
+      className="fixed z-40 flex h-12 w-12 items-center justify-center rounded-full border border-[#ede5d8] bg-white shadow-lg transition-all duration-300"
+      style={{
+        right: "max(14px, calc(50% - 246px))",
+        bottom: "calc(env(safe-area-inset-bottom) + 14px)",
+        transform: visible ? "translateY(0)" : "translateY(90px)",
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? "auto" : "none",
+      }}
     >
-      {/* TalK（右詰め・未読数はOneSea式の赤丸数字） */}
-      <Link
-        href="/talk"
-        className={`flex flex-col items-center px-4 py-1.5 no-underline ${
-          active === "talk" ? "text-[#d96a1a] font-bold" : "text-[#8a8070]"
-        }`}
-      >
-        <span className="relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" />
-          {unread > 0 && (
-            <span className="num absolute -right-3 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white">
-              {unread > 99 ? "99+" : unread}
-            </span>
-          )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/icons/icon-talk-green.webp" alt="TalK" className="h-7 w-7 object-contain" />
+      {unread > 0 && (
+        <span className="num absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white">
+          {unread > 99 ? "99+" : unread}
         </span>
-        <span className="mt-0.5 text-[10px]">TalK</span>
-      </Link>
-    </nav>
+      )}
+    </Link>
   );
 }

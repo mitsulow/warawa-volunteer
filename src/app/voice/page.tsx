@@ -15,7 +15,7 @@ export default function VoicePage() {
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
-        <div className="flex h-[52px] items-center gap-3 px-4">
+        <div className="flex h-[52px] items-center gap-3 pl-14 pr-4">
           <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="戻る">
             ←
           </Link>

@@ -65,7 +65,7 @@ export default function TalkListPage() {
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
-      <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
+      <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 py-3 pl-14 pr-4 backdrop-blur-sm">
         <h1 className="flex items-center gap-2 text-lg font-bold" style={{ color: "#d96a1a" }}>
           <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="ホームへ">
             ←

@@ -1,0 +1,116 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase";
+import { fetchIsAdmin } from "@/lib/db";
+
+/* eslint-disable @next/next/no-img-element */
+
+/**
+ * 左上の三本線メニュー（OneSeaのSekaiMenuButton方式）。
+ * layoutに常駐して全ページ左上に浮かせる。押すと左からドロワーが開く。
+ */
+export function MenuButton() {
+  const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [admin, setAdmin] = useState(false);
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth
+      .getSession()
+      .then(async ({ data }: { data: { session: { user: { id: string } } | null } }) => {
+        const uid = data.session?.user?.id ?? null;
+        setUserId(uid);
+        if (uid) setAdmin(await fetchIsAdmin(uid));
+      });
+  }, []);
+
+  const logout = async () => {
+    await createClient().auth.signOut();
+    window.location.href = "/";
+  };
+
+  const MENU: Array<{ href: string; icon: string; label: string }> = [
+    { href: "/?tab=offers", icon: "/icons/icon-gift.webp", label: "助けたい" },
+    { href: "/?tab=voice", icon: "/icons/icon-tasukete.webp", label: "助けて" },
+    { href: "/?tab=board", icon: "/icons/icon-listing.webp", label: "掲示板" },
+    { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
+    ...(userId
+      ? [{ href: `/u/${userId}`, icon: "/icons/icon-meishi.webp", label: "マイページ" }]
+      : []),
+    { href: "/guide", icon: "/icons/icon-star.webp", label: "使い方" },
+    ...(admin
+      ? [{ href: "/office", icon: "/icons/icon-megaphone.webp", label: "事務局ページ" }]
+      : []),
+  ];
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="メニュー"
+        className="fixed z-[70] flex h-9 w-9 items-center justify-center rounded-full border border-[#f0e0cc] bg-white text-[19px] leading-none shadow-md"
+        style={{
+          color: "#d96a1a",
+          top: "calc(env(safe-area-inset-top) + 8px)",
+          left: "max(10px, calc(50% - 250px))",
+        }}
+      >
+        ☰
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setOpen(false)} />
+          <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
+            <div className="px-5 pb-2 pt-5">
+              <div className="text-[10px] tracking-[1px] text-[#e0a06a]">
+                届けたいのは「大丈夫」、配りたいのは「笑顔」。
+              </div>
+              <div className="text-[19px] font-extrabold" style={{ color: "#d96a1a" }}>
+                わらわ〜ボランティア
+              </div>
+            </div>
+            {MENU.map((m) => {
+              const base = m.href.split("?")[0];
+              const here =
+                base === "/" ? path === "/" && m.href === "/?tab=offers" : path.startsWith(base);
+              return (
+                <a
+                  key={m.href}
+                  href={m.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 border-b border-[#f6efe4] px-5 py-3 text-[14px] no-underline ${
+                    here ? "bg-[#fdeedd] font-bold text-[#c05e14]" : "font-medium text-[#3a3428]"
+                  }`}
+                >
+                  <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
+                  {m.label}
+                </a>
+              );
+            })}
+            {userId ? (
+              <button
+                className="flex w-full items-center gap-3 px-5 py-3 text-left text-[14px] font-medium text-[#c04030]"
+                onClick={logout}
+              >
+                🚪 ログアウト
+              </button>
+            ) : (
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-5 py-3 text-[14px] font-bold no-underline"
+                style={{ color: "#d96a1a" }}
+              >
+                ○ 参加する
+              </Link>
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
