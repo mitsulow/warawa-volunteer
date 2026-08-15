@@ -53,6 +53,14 @@ function relTime(iso: string): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
+/* 掲示板トップの現地レポート・紹介ポスター（タップで拡大） */
+const POSTERS = [
+  { src: "/posters/poster2.webp", label: "わらわ〜ボランティアとは" },
+  { src: "/posters/poster1.webp", label: "今、熊本はどうなってるの!?" },
+  { src: "/posters/poster3.webp", label: "みんなの「私にできること」" },
+  { src: "/posters/poster4.webp", label: "現地での体験" },
+];
+
 /* ============ フィード ============ */
 
 interface FeedItem {
@@ -94,6 +102,7 @@ export function ActivityFeed({
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
+  const [poster, setPoster] = useState<string | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   const cursorRef = useRef<string | null>(null);
 
@@ -228,6 +237,25 @@ export function ActivityFeed({
         requireJoin={requireJoin}
         onPosted={pullBoard}
       />
+
+      {/* 現地レポート・紹介ポスター（横スクロール・タップで拡大） */}
+      <div className="mb-3">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {POSTERS.map((p) => (
+            <button
+              key={p.src}
+              onClick={() => setPoster(p.src)}
+              className="shrink-0 overflow-hidden rounded-xl border-2 bg-white text-left shadow-sm"
+              style={{ borderColor: "#e8c890" }}
+            >
+              <img src={p.src} alt={p.label} className="h-44 w-32 object-cover object-top" />
+              <span className="block w-32 truncate px-1.5 py-1 text-[10.5px] font-bold text-[#8a7a5a]">
+                {p.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div className="space-y-2.5">
@@ -449,6 +477,25 @@ export function ActivityFeed({
           meId={userId}
           onClose={() => setReport(null)}
         />
+      )}
+
+      {/* ポスター拡大: 文字が読めるよう画面幅いっぱい+縦スクロール */}
+      {poster && (
+        <div
+          className="fixed inset-0 z-[220] overflow-y-auto bg-black/92"
+          onClick={() => setPoster(null)}
+        >
+          <div className="mx-auto max-w-[640px] py-10">
+            <img src={poster} alt="" className="w-full" />
+          </div>
+          <button
+            className="fixed right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/25 text-[18px] text-white"
+            aria-label="閉じる"
+            onClick={() => setPoster(null)}
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* ライトボックス（タップでフル画質） */}
