@@ -464,7 +464,7 @@ export function ActivityFeed({
                   aria-hidden
                   className="pointer-events-none absolute -right-6 h-28 w-28 object-contain"
                   style={{
-                    opacity: it.images.length > 0 ? 0.3 : 0.12,
+                    opacity: 0.12,
                     bottom: -18,
                     transform: "rotate(-8deg)",
                   }}
