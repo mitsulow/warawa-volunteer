@@ -782,7 +782,7 @@ export function OffersSection({
                   style={{
                     opacity: 0.12,
                     bottom: -13,
-                    left: -14,
+                    right: -14,
                     transform: "rotate(-8deg)",
                   }}
                 />
