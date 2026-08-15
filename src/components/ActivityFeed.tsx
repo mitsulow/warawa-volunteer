@@ -266,7 +266,7 @@ export function ActivityFeed({
       </div>
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
-      <div className="space-y-2.5">
+      <div>
         {items.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
             まだ取り組みがありません。最初のひとことをどうぞ
@@ -278,8 +278,8 @@ export function ActivityFeed({
           return (
             <div
               key={it.key}
-              className="overflow-hidden rounded-2xl shadow-sm"
-              style={{ background: "linear-gradient(160deg,#f9d8b2,#f1b077)", padding: "5px 5px 0" }}
+              className="-mx-2 overflow-hidden"
+              style={{ background: "#f9dfc2", padding: "5px 5px 0" }}
             >
               <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
                 <div className="relative">
@@ -470,7 +470,7 @@ export function ActivityFeed({
                   }}
                 />
               </div>
-              <div className="flex h-[24px] items-center justify-between px-2.5">
+              <div className="flex h-[24px] items-center justify-between px-2.5" style={{ background: "linear-gradient(90deg,#f4c894,#eeb578)" }}>
                 {/* いいねした人の顔はロゴ帯の中(わらわ〜の横)に */}
                 <div className="flex items-center">
                   {(likers[it.key] ?? []).map((l, i) => (

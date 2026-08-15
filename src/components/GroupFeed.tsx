@@ -243,7 +243,7 @@ export function GroupFeed({
         }
       />
 
-      <div className="space-y-2">
+      <div>
         {messages.filter(matchArea).length === 0 && (
           <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
             {scope === "voice" ? "このエリアの投稿はまだありません" : "まだ書き込みがありません"}
@@ -263,8 +263,8 @@ export function GroupFeed({
               /* mond式カード: 色枠 + 白カード + 透かしワラエル + 手書きロゴ */
               <div
                 key={m.id}
-                className="overflow-hidden rounded-2xl shadow-sm"
-                style={{ background: "linear-gradient(160deg,#f9d8b2,#f1b077)", padding: "5px 5px 0" }}
+                className="-mx-2 overflow-hidden"
+                style={{ background: "#f9dfc2", padding: "5px 5px 0" }}
               >
               <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
                 <div className="relative">
@@ -367,7 +367,7 @@ export function GroupFeed({
                 />
               </div>
               {/* 枠の外・右下に手書きロゴ */}
-              <div className="flex h-[24px] items-center justify-between px-2.5">
+              <div className="flex h-[24px] items-center justify-between px-2.5" style={{ background: "linear-gradient(90deg,#f4c894,#eeb578)" }}>
                 {/* いいねした人の顔はロゴ帯の中(わらわ〜の横)に */}
                 <div className="flex items-center">
                   {(likers[`board:${m.id}`] ?? []).map((l, i) => (
