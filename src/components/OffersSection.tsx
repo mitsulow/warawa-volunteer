@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   addOffer,
+  deleteOffer,
+  fetchCommentCounts,
+  fetchFeedLikes,
   fetchOffers,
+  toggleFeedLike,
   type Offer,
   type OfferKind,
 } from "@/lib/db";
+import { CommentSection } from "@/components/CommentSection";
+import { DotsMenu } from "@/components/PostKit";
+import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { firePush } from "@/lib/push";
 import { Avatar } from "@/components/Avatar";
@@ -56,6 +64,33 @@ async function fetchOGP(url: string): Promise<OGPEmbed | null> {
 }
 
 /* eslint-disable @next/next/no-img-element */
+
+/* CotoZuteと同じアイコン文法（ActivityFeedと同一） */
+function IcoHeart({ on }: { on: boolean }) {
+  return (
+    <svg width="27" height="27" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#d96a1a"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
+      <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
+    </svg>
+  );
+}
+
+function IcoBubble() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d96a1a" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
+    </svg>
+  );
+}
+
+function relTime(iso: string): string {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "たった今";
+  if (s < 3600) return `${Math.floor(s / 60)}分前`;
+  if (s < 86400) return `${Math.floor(s / 3600)}時間前`;
+  if (s < 7 * 86400) return `${Math.floor(s / 86400)}日前`;
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
 
 const KINDS: Record<
   OfferKind,
@@ -414,15 +449,66 @@ export function OffersSection({
   requireJoin: () => void;
   openGoodsSignal?: number;
 }) {
-  void isAdmin;
+  const router = useRouter();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [dialog, setDialog] = useState<OfferKind | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // CotoZuteと同じ記事挙動（いいね/コメント/…メニュー/折りたたみ/写真拡大）
+  const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
+  const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
+  const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
+  const [openComments, setOpenComments] = useState<Set<string>>(new Set());
+  const [expandedBody, setExpandedBody] = useState<Set<string>>(new Set());
+  const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
+  const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
+  const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
 
   const reload = () => fetchOffers().then(setOffers);
   useEffect(() => {
     reload();
   }, []);
+
+  useEffect(() => {
+    const keys = offers
+      .filter((o) => o.kind === "goods" || o.kind === "other")
+      .map((o) => `offer:${o.id}`)
+      .slice(0, 100);
+    if (keys.length === 0) return;
+    fetchFeedLikes(keys, userId).then(({ counts, mine }) => {
+      setLikeCounts(counts);
+      setMyLikes(mine);
+    });
+    fetchCommentCounts(keys).then(setCommentCounts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offers.length, userId]);
+
+  const like = async (key: string) => {
+    if (!userId) {
+      requireJoin();
+      return;
+    }
+    const on = !myLikes.has(key);
+    setMyLikes((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+    setLikeCounts((prev) => {
+      const next = new Map(prev);
+      next.set(key, Math.max(0, (next.get(key) ?? 0) + (on ? 1 : -1)));
+      return next;
+    });
+    await toggleFeedLike(key, userId, on);
+  };
+
+  const needsFold = (b: string) => b.length > 60 || b.includes("\n");
+
+  const removeOffer = async (id: string) => {
+    if (!window.confirm("この投稿を削除しますか？")) return;
+    await deleteOffer(id);
+    setOffers((prev) => prev.filter((o) => o.id !== id));
+  };
 
   // トップの「物資を登録する」CTAから物資フォームを直接開く
   useEffect(() => {
@@ -491,18 +577,22 @@ export function OffersSection({
         />
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {feed.length === 0 && (
           <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
             まだ投稿がありません
           </p>
         )}
         {feed.map((o) => {
-          const thumbs = o.thumb_urls?.length
-            ? o.thumb_urls
-            : o.image_url
-              ? [o.image_url]
-              : [];
+          const key = `offer:${o.id}`;
+          const name = o.profiles?.display_name ?? "参加者";
+          const memberNo = o.profiles?.member_no ?? null;
+          const body = o.title ? `${o.title}\n${o.detail}` : o.detail;
+          const images = o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [];
+          const thumbs = o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [];
+          const embed = (o.embed as OGPEmbed | null) ?? null;
+          const bodyExpanded = expandedBody.has(key);
+          const idx = imgIdx.get(key) ?? 0;
           return (
             <div
               key={o.id}
@@ -510,49 +600,182 @@ export function OffersSection({
               style={{ background: "linear-gradient(160deg,#f2a35c,#e0803a)", padding: "5px 5px 0" }}
             >
               <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
-              <div className="relative">
-              <div className="flex items-center gap-2.5">
-                <Link href={`/u/${o.user_id}`} className="shrink-0">
-                  <Avatar
-                    name={o.profiles?.display_name ?? "参加者"}
-                    url={o.profiles?.avatar_url}
-                    size={36}
+                <div className="relative">
+                {/* ヘッダー（ActivityFeedと同一） */}
+                <div className="flex items-center gap-2.5">
+                  <Link href={`/u/${o.user_id}`} className="flex-shrink-0">
+                    <Avatar name={name} url={o.profiles?.avatar_url} size={40} />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`/u/${o.user_id}`}
+                      className="flex max-w-full items-center gap-1 truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21] no-underline"
+                    >
+                      {name}
+                      <VerifiedBadge size={14} />
+                    </Link>
+                    <div className="text-[11.5px] leading-tight text-[#8a8d91]">
+                      {relTime(o.created_at)}
+                      {memberNo != null && (
+                        <span className="num ml-1.5">@ボランティアNo.{memberNo}</span>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    style={{ background: "#fdf0e0", color: "#c05e14", border: "1px solid #f0d0a8" }}
+                  >
+                    {o.kind === "goods" ? "物資を出します" : "持ち寄ります"}
+                  </span>
+                  {userId && (
+                    <DotsMenu
+                      canEdit={userId === o.user_id || isAdmin}
+                      onEdit={() => router.push(`/post/offer/${o.id}?edit=1`)}
+                      onDelete={() => removeOffer(o.id)}
+                      onReport={() => setReport({ key, excerpt: body })}
+                    />
+                  )}
+                </div>
+
+                {/* 本文（1行 → もっと見る → 折りたたむ・CotoZuteと同じ） */}
+                {body.trim() && (
+                  <div className="mt-2">
+                    <p
+                      className={`whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#1c1e21] ${
+                        bodyExpanded || !needsFold(body) ? "" : "line-clamp-1"
+                      }`}
+                      onClick={() => {
+                        if (needsFold(body) && !bodyExpanded)
+                          setExpandedBody((p) => new Set(p).add(key));
+                      }}
+                    >
+                      {body}
+                    </p>
+                    {needsFold(body) && !bodyExpanded && (
+                      <button
+                        onClick={() => setExpandedBody((p) => new Set(p).add(key))}
+                        className="text-[13.5px] text-[#8a8d91]"
+                      >
+                        …もっと見る
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* 埋め込み（SNSリンク） */}
+                {embed && (
+                  <div className="mt-2">
+                    <EmbedCard embed={embed} />
+                  </div>
+                )}
+
+                {/* 写真（左右いっぱい）。複数枚はインスタ式: 横スワイプ+●ドット */}
+                {images.length === 1 && (
+                  <div className="-mx-3 mt-2">
+                    <button
+                      onClick={() => setLightbox({ urls: images, idx: 0 })}
+                      className="block w-full"
+                      aria-label="写真をフル画質で見る"
+                    >
+                      <img src={thumbs[0] ?? images[0]} alt="" className="w-full object-cover" />
+                    </button>
+                  </div>
+                )}
+                {images.length > 1 && (
+                  <div className="-mx-3 mt-2">
+                    <div
+                      className="hide-scrollbar flex snap-x snap-mandatory overflow-x-auto"
+                      onScroll={(e) => {
+                        const el = e.currentTarget;
+                        const i = Math.round(el.scrollLeft / el.clientWidth);
+                        if (i !== idx) setImgIdx((p) => new Map(p).set(key, i));
+                      }}
+                    >
+                      {images.map((full, i) => (
+                        <button
+                          key={full}
+                          onClick={() => setLightbox({ urls: images, idx: i })}
+                          className="w-full flex-shrink-0 snap-center"
+                          aria-label={`写真${i + 1}`}
+                        >
+                          <img
+                            src={thumbs[i] ?? full}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            style={{ aspectRatio: "1" }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-1.5 flex justify-center gap-1">
+                      {images.map((_, i) => (
+                        <span
+                          key={i}
+                          className="rounded-full"
+                          style={{ width: 6, height: 6, background: i === idx ? "#d96a1a" : "#d8d4c8" }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* アイコン行（左寄せ・CotoZuteと同じ） */}
+                <div className="mt-2 flex items-center gap-4">
+                  <button className="flex items-center gap-1" onClick={() => like(key)} aria-label="いいね">
+                    <IcoHeart on={myLikes.has(key)} />
+                    {(likeCounts.get(key) ?? 0) > 0 && (
+                      <span className="num text-[12.5px] font-bold text-[#8a8070]">
+                        {likeCounts.get(key)}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    className="flex items-center gap-1"
+                    onClick={() =>
+                      setOpenComments((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(key)) next.delete(key);
+                        else next.add(key);
+                        return next;
+                      })
+                    }
+                    aria-label="コメント"
+                  >
+                    <IcoBubble />
+                    {(commentCounts.get(key) ?? 0) > 0 && (
+                      <span className="num text-[12.5px] font-bold text-[#8a8070]">
+                        {commentCounts.get(key)}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                {openComments.has(key) && (
+                  <CommentSection
+                    itemKey={key}
+                    userId={userId}
+                    requireJoin={requireJoin}
+                    onAdded={() =>
+                      setCommentCounts((prev) => {
+                        const next = new Map(prev);
+                        next.set(key, (next.get(key) ?? 0) + 1);
+                        return next;
+                      })
+                    }
                   />
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-1 text-[13px] font-bold text-[#3a3428]">
-                    <span className="truncate">{o.profiles?.display_name ?? "参加者"}</span>
-                    <VerifiedBadge size={13} />
-                    <span className="shrink-0 font-normal">さんが{KINDS[o.kind].verb}</span>
-                    <img src={KINDS[o.kind].icon} alt="" className="h-4 w-4 shrink-0 object-contain" />
-                  </p>
-                  <p className="text-[10px] text-[#c0b8a8]">{fmtTime(o.created_at)}</p>
+                )}
                 </div>
-              </div>
-              <p className="mt-1.5 whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#3a3428]">
-                {o.title ? `${o.title}\n` : ""}
-                {o.detail}
-              </p>
-              {thumbs.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {thumbs.map((t) => (
-                    <img key={t} src={t} alt="" className="h-24 w-24 rounded-lg object-cover" />
-                  ))}
-                </div>
-              )}
-              </div>
-              {/* 透かしワラエル */}
-              <img
-                src="/waraeru-v2.png"
-                alt=""
-                aria-hidden
-                className="pointer-events-none absolute -right-6 h-28 w-28 object-contain"
-                style={{
-                  opacity: thumbs.length > 0 ? 0.3 : 0.12,
-                  bottom: -18,
-                  transform: "rotate(-8deg)",
-                }}
-              />
+                {/* 透かしワラエル: 左に少し倒す。写真ありは写真の上に重なる */}
+                <img
+                  src="/waraeru-v2.png"
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute -right-6 h-28 w-28 object-contain"
+                  style={{
+                    opacity: images.length > 0 ? 0.3 : 0.12,
+                    bottom: -18,
+                    transform: "rotate(-8deg)",
+                  }}
+                />
               </div>
               <div className="flex h-[24px] items-center justify-end pr-2.5">
                 <img src="/warawa-logo.png" alt="わらわ〜" className="h-[16px] w-auto object-contain" />
@@ -561,6 +784,36 @@ export function OffersSection({
           );
         })}
       </div>
+
+      {/* 通報（→事務局/officeの通報受信箱へ届く） */}
+      {report && userId && (
+        <ReportDialog
+          itemKey={report.key}
+          excerpt={report.excerpt}
+          meId={userId}
+          onClose={() => setReport(null)}
+        />
+      )}
+
+      {/* ライトボックス（タップでフル画質） */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-3"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox.urls[lightbox.idx]}
+            alt=""
+            className="max-h-full max-w-full object-contain"
+          />
+          <button
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }
