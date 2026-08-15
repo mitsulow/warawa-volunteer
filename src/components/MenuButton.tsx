@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import { fetchIsAdmin } from "@/lib/db";
@@ -88,10 +89,14 @@ export function MenuButton({
           ☰
         </button>
       )}
-      {open && (
+      {/* ドロワーはbody直下にポータルで出す:
+          backdrop-blur等のあるヘッダー内に置くとfixedがヘッダー基準になり見えなくなるため */}
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
         <>
-          <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setOpen(false)} />
-          <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
+          <div className="fixed inset-0 z-[210] bg-black/35" onClick={() => setOpen(false)} />
+          <div className="fixed left-0 top-0 z-[211] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
             <div className="px-5 pb-2 pt-5">
               <div className="text-[10px] tracking-[1px] text-[#e0a06a]">
                 届けたいのは「大丈夫」、配りたいのは「笑顔」。
@@ -138,7 +143,8 @@ export function MenuButton({
               </Link>
             )}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   );
