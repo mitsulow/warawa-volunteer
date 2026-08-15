@@ -666,6 +666,20 @@ export function OffersSection({
                         …もっと見る
                       </button>
                     )}
+                    {needsFold(body) && bodyExpanded && (
+                      <button
+                        onClick={() =>
+                          setExpandedBody((p) => {
+                            const n = new Set(p);
+                            n.delete(key);
+                            return n;
+                          })
+                        }
+                        className="mt-1 text-[13.5px] text-[#8a8d91]"
+                      >
+                        △ 折りたたむ
+                      </button>
+                    )}
                   </div>
                 )}
 

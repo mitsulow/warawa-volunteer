@@ -75,6 +75,8 @@ export function GroupFeed({
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
+  const [expandedBody, setExpandedBody] = useState<Set<string>>(new Set());
+  const needsFold = (b: string) => b.length > 60 || b.includes("\n");
   // エリア絞り込み（助けて）: どこの県・市で困っているかをセクション分けで確認できる
   const [fPref, setFPref] = useState("九州全域");
   const [fCity, setFCity] = useState("全市町村");
@@ -299,9 +301,41 @@ export function GroupFeed({
                   )}
                 </div>
                 {m.body && (
-                  <p className="mt-1.5 whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#3a3428]">
-                    {m.body}
-                  </p>
+                  <div className="mt-1.5">
+                    <p
+                      className={`whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#3a3428] ${
+                        expandedBody.has(`board:${m.id}`) || !needsFold(m.body) ? "" : "line-clamp-1"
+                      }`}
+                      onClick={() => {
+                        if (needsFold(m.body) && !expandedBody.has(`board:${m.id}`))
+                          setExpandedBody((p) => new Set(p).add(`board:${m.id}`));
+                      }}
+                    >
+                      {m.body}
+                    </p>
+                    {needsFold(m.body) && !expandedBody.has(`board:${m.id}`) && (
+                      <button
+                        onClick={() => setExpandedBody((p) => new Set(p).add(`board:${m.id}`))}
+                        className="text-[13.5px] text-[#8a8d91]"
+                      >
+                        …もっと見る
+                      </button>
+                    )}
+                    {needsFold(m.body) && expandedBody.has(`board:${m.id}`) && (
+                      <button
+                        onClick={() =>
+                          setExpandedBody((p) => {
+                            const n = new Set(p);
+                            n.delete(`board:${m.id}`);
+                            return n;
+                          })
+                        }
+                        className="mt-1 text-[13.5px] text-[#8a8d91]"
+                      >
+                        △ 折りたたむ
+                      </button>
+                    )}
+                  </div>
                 )}
                 {m.embed && (
                   <div className="mt-2">
