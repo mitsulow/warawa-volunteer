@@ -15,7 +15,16 @@ export function MenuButton() {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [admin, setAdmin] = useState(false);
+  const [homeTab, setHomeTab] = useState("offers");
   const path = typeof window !== "undefined" ? window.location.pathname : "";
+
+  // ホームで開いているタブをハイライトに反映
+  useEffect(() => {
+    try {
+      const t = localStorage.getItem("warawa-tab3");
+      if (t) setHomeTab(t);
+    } catch {}
+  }, [open]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -76,7 +85,9 @@ export function MenuButton() {
             {MENU.map((m) => {
               const base = m.href.split("?")[0];
               const here =
-                base === "/" ? path === "/" && m.href === "/?tab=offers" : path.startsWith(base);
+                base === "/"
+                  ? path === "/" && m.href === `/?tab=${homeTab}`
+                  : path.startsWith(base);
               return (
                 <a
                   key={m.href}
