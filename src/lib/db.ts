@@ -753,9 +753,20 @@ export async function fetchOfferById(id: string): Promise<Offer | null> {
   return (data as unknown as Offer | null) ?? null;
 }
 
-export async function updateOfferDetail(id: string, detail: string) {
+export async function updateOfferDetail(
+  id: string,
+  detail: string,
+  imageUrls?: string[],
+  thumbUrls?: string[]
+) {
   const supabase = createClient();
-  return supabase.from("offers").update({ detail }).eq("id", id);
+  const patch: Record<string, unknown> = { detail };
+  if (imageUrls) {
+    patch.image_urls = imageUrls.length ? imageUrls : null;
+    patch.thumb_urls = thumbUrls?.length ? thumbUrls : null;
+    patch.image_url = null;
+  }
+  return supabase.from("offers").update(patch).eq("id", id);
 }
 
 export async function deleteOffer(id: string) {

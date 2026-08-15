@@ -80,7 +80,9 @@ export default function PostPage({
       setEditImgs(fulls.map((f, i) => ({ full: f, thumb: thumbs[i] ?? f })));
     } else if (offer) {
       setDraft(offer.detail);
-      setEditImgs([]);
+      const fulls = offer.image_urls ?? (offer.image_url ? [offer.image_url] : []);
+      const thumbs = offer.thumb_urls ?? (offer.image_url ? [offer.image_url] : []);
+      setEditImgs(fulls.map((f, i) => ({ full: f, thumb: thumbs[i] ?? f })));
     }
     setEditing(true);
   };
@@ -105,7 +107,12 @@ export default function PostPage({
         editImgs.map((i) => i.thumb)
       );
     } else {
-      await updateOfferDetail(id, draft.trim());
+      await updateOfferDetail(
+        id,
+        draft.trim(),
+        editImgs.map((i) => i.full),
+        editImgs.map((i) => i.thumb)
+      );
     }
     setSaving(false);
     setEditing(false);
@@ -148,9 +155,7 @@ export default function PostPage({
       : offer!.detail;
   const images = isBoard
     ? (board!.image_urls ?? (board!.image_url ? [board!.image_url] : []))
-    : offer!.image_url
-      ? [offer!.image_url]
-      : [];
+    : (offer!.image_urls ?? (offer!.image_url ? [offer!.image_url] : []));
   const itemKey = `${type}:${id}`;
 
   return (
@@ -199,7 +204,8 @@ export default function PostPage({
               autoFocus
               className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[15px] leading-relaxed outline-none focus:border-[#d96a1a]"
             />
-            {isBoard && (
+            {/* 画像の変更（OneSea同様・掲示板/物資/その他すべて対応） */}
+            {(
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {editImgs.map((im, i) => (
                   <div key={im.thumb} className="relative">
