@@ -264,7 +264,7 @@ export function GroupFeed({
               <div
                 key={m.id}
                 className="overflow-hidden rounded-2xl shadow-sm"
-                style={{ background: "linear-gradient(160deg,#f2a35c,#e0803a)", padding: "5px 5px 0" }}
+                style={{ background: "linear-gradient(160deg,#f9d8b2,#f1b077)", padding: "5px 5px 0" }}
               >
               <div className="relative overflow-hidden rounded-xl bg-white px-3 py-2.5">
                 <div className="relative">
@@ -337,33 +337,6 @@ export function GroupFeed({
                   </button>
                 </div>
 
-                {/* いいねした人の顔（CotoZuteのFB風） */}
-                {(likers[`board:${m.id}`]?.length ?? 0) > 0 && (
-                  <div className="mt-1 flex items-center">
-                    {likers[`board:${m.id}`].map((l, i) => (
-                      <span key={i} style={{ marginLeft: i === 0 ? 0 : -6 }}>
-                        {l.avatar_url ? (
-                          <img
-                            src={l.avatar_url}
-                            alt=""
-                            referrerPolicy="no-referrer"
-                            className="h-[20px] w-[20px] rounded-full border-2 border-white object-cover"
-                          />
-                        ) : (
-                          <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full border-2 border-white bg-[#fdeedd] text-[10px]">
-                            <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                    <span className="ml-1.5 text-[11px] text-[#8a8d91]">
-                      {likers[`board:${m.id}`][0]?.display_name ?? ""}
-                      {(likeCounts.get(`board:${m.id}`) ?? 0) > 1
-                        ? ` 他${(likeCounts.get(`board:${m.id}`) ?? 0) - 1}人`
-                        : ""}
-                    </span>
-                  </div>
-                )}
                 {openComments.has(`board:${m.id}`) && (
                   <CommentSection
                     itemKey={`board:${m.id}`}
@@ -394,7 +367,26 @@ export function GroupFeed({
                 />
               </div>
               {/* 枠の外・右下に手書きロゴ */}
-              <div className="flex h-[24px] items-center justify-end pr-2.5">
+              <div className="flex h-[24px] items-center justify-between px-2.5">
+                {/* いいねした人の顔はロゴ帯の中(わらわ〜の横)に */}
+                <div className="flex items-center">
+                  {(likers[`board:${m.id}`] ?? []).map((l, i) => (
+                    <span key={i} style={{ marginLeft: i === 0 ? 0 : -5 }}>
+                      {l.avatar_url ? (
+                        <img src={l.avatar_url} alt="" referrerPolicy="no-referrer" className="h-[17px] w-[17px] rounded-full border border-white object-cover" />
+                      ) : (
+                        <span className="flex h-[17px] w-[17px] items-center justify-center rounded-full border border-white bg-[#fdeedd]">
+                          <img src="/icons/icon-leaf.webp" alt="" style={{ width: 10, height: 10 }} />
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                  {(likeCounts.get(`board:${m.id}`) ?? 0) > 3 && (
+                    <span className="ml-1 text-[10px] font-bold text-[#a05c1a]">
+                      +{(likeCounts.get(`board:${m.id}`) ?? 0) - 3}
+                    </span>
+                  )}
+                </div>
                 <img src="/warawa-logo.png" alt="わらわ〜" className="h-[16px] w-auto object-contain" />
               </div>
               </div>
