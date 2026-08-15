@@ -219,8 +219,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 本日の出せる物資一覧 */}
-        <FeaturedGoods offers={offers} />
+        {/* 現地へ届けたい物資候補（楽市楽座トップと同じく左右幅いっぱい） */}
+        <div className="-mx-4">
+          <FeaturedGoods offers={offers} />
+        </div>
 
         {/* 現地入りメンバー（一番下） */}
         <OrangeCorps />

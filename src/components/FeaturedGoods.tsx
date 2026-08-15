@@ -5,8 +5,9 @@ import Link from "next/link";
 import type { Offer } from "@/lib/db";
 
 /**
- * 本日の出せる物資一覧（楽市楽座「本日のパワープッシュ楽座」を移植）。
+ * 現地へ届けたい物資候補（楽市楽座「本日のパワープッシュ楽座」を移植）。
  * 画像つき物資から日替わりで最大6件、4.5秒ごとに自動回転・スワイプ可。
+ * 表示は楽市楽座トップと同じく画面の左右幅いっぱい（親側で-mx-4）。
  */
 export function FeaturedGoods({ offers }: { offers: Offer[] }) {
   const withImage = offers.filter(
@@ -86,7 +87,7 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
         <span className="whitespace-nowrap text-[11px] font-bold tracking-widest text-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-goldstar.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} />{" "}
-          本日の出せる物資一覧{" "}
+          現地へ届けたい物資候補{" "}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-goldstar.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} />
         </span>
