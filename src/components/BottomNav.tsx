@@ -87,8 +87,8 @@ export function BottomNav({
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-[520px] -translate-x-1/2 justify-end border-t border-[#ede5d8] bg-white pb-[env(safe-area-inset-bottom)] pr-3 transition-transform duration-300"
-      style={{ transform: visible ? "translate(-50%, 0)" : "translate(-50%, 110%)" }}
+      className="fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-[520px] justify-end border-t border-[#ede5d8] bg-white pb-[env(safe-area-inset-bottom)] pr-3 transition-transform duration-300"
+      style={{ transform: visible ? "translateY(0)" : "translateY(110%)" }}
     >
       {/* TalK（右詰め・未読数はOneSea式の赤丸数字） */}
       <Link
