@@ -6,6 +6,7 @@ import { useSession } from "@/lib/useSession";
 import { GroupFeed } from "@/components/GroupFeed";
 import { JoinDialog } from "@/components/JoinDialog";
 import { BottomNav } from "@/components/BottomNav";
+import { MenuButton } from "@/components/MenuButton";
 
 /** 現地からの声（欲しい物・やって欲しい事）— グループTalKと同期した掲示板ビュー */
 export default function VoicePage() {
@@ -15,7 +16,8 @@ export default function VoicePage() {
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
-        <div className="flex h-[52px] items-center gap-3 pl-14 pr-4">
+        <div className="flex h-[52px] items-center gap-3 px-4">
+          <MenuButton inline />
           <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="戻る">
             ←
           </Link>

@@ -13,6 +13,7 @@ import {
   type BoardScope,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
+import { MenuButton } from "@/components/MenuButton";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -106,9 +107,10 @@ export default function GroupTalkPage({
   return (
     <main className="flex h-dvh flex-col" style={{ background: "#faf6ee" }}>
       <header
-        className="sticky top-0 flex items-center gap-3 py-3 pl-14 pr-4 text-white"
+        className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
         style={{ background: "#d96a1a" }}
       >
+        <MenuButton inline light />
         <Link href="/talk" className="text-xl text-white no-underline" aria-label="戻る">
           ←
         </Link>

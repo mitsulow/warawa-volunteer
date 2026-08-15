@@ -15,6 +15,7 @@ import { GroupFeed } from "@/components/GroupFeed";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { BottomNav } from "@/components/BottomNav";
+import { MenuButton } from "@/components/MenuButton";
 
 type Tab = "voice" | "offers" | "board";
 
@@ -126,6 +127,9 @@ export default function Home() {
             </span>
           </div>
 
+          <span className="absolute left-3 top-1/2 -translate-y-1/2">
+            <MenuButton inline />
+          </span>
           <span className="absolute right-3 top-1/2 -translate-y-1/2">
             {session.profile && session.userId ? (
               <AvatarMenu userId={session.userId} profile={session.profile} />

@@ -18,6 +18,7 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { SnsIcon } from "@/components/SnsIcon";
 import { RegisterDialog } from "@/components/RegisterDialog";
 import { BottomNav } from "@/components/BottomNav";
+import { MenuButton } from "@/components/MenuButton";
 
 /** マイページ（OneSeaのマイページから移植・簡素化版: カバー + 重なるアバター + 認証マーク + 出せる物資 + SNS） */
 export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
@@ -72,6 +73,8 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#f2ede4" }}>
+      {/* ヘッダーが無いページなので☰は左上に浮かせる（OneSeaのfloating方式） */}
+      <MenuButton />
       {/* カバー画像 */}
       <div className="relative h-44 w-full overflow-hidden">
         {profile.cover_url ? (

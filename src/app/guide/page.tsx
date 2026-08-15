@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import { BottomNav } from "@/components/BottomNav";
+import { MenuButton } from "@/components/MenuButton";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -41,8 +42,9 @@ export default function GuidePage() {
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
-      <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 py-3 pl-14 pr-4 backdrop-blur-sm">
+      <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-3">
+          <MenuButton inline />
           <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="戻る">
             ←
           </Link>

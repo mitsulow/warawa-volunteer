@@ -21,6 +21,7 @@ import { Avatar } from "@/components/Avatar";
 import { AdminSection } from "@/components/AdminSection";
 import { SnsIcon } from "@/components/SnsIcon";
 import { BottomNav } from "@/components/BottomNav";
+import { MenuButton } from "@/components/MenuButton";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -164,9 +165,10 @@ export default function OfficePage() {
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header
-        className="sticky top-0 z-30 flex items-center gap-2.5 py-3 pl-14 pr-4 text-white"
+        className="sticky top-0 z-30 flex items-center gap-2.5 px-4 py-3 text-white"
         style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
+        <MenuButton inline light />
         <Link href="/" className="text-xl text-white no-underline" aria-label="戻る">
           ←
         </Link>

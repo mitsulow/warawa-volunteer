@@ -9,9 +9,16 @@ import { fetchIsAdmin } from "@/lib/db";
 
 /**
  * 左上の三本線メニュー（OneSeaのSekaiMenuButton方式）。
- * layoutに常駐して全ページ左上に浮かせる。押すと左からドロワーが開く。
+ * inline=ヘッダー内に置く（通常はこちら）/ floating=ヘッダーが無いページ用に左上へ浮かせる。
+ * light=オレンジ帯ヘッダー用の白い☰。押すと左からドロワーが開く。
  */
-export function MenuButton() {
+export function MenuButton({
+  inline = false,
+  light = false,
+}: {
+  inline?: boolean;
+  light?: boolean;
+} = {}) {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [admin, setAdmin] = useState(false);
@@ -58,18 +65,29 @@ export function MenuButton() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="メニュー"
-        className="fixed z-[70] flex h-9 w-9 items-center justify-center rounded-full border border-[#f0e0cc] bg-white text-[19px] leading-none shadow-md"
-        style={{
-          color: "#d96a1a",
-          top: "calc(env(safe-area-inset-top) + 8px)",
-          left: "max(10px, calc(50% - 250px))",
-        }}
-      >
-        ☰
-      </button>
+      {inline ? (
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="メニュー"
+          className="text-[22px] leading-none"
+          style={{ color: light ? "#fff" : "#d96a1a" }}
+        >
+          ☰
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="メニュー"
+          className="fixed z-[70] flex h-9 w-9 items-center justify-center rounded-full border border-[#f0e0cc] bg-white text-[19px] leading-none shadow-md"
+          style={{
+            color: "#d96a1a",
+            top: "calc(env(safe-area-inset-top) + 8px)",
+            left: "max(10px, calc(50% - 250px))",
+          }}
+        >
+          ☰
+        </button>
+      )}
       {open && (
         <>
           <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setOpen(false)} />

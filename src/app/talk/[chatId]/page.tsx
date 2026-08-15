@@ -13,6 +13,7 @@ import {
   type Profile,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
+import { MenuButton } from "@/components/MenuButton";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -95,7 +96,8 @@ export default function TalkPage({
 
   return (
     <main className="flex flex-col h-dvh">
-      <header className="flex items-center gap-3 py-3 pl-14 pr-4 bg-[#d96a1a] text-white sticky top-0">
+      <header className="flex items-center gap-3 px-4 py-3 bg-[#d96a1a] text-white sticky top-0">
+        <MenuButton inline light />
         <Link href="/talk" className="text-xl" aria-label="戻る">
           ←
         </Link>
