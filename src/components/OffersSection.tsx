@@ -778,10 +778,11 @@ export function OffersSection({
                   src="/waraeru-v2.png"
                   alt=""
                   aria-hidden
-                  className="pointer-events-none absolute -right-6 h-28 w-28 object-contain"
+                  className="pointer-events-none absolute h-[84px] w-[84px] object-contain"
                   style={{
                     opacity: 0.12,
-                    bottom: -18,
+                    bottom: -13,
+                    left: -14,
                     transform: "rotate(-8deg)",
                   }}
                 />
