@@ -97,7 +97,7 @@ function BankDialog({ onClose }: { onClose: () => void }) {
           <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">口座　</span> 普通 1007941</p>
           <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">名義　</span> ファミュニティリンク カ）</p>
         </div>
-        <p className="mt-2 text-[11.5px] leading-relaxed text-[#8a8070]">
+        <p className="mt-2 text-[14px] font-bold leading-relaxed text-[#5a5448]">
           ※なお、小銭の両替手数料の関係から、1口（1,000円）以上からの寄付をお願いしております。ご協力お願い致します。
         </p>
         <button
