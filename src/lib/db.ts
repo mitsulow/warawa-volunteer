@@ -809,6 +809,29 @@ export async function fetchFeedLikes(
   return { counts, mine };
 }
 
+export type Liker = { avatar_url: string | null; display_name: string | null };
+
+/** いいねした人の顔（CotoZute方式・記事ごとに最大3人） */
+export async function fetchLikersFor(keys: string[]): Promise<Record<string, Liker[]>> {
+  if (!keys.length) return {};
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("feed_likes")
+    .select("item_key, profiles!feed_likes_user_id_fkey(avatar_url, display_name)")
+    .in("item_key", keys)
+    .limit(keys.length * 6);
+  const map: Record<string, Liker[]> = {};
+  for (const r of (data ?? []) as unknown as Array<{
+    item_key: string;
+    profiles: Liker | null;
+  }>) {
+    if (!r.profiles) continue;
+    map[r.item_key] = map[r.item_key] ?? [];
+    if (map[r.item_key].length < 3) map[r.item_key].push(r.profiles);
+  }
+  return map;
+}
+
 export interface FeedComment {
   id: string;
   item_key: string;

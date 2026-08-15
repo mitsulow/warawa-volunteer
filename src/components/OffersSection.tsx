@@ -8,8 +8,10 @@ import {
   deleteOffer,
   fetchCommentCounts,
   fetchFeedLikes,
+  fetchLikersFor,
   fetchOffers,
   toggleFeedLike,
+  type Liker,
   type Offer,
   type OfferKind,
 } from "@/lib/db";
@@ -456,6 +458,7 @@ export function OffersSection({
   // CotoZuteと同じ記事挙動（いいね/コメント/…メニュー/折りたたみ/写真拡大）
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
+  const [likers, setLikers] = useState<Record<string, Liker[]>>({});
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [expandedBody, setExpandedBody] = useState<Set<string>>(new Set());
@@ -478,6 +481,7 @@ export function OffersSection({
       setLikeCounts(counts);
       setMyLikes(mine);
     });
+    fetchLikersFor(keys).then(setLikers);
     fetchCommentCounts(keys).then(setCommentCounts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offers.length, userId]);
@@ -500,6 +504,10 @@ export function OffersSection({
       return next;
     });
     await toggleFeedLike(key, userId, on);
+    // いいねした人の顔をその記事だけ取り直す
+    fetchLikersFor([key]).then((m) =>
+      setLikers((prev) => ({ ...prev, [key]: m[key] ?? [] }))
+    );
   };
 
   const needsFold = (b: string) => b.length > 60 || b.includes("\n");
@@ -749,6 +757,34 @@ export function OffersSection({
                     )}
                   </button>
                 </div>
+
+                {/* いいねした人の顔（CotoZuteのFB風） */}
+                {(likers[key]?.length ?? 0) > 0 && (
+                  <div className="mt-1 flex items-center">
+                    {likers[key].map((l, i) => (
+                      <span key={i} style={{ marginLeft: i === 0 ? 0 : -6 }}>
+                        {l.avatar_url ? (
+                          <img
+                            src={l.avatar_url}
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            className="h-[20px] w-[20px] rounded-full border-2 border-white object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full border-2 border-white bg-[#fdeedd] text-[10px]">
+                            <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                    <span className="ml-1.5 text-[11px] text-[#8a8d91]">
+                      {likers[key][0]?.display_name ?? ""}
+                      {(likeCounts.get(key) ?? 0) > 1
+                        ? ` 他${(likeCounts.get(key) ?? 0) - 1}人`
+                        : ""}
+                    </span>
+                  </div>
+                )}
                 {openComments.has(key) && (
                   <CommentSection
                     itemKey={key}

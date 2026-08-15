@@ -8,6 +8,8 @@ import {
   fetchBoardSince,
   fetchCommentCounts,
   fetchFeedLikes,
+  fetchLikersFor,
+  type Liker,
   markGroupRead,
   toggleFeedLike,
   type BoardMessage,
@@ -69,6 +71,7 @@ export function GroupFeed({
   const [messages, setMessages] = useState<BoardMessage[]>([]);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
+  const [likers, setLikers] = useState<Record<string, Liker[]>>({});
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
@@ -101,6 +104,7 @@ export function GroupFeed({
       setLikeCounts(counts);
       setMyLikes(mine);
     });
+    fetchLikersFor(keys).then(setLikers);
     fetchCommentCounts(keys).then(setCommentCounts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length, userId]);
@@ -123,6 +127,10 @@ export function GroupFeed({
       return next;
     });
     await toggleFeedLike(key, userId, on);
+    // いいねした人の顔をその記事だけ取り直す
+    fetchLikersFor([key]).then((m) =>
+      setLikers((prev) => ({ ...prev, [key]: m[key] ?? [] }))
+    );
   };
 
   const toggleComments = (key: string) => {
@@ -328,6 +336,34 @@ export function GroupFeed({
                     )}
                   </button>
                 </div>
+
+                {/* いいねした人の顔（CotoZuteのFB風） */}
+                {(likers[`board:${m.id}`]?.length ?? 0) > 0 && (
+                  <div className="mt-1 flex items-center">
+                    {likers[`board:${m.id}`].map((l, i) => (
+                      <span key={i} style={{ marginLeft: i === 0 ? 0 : -6 }}>
+                        {l.avatar_url ? (
+                          <img
+                            src={l.avatar_url}
+                            alt=""
+                            referrerPolicy="no-referrer"
+                            className="h-[20px] w-[20px] rounded-full border-2 border-white object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full border-2 border-white bg-[#fdeedd] text-[10px]">
+                            <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                    <span className="ml-1.5 text-[11px] text-[#8a8d91]">
+                      {likers[`board:${m.id}`][0]?.display_name ?? ""}
+                      {(likeCounts.get(`board:${m.id}`) ?? 0) > 1
+                        ? ` 他${(likeCounts.get(`board:${m.id}`) ?? 0) - 1}人`
+                        : ""}
+                    </span>
+                  </div>
+                )}
                 {openComments.has(`board:${m.id}`) && (
                   <CommentSection
                     itemKey={`board:${m.id}`}
