@@ -363,9 +363,10 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
           {(
             <div className="grid grid-cols-2 gap-3">
               {goods.map((o) => (
-                <div
+                <Link
                   key={o.id}
-                  className="relative flex h-full flex-col overflow-hidden rounded-md border border-[#ede5d8] shadow-sm"
+                  href={`/post/offer/${o.id}`}
+                  className="relative flex h-full flex-col overflow-hidden rounded-md border border-[#ede5d8] no-underline shadow-sm active:opacity-80"
                   style={{ background: "linear-gradient(180deg,#fffaf0,#fdf6e9)" }}
                 >
                   <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#d96a1a" }} />
@@ -382,12 +383,12 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                         <img src="/waraeru-v2.png" alt="" className="h-12 w-12 object-contain opacity-90" />
                       </div>
                     )}
-                    {o.status === "done" && (
+                    {(o.done || o.status === "done") && (
                       <span
-                        className="pointer-events-none absolute left-1/2 top-1/2 z-10 border-[3px] border-[#d02020] px-2 py-0.5 text-[13px] font-extrabold tracking-[2px] text-[#d02020]"
-                        style={{ transform: "translate(-50%,-50%) rotate(-18deg)", background: "rgba(255,255,255,.6)", whiteSpace: "nowrap" }}
+                        className="pointer-events-none absolute left-1/2 top-1/2 z-10 border-[3px] px-2 py-0.5 text-[13px] font-extrabold tracking-[2px]"
+                        style={{ transform: "translate(-50%,-50%) rotate(-18deg)", background: "rgba(255,255,255,.7)", whiteSpace: "nowrap", color: "#c05e14", borderColor: "#c05e14" }}
                       >
-                        届けました
+                        応援完了
                       </span>
                     )}
                   </div>
@@ -397,7 +398,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                     </h3>
                     <p className="line-clamp-1 text-[10.5px] text-[#8a8070]">{o.detail}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
