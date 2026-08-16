@@ -15,13 +15,19 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError("");
     const supabase = createClient();
+    // 8秒たってもGoogleへ飛べない＝サーバー側が詰まっている
+    const timer = setTimeout(() => {
+      setBusy(false);
+      setError("ただ今アクセス集中により繋がりません。10分後にまたお入りください🙏");
+    }, 8000);
     const { error: e } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: window.location.origin },
     });
     if (e) {
+      clearTimeout(timer);
       setBusy(false);
-      setError("ログインを開始できませんでした。少し待ってもう一度お試しください");
+      setError("ただ今アクセス集中により繋がりません。10分後にまたお入りください🙏");
     }
   };
 

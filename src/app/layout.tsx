@@ -5,6 +5,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import { PopupAnnouncement } from "@/components/PopupAnnouncement";
 import { PushSetup } from "@/components/PushSetup";
 import { TermsGate } from "@/components/TermsGate";
+import { ServiceStatus } from "@/components/ServiceStatus";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -55,6 +56,7 @@ export default function RootLayout({
         <BadgeSync />
         <TermsGate />
         <div className="mx-auto min-h-screen max-w-[520px] bg-washi shadow-xl">
+          <ServiceStatus />
           {children}
         </div>
       </body>
