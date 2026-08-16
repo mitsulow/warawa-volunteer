@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { firePush } from "@/lib/push";
 import { TERMS_VERSION } from "@/lib/terms";
 import { OFFICE_BOT_ID, SUPABASE_URL } from "@/lib/config";
+import { uploadSingle } from "@/lib/images";
 
 export interface Profile {
   id: string;
@@ -1103,14 +1104,6 @@ export async function removeAdmin(userId: string) {
 /* ---------- 画像アップロード（Supabase Storage） ---------- */
 
 export async function uploadPhoto(file: File, userId: string): Promise<string | null> {
-  const supabase = createClient();
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-  const path = `${userId}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from("photos").upload(path, file, {
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (error) return null;
-  const { data } = supabase.storage.from("photos").getPublicUrl(path);
-  return data.publicUrl;
+  // 圧縮(WebP・長辺1280) → R2優先、無ければ Supabase Storage（images.ts）
+  return uploadSingle(userId, file, 1280);
 }
