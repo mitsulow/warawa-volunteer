@@ -118,8 +118,13 @@ export function Lightbox({ urls, index, onClose }: { urls: string[]; index: numb
               className="max-h-full max-w-full select-none object-contain"
               style={
                 i === idx
-                  ? { transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transition: pinch.current || drag.current ? "none" : "transform .12s", touchAction: "none" }
-                  : undefined
+                  ? {
+                      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                      transition: pinch.current || drag.current ? "none" : "transform .12s",
+                      // 等倍のときは写真の上でも横スワイプ(ネイティブスクロール)が効くように pan-x を許可。拡大中だけ全部こちらで扱う
+                      touchAction: zoom > 1 ? "none" : "pan-x",
+                    }
+                  : { touchAction: "pan-x" }
               }
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
