@@ -105,6 +105,7 @@ export function ActivityFeed({
   const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [poster, setPoster] = useState<number | null>(null);
+  const [posterIdx, setPosterIdx] = useState(0);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
   const cursorRef = useRef<string | null>(null);
@@ -213,21 +214,35 @@ export function ActivityFeed({
         onPosted={pullBoard}
       />
 
-      {/* 現地レポート・紹介ポスター（横スクロール・タップで拡大） */}
+      {/* 現地レポート・紹介ポスター: 1枚ずつ左右スワイプ（スナップ・次の1枚がチラ見え）・タップで拡大 */}
       <div className="mb-3">
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {POSTERS.map((p) => (
+        <div
+          className="hide-scrollbar -mx-2 flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-1"
+          style={{ touchAction: "pan-x pan-y", scrollPaddingLeft: 8 }}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const w = el.firstElementChild ? (el.firstElementChild as HTMLElement).offsetWidth + 8 : el.clientWidth;
+            const i = Math.round(el.scrollLeft / w);
+            if (i !== posterIdx) setPosterIdx(Math.min(POSTERS.length - 1, Math.max(0, i)));
+          }}
+        >
+          {POSTERS.map((p, i) => (
             <button
               key={p.src}
-              onClick={() => setPoster(POSTERS.indexOf(p))}
-              className="shrink-0 overflow-hidden rounded-xl border-2 bg-white text-left shadow-sm"
+              onClick={() => setPoster(i)}
+              className="w-[70%] shrink-0 snap-start overflow-hidden rounded-xl border-2 bg-white text-left shadow-sm"
               style={{ borderColor: "#e8c890" }}
             >
-              <img src={p.src} alt={p.label} className="h-44 w-32 object-cover object-top" />
-              <span className="block w-32 truncate px-1.5 py-1 text-[10.5px] font-bold text-[#8a7a5a]">
-                {p.label}
+              <img src={p.src} alt={p.label} className="aspect-[3/4] w-full object-cover object-top" />
+              <span className="block truncate px-2 py-1.5 text-[12px] font-bold text-[#8a7a5a]">
+                {i + 1}. {p.label}
               </span>
             </button>
+          ))}
+        </div>
+        <div className="mt-1 flex justify-center gap-1.5">
+          {POSTERS.map((_, i) => (
+            <span key={i} className="rounded-full" style={{ width: i === posterIdx ? 8 : 6, height: i === posterIdx ? 8 : 6, background: i === posterIdx ? "#d96a1a" : "#d8d4c8" }} />
           ))}
         </div>
       </div>
