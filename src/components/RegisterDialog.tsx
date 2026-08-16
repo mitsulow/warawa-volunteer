@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
+import Link from "next/link";
 import { saveMyEmail, upsertMyProfile } from "@/lib/db";
+import { TERMS_VERSION } from "@/lib/terms";
+import { TermsBody } from "@/components/TermsBody";
 import { SnsIcon } from "@/components/SnsIcon";
 
 /** SNS入力欄（OneSeaのプロフィール設定と同じ形式） */
@@ -67,9 +70,16 @@ export function RegisterDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [agreed, setAgreed] = useState(!isFirst);
+  const [termsOpen, setTermsOpen] = useState(false);
+
   const save = async () => {
     if (!name.trim()) {
       setError("お名前を入れてください");
+      return;
+    }
+    if (isFirst && !agreed) {
+      setError("「上記に了承します」にチェックを入れてください");
       return;
     }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -85,6 +95,9 @@ export function RegisterDialog({
       avatar_url: initial.avatar_url,
       bio: hitokoto.trim() || null,
       sns: Object.keys(snsClean).length ? snsClean : null,
+      ...(isFirst
+        ? { terms_accepted_at: new Date().toISOString(), terms_version: TERMS_VERSION }
+        : {}),
     });
     if (!e) await saveMyEmail(userId, email.trim());
     setBusy(false);
@@ -174,6 +187,36 @@ export function RegisterDialog({
                 />
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 初回登録: 了承事項（スクロール枠に折りたたみ）→「上記に了承します」 */}
+        {isFirst && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setTermsOpen(!termsOpen)}
+              className="flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left"
+              style={{ borderColor: "#e8dcc4", background: "#fffaf0" }}
+            >
+              <span className="text-[12.5px] font-bold text-[#5a5448]">ご利用にあたっての了承事項を読む</span>
+              <span className="text-[#b0a898]">{termsOpen ? "▲" : "▼"}</span>
+            </button>
+            {termsOpen && (
+              <div className="mt-2 max-h-[38dvh] overflow-y-auto rounded-xl border p-3" style={{ borderColor: "#e8dcc4", background: "#fffdf8" }}>
+                <TermsBody compact />
+              </div>
+            )}
+            <label
+              className="mt-2 flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5"
+              style={{ borderColor: agreed ? "#d96a1a" : "#e8dcc4", background: agreed ? "#fdf0e0" : "#fff" }}
+            >
+              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="h-5 w-5 accent-[#d96a1a]" />
+              <span className="text-[13.5px] font-extrabold text-[#3a3428]">上記に了承します</span>
+            </label>
+            <p className="mt-1 text-[10.5px] text-[#a09888]">
+              全文は <Link href="/terms" target="_blank" className="underline">こちら</Link> でいつでも読めます
+            </p>
           </div>
         )}
 

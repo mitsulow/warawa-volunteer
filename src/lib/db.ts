@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase";
 import { firePush } from "@/lib/push";
+import { TERMS_VERSION } from "@/lib/terms";
 
 export interface Profile {
   id: string;
@@ -11,11 +12,22 @@ export interface Profile {
   bio: string | null;
   sns: Record<string, string> | null;
   member_no: number | null;
+  terms_accepted_at?: string | null;
+  terms_version?: string | null;
   created_at: string;
 }
 
 const PROFILE_SELECT =
-  "id, display_name, avatar_url, cover_url, bio, sns, member_no, created_at";
+  "id, display_name, avatar_url, cover_url, bio, sns, member_no, terms_accepted_at, terms_version, created_at";
+
+/** 了承事項に同意（profiles に日時と版を記録。改訂したら TERMS_VERSION が変わり再表示される） */
+export async function acceptTerms(userId: string) {
+  const supabase = createClient();
+  return supabase
+    .from("profiles")
+    .update({ terms_accepted_at: new Date().toISOString(), terms_version: TERMS_VERSION })
+    .eq("id", userId);
+}
 
 export type OfferKind = "money" | "body" | "goods" | "other";
 

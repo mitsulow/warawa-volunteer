@@ -50,6 +50,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - **寄付フロー刷新**: 4ボタン(寄付をする/現地へ行く/物資を送る/その他)は折りたたみ無しで常時表示。寄付=`DonateDialog`(OffersSection内)で口数(1口1,000円・±/クイック/最大1万口)→ offers(kind=money, detail「私はX口（X,000円）の寄付をする予定です。」)を作りフィードに並べる＋`/api/donate-talk`({units})で事務局から口座案内TalK(直近10分は重複送信しない)。申込は2択: ①寄付予定を掲示板(フィード)に並べる=offer作成 / ②並べずに寄付=offer無し。どちらもTalK送信。未ログインでもダイアログは開ける(申込ボタンで参加)。ゆうちょ手順は赤字「※ゆうちょ銀行から振り込む場合はこちら▽」の折りたたみ(枠なし)
 - **寄付申込の保管**: `donations`テーブル(user_id/units/amount/listed/email=Google認証メール/display_name)。`/api/donate-talk`がservice roleで毎回insert(①②とも)。RLSは管理者のみSELECT。事務局 /office に「💰 寄付申込」一覧＋「メールアドレスを全部コピー」(後日メール連絡用。送信基盤は未定=Gmailアプリパスワード案 or Resend)
 - 現地入り立候補(body offer)もフィードに並ぶ: 公開はニックネーム・アイコン・SNS一覧(profiles.sns・OFFER_SELECTに追加)・私にできる事PR・動ける期間のみ。本名/電話/住所は profile_private(事務局のみ)。BodyApplyDialogの説明文にも明記
+- **了承事項ゲート(2026-08-16)**: 本文は `src/lib/terms.ts`(TERMS_VERSION を上げると全員に再表示)。profiles.terms_accepted_at/terms_version。初回登録(RegisterDialog isFirst)はチェック必須、既存ログインユーザーは layout常駐の `TermsGate` が全面表示(未ログイン=閲覧のみには出ない)。全文ページ /terms(☰メニューにも)
 - **掲示板は分離(2026-08-16昼)**: ActivityFeed は board_messages(scope=board)だけ=「つながりのための掲示板」。助けたい(offers)は助けたいタブ、助けて(voice)は助けてタブにだけ並ぶ
 - donate-talk: プロフィール未作成ユーザーでもTalKが作れるようAPI側でprofilesを自動作成(chats FK対策・E2Eで発覚)。DonateDialog②でもensureProfile
 - フィード(助けたい)は offers **4種すべて**表示。チップ=PostKit `CHIP_STYLE`(寄付します=金/物資を送れます=橙/動けます=青/アイディア=緑 ※4ボタンの表示名は寄付をする/現地へ行く/物資を送る/その他のまま)。その他の投稿欄見出し「私が持ち寄れる「アイディア」や意見、その他の情報はこちらへ」・フィード上部に薄い1段のジャンル切替 `KindFilterTabs`(物資/動けます/寄付/アイディア/すべて・件数バッジ)。助けたいの初期表示は**物資だけ**、掲示板は「すべて」。カードのチップタップでも切替

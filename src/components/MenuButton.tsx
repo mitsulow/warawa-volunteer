@@ -59,6 +59,7 @@ export function MenuButton({
       ? [{ href: `/u/${userId}`, icon: "/icons/icon-meishi.webp", label: "マイページ" }]
       : []),
     { href: "/guide", icon: "/icons/icon-star.webp", label: "使い方" },
+    { href: "/terms", icon: "/icons/icon-listing.webp", label: "ご利用にあたって" },
     ...(admin
       ? [{ href: "/office", icon: "/icons/icon-megaphone.webp", label: "事務局ページ" }]
       : []),
