@@ -68,7 +68,7 @@ export function TermsGate() {
               onChange={(e) => setChecked(e.target.checked)}
               className="h-5 w-5 accent-[#d96a1a]"
             />
-            <span className="text-[14px] font-extrabold text-[#3a3428]">上記に了承します</span>
+            <span className="text-[14px] font-extrabold text-[#3a3428]">上記の記載事項について了承しました。</span>
           </label>
           <button
             className="mt-3 w-full rounded-xl py-3 text-[15px] font-extrabold text-white disabled:opacity-40"
@@ -79,7 +79,7 @@ export function TermsGate() {
             {busy ? "保存中…" : "利用をはじめる"}
           </button>
           <button className="mt-2 w-full py-1.5 text-[12px] text-[#a09888] underline" onClick={logout}>
-            了承せずにログアウトする（閲覧だけならログイン不要です）
+            ログインせず閲覧だけ行なう
           </button>
         </div>
       </div>

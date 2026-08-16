@@ -79,7 +79,7 @@ export function RegisterDialog({
       return;
     }
     if (isFirst && !agreed) {
-      setError("「上記に了承します」にチェックを入れてください");
+      setError("「上記の記載事項について了承しました。」にチェックを入れてください");
       return;
     }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -212,7 +212,7 @@ export function RegisterDialog({
               style={{ borderColor: agreed ? "#d96a1a" : "#e8dcc4", background: agreed ? "#fdf0e0" : "#fff" }}
             >
               <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="h-5 w-5 accent-[#d96a1a]" />
-              <span className="text-[13.5px] font-extrabold text-[#3a3428]">上記に了承します</span>
+              <span className="text-[13.5px] font-extrabold text-[#3a3428]">上記の記載事項について了承しました。</span>
             </label>
             <p className="mt-1 text-[10.5px] text-[#a09888]">
               全文は <Link href="/terms" target="_blank" className="underline">こちら</Link> でいつでも読めます
