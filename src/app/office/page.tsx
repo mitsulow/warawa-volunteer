@@ -416,9 +416,38 @@ export default function OfficePage() {
           <h2 className="mb-2 flex items-center text-sm font-extrabold text-[#5a5448]">
             💰 寄付申込（{donations.length}件・
             <span className="num">{donations.reduce((a, d) => a + d.amount, 0).toLocaleString()}</span>円）
+            <button
+              className="ml-auto rounded-full border px-2.5 py-1 text-[11px] font-bold"
+              style={{ borderColor: "#2e7d4f", color: "#2e7d4f", background: "#fff" }}
+              onClick={() => {
+                // Excelで開けるCSV（UTF-8 BOM付き）。お礼メールの宛先リスト等に
+                const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+                const header = ["申込日時", "お名前", "メールアドレス", "口数", "金額(円)", "掲示板掲載", "ユーザーID"];
+                const rows = donations.map((d) => [
+                  new Date(d.created_at).toLocaleString("ja-JP"),
+                  d.display_name ?? "",
+                  d.email ?? "",
+                  d.units,
+                  d.amount,
+                  d.listed ? "掲載" : "非掲載",
+                  d.user_id,
+                ]);
+                const csv = [header, ...rows].map((r) => r.map(esc).join(",")).join("
+");
+                const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `寄付申込一覧_${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}
+            >
+              📥 CSV(Excel)で保存
+            </button>
             {donations.some((d) => d.email) && (
               <button
-                className="ml-auto rounded-full border px-2.5 py-1 text-[11px] font-bold"
+                className="ml-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold"
                 style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
                 onClick={async () => {
                   const emails = Array.from(new Set(donations.map((d) => d.email).filter(Boolean))) as string[];
