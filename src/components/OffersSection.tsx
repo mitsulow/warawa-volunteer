@@ -273,7 +273,7 @@ function DonateDialog({
             </p>
             <div className="mt-1.5 space-y-1.5">
               {[
-                { v: true, t: "寄付予定であることを掲示板に並べる", s: `「私は${units.toLocaleString()}口の寄付をする予定です。」が助けたいに並びます` },
+                { v: true, t: "寄付予定であることを掲示板に並べる", s: `「私は${units.toLocaleString()}口の寄付をする予定です。」が掲示板に並びます` },
                 { v: false, t: "掲示板には並べずに寄付をする", s: "掲示板には何も表示されません" },
               ].map((o) => (
                 <button
