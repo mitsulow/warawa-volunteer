@@ -10,18 +10,20 @@ import type { Offer } from "@/lib/db";
  * 表示は楽市楽座トップと同じく画面の左右幅いっぱい（親側で-mx-4）。
  */
 export function FeaturedGoods({ offers }: { offers: Offer[] }) {
-  const withImage = offers.filter(
-    (o) => o.kind === "goods" && (o.image_urls?.length || o.image_url)
-  );
+  // 応援完了していない物資を、写真ありを先頭に最大6件（楽市楽座のパワープッシュと同じ6枠）。写真なしはワラエルのタイル
+  const goods = offers.filter((o) => o.kind === "goods" && !o.done);
+  const withImage = goods.filter((o) => o.image_urls?.length || o.image_url);
+  const noImage = goods.filter((o) => !(o.image_urls?.length || o.image_url));
+  const pool = [...withImage, ...noImage];
   const now = new Date();
   const dayOfYear = Math.floor(
     (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
   );
   const picks: Offer[] = [];
-  if (withImage.length > 0) {
-    const start = dayOfYear % withImage.length;
-    const count = Math.min(6, withImage.length);
-    for (let i = 0; i < count; i++) picks.push(withImage[(start + i) % withImage.length]);
+  if (pool.length > 0) {
+    const start = dayOfYear % pool.length;
+    const count = Math.min(6, pool.length);
+    for (let i = 0; i < count; i++) picks.push(pool[(start + i) % pool.length]);
   }
 
   const [index, setIndex] = useState(0);
@@ -102,17 +104,27 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
           {picks.map((o) => (
             <Link
               key={o.id}
-              href={`/u/${o.user_id}`}
+              href={`/post/offer/${o.id}`}
               className="block w-full flex-shrink-0 no-underline"
             >
               <div className="flex h-24">
                 <div className="relative w-24 flex-shrink-0 overflow-hidden bg-[#f2ede4]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={o.thumb_urls?.[0] ?? o.image_urls?.[0] ?? o.image_url!}
-                    alt={o.title ?? ""}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
+                  {o.thumb_urls?.[0] ?? o.image_urls?.[0] ?? o.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={o.thumb_urls?.[0] ?? o.image_urls?.[0] ?? o.image_url!}
+                      alt={o.title ?? ""}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ background: "linear-gradient(135deg,#fdf0e0 0%,#f5ddb8 100%)" }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/waraeru-v2.png" alt="" className="h-12 w-12 object-contain opacity-80" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden p-2">
                   <div className="min-w-0">
