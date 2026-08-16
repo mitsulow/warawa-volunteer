@@ -15,16 +15,19 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
   const goods = offers.filter((o) => o.kind === "goods" && !o.done);
   const withImage = goods.filter((o) => o.image_urls?.length || o.image_url);
   const noImage = goods.filter((o) => !(o.image_urls?.length || o.image_url));
-  const pool = [...withImage, ...noImage];
   const now = new Date();
   const dayOfYear = Math.floor(
     (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
   );
+  // 写真ありを優先して6枠を埋め（日替わりで先頭をずらす）、足りない分だけ写真なしで補う
   const picks: Offer[] = [];
-  if (pool.length > 0) {
-    const start = dayOfYear % pool.length;
-    const count = Math.min(6, pool.length);
-    for (let i = 0; i < count; i++) picks.push(pool[(start + i) % pool.length]);
+  if (withImage.length > 0) {
+    const start = dayOfYear % withImage.length;
+    for (let i = 0; i < Math.min(6, withImage.length); i++) picks.push(withImage[(start + i) % withImage.length]);
+  }
+  for (const o of noImage) {
+    if (picks.length >= 6) break;
+    picks.push(o);
   }
 
   const [index, setIndex] = useState(0);
