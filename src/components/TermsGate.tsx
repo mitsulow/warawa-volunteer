@@ -51,10 +51,7 @@ export function TermsGate() {
     <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/60 p-4">
       <div className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="px-5 pt-5">
-          <h2 className="text-[17px] font-extrabold text-[#3a3428]">ご利用にあたっての了承事項</h2>
-          <p className="mt-1 text-[12px] text-[#8a8070]">
-            書き込み（助けたい・助けて・掲示板・TalK）を使う前に、一度だけご確認ください。
-          </p>
+          <h2 className="text-[17px] font-extrabold text-[#3a3428]">ご利用にあたって</h2>
         </div>
         {/* 本文はスクロール枠（規約置き場の定番の形） */}
         <div

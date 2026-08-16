@@ -199,7 +199,7 @@ export function RegisterDialog({
               className="flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left"
               style={{ borderColor: "#e8dcc4", background: "#fffaf0" }}
             >
-              <span className="text-[12.5px] font-bold text-[#5a5448]">ご利用にあたっての了承事項を読む</span>
+              <span className="text-[12.5px] font-bold text-[#5a5448]">ご利用にあたって</span>
               <span className="text-[#b0a898]">{termsOpen ? "▲" : "▼"}</span>
             </button>
             {termsOpen && (
