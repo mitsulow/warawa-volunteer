@@ -8,10 +8,15 @@ import {
   deleteBoardMessage,
   deleteOffer,
   fetchBoardMessageById,
+  fetchCommentCounts,
+  fetchFeedLikes,
+  fetchLikersFor,
   fetchOfferById,
+  toggleFeedLike,
   updateBoardMessage,
   updateOfferDetail,
   type BoardMessage,
+  type Liker,
   type Offer,
 } from "@/lib/db";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
@@ -20,7 +25,8 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { MenuButton } from "@/components/MenuButton";
+import { CommentSection } from "@/components/CommentSection";
+import { JoinDialog } from "@/components/JoinDialog";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -56,6 +62,35 @@ export default function PostPage({
   const [uploading, setUploading] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const editStarted = useRef(false);
+  // いいね・コメント（フィードと同じ挙動。通知から飛んで来た人がその場で読める）
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likers, setLikers] = useState<Liker[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [showJoin, setShowJoin] = useState(false);
+  const itemKeyRef = `${type}:${id}`;
+
+  useEffect(() => {
+    fetchFeedLikes([itemKeyRef], session.userId).then(({ counts, mine }) => {
+      setLikeCount(counts.get(itemKeyRef) ?? 0);
+      setLiked(mine.has(itemKeyRef));
+    });
+    fetchLikersFor([itemKeyRef]).then((m) => setLikers(m[itemKeyRef] ?? []));
+    fetchCommentCounts([itemKeyRef]).then((m) => setCommentCount(m.get(itemKeyRef) ?? 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemKeyRef, session.userId]);
+
+  const like = async () => {
+    if (!session.userId) {
+      setShowJoin(true);
+      return;
+    }
+    const on = !liked;
+    setLiked(on);
+    setLikeCount((n) => Math.max(0, n + (on ? 1 : -1)));
+    await toggleFeedLike(itemKeyRef, session.userId, on);
+    fetchLikersFor([itemKeyRef]).then((m) => setLikers(m[itemKeyRef] ?? []));
+  };
 
   const load = async () => {
     if (isBoard) setBoard(await fetchBoardMessageById(id));
@@ -160,12 +195,17 @@ export default function PostPage({
 
   return (
     <main className="min-h-screen pb-16" style={{ background: "#faf6ee" }}>
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
-        <MenuButton inline />
-        <button onClick={() => router.back()} className="text-xl" style={{ color: "#d96a1a" }} aria-label="戻る">
-          ←
-        </button>
-        <span className="text-[14px] font-bold text-[#1c1e21]">投稿</span>
+      <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
+        <div className="relative flex items-center justify-center">
+          <button
+            onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
+            className="absolute left-0 rounded-full border px-3 py-1 text-[12.5px] font-bold"
+            style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }}
+          >
+            戻る
+          </button>
+          <span className="text-[14px] font-bold text-[#1c1e21]">投稿</span>
+        </div>
       </header>
 
       <div className="bg-white px-4 py-3">
@@ -279,9 +319,53 @@ export default function PostPage({
                 <img src={u} alt="" className="w-full object-cover" />
               </div>
             ))}
+
+            {/* いいね + コメント数（フィードと同じアイコン文法） */}
+            <div className="mt-3 flex items-center gap-4">
+              <button className="flex items-center gap-1" onClick={like} aria-label="いいね">
+                <svg width="25" height="25" viewBox="0 0 24 24" fill={liked ? "#e8384f" : "none"} stroke={liked ? "#e8384f" : "#d96a1a"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
+                </svg>
+                {likeCount > 0 && <span className="num text-[12.5px] font-bold text-[#8a8070]">{likeCount}</span>}
+              </button>
+              <span className="flex items-center gap-1" aria-label="コメント">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d96a1a" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
+                </svg>
+                {commentCount > 0 && <span className="num text-[12.5px] font-bold text-[#8a8070]">{commentCount}</span>}
+              </span>
+            </div>
+            {likers.length > 0 && (
+              <div className="mt-1 flex items-center">
+                {likers.map((l, i) => (
+                  <span key={i} style={{ marginLeft: i === 0 ? 0 : -6 }}>
+                    {l.avatar_url ? (
+                      <img src={l.avatar_url} alt="" referrerPolicy="no-referrer" className="h-[20px] w-[20px] rounded-full border-2 border-white object-cover" />
+                    ) : (
+                      <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full border-2 border-white bg-[#fdeedd]">
+                        <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
+                      </span>
+                    )}
+                  </span>
+                ))}
+                <span className="ml-1.5 text-[11px] text-[#8a8d91]">
+                  {likers[0]?.display_name ?? ""}
+                  {likeCount > 1 ? ` 他${likeCount - 1}人` : ""}
+                </span>
+              </div>
+            )}
+            {/* コメント欄は最初から開いておく（通知から来た人がすぐ読める） */}
+            <CommentSection
+              itemKey={itemKeyRef}
+              userId={session.userId}
+              requireJoin={() => setShowJoin(true)}
+              onAdded={() => setCommentCount((n) => n + 1)}
+            />
           </>
         )}
       </div>
+
+      {showJoin && <JoinDialog onClose={() => setShowJoin(false)} />}
 
       {reportOpen && session.userId && (
         <ReportDialog
