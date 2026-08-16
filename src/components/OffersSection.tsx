@@ -1024,8 +1024,9 @@ export function OffersSection({
                   />
                 )}
                 {o.kind === "goods" && o.done && images.length === 0 && (
-                  <div className="mt-2 rounded-lg py-1.5 text-center text-[13px] font-extrabold tracking-[2px]" style={{ background: "#fdf0e0", color: "#c05e14" }}>
-                    応援完了
+                  <div className="mt-2 rounded-lg py-2 text-center" style={{ background: "#fdf0e0", color: "#c05e14" }}>
+                    <div className="text-[15px] font-extrabold tracking-[3px]">応援完了</div>
+                    <div className="text-[11.5px] font-bold">物資が必要な所へ届きました</div>
                   </div>
                 )}
 

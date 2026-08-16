@@ -387,6 +387,7 @@ export function GroupFeed({
                 {images.length === 0 && (m.status === "done" || (supCounts.get(m.id)?.pending ?? 0) + (supCounts.get(m.id)?.accepted ?? 0) > 0) && (
                   <div className="mt-2 rounded-lg py-1.5 text-center text-[13px] font-extrabold tracking-[2px]" style={{ background: "#fdf0e0", color: "#c05e14" }}>
                     {m.status === "done" ? "応援完了" : "現在やり取り中"}
+                    <div className="text-[11px] font-bold tracking-normal">{m.status === "done" ? "物資が必要な所へ届きました" : "他の方が対応中です"}</div>
                   </div>
                 )}
                 <VoiceSupportBlock

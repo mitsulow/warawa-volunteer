@@ -9,20 +9,43 @@ import { useState } from "react";
  * 1枚だけ表示・左右スワイプ・写真の下端に ○○●○○ を重ねて、左右にも写真があると分かるように。
  * 1枚のときはドット無し・元の縦横比。2枚以上は 4:3 に揃える（切り抜きの既定比率と同じ）。
  */
+/**
+ * 写真に重ねる斜めのたすき。「応援完了」は写真の幅いっぱいの大きなたすき＋下に説明文
+ * （「応援完了」だけだと見た人が？？？になるため）。「現在やり取り中」はやや小さめ。
+ */
+const STAMP_SUB: Record<string, string> = {
+  応援完了: "物資が必要な所へ届きました",
+  現在やり取り中: "他の方が対応中です",
+};
 export function Stamp({ text }: { text: string }) {
+  const big = text === "応援完了";
+  const sub = STAMP_SUB[text];
   return (
-    <span
-      className="pointer-events-none absolute left-1/2 top-1/2 z-10 whitespace-nowrap border-[3px] px-3 py-1 text-[17px] font-extrabold tracking-[3px]"
-      style={{
-        transform: "translate(-50%,-50%) rotate(-16deg)",
-        color: "#c05e14",
-        borderColor: "#c05e14",
-        background: "rgba(255,255,255,.72)",
-        boxShadow: "0 2px 8px rgba(0,0,0,.15)",
-      }}
-    >
-      {text}
-    </span>
+    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
+      <span
+        className="flex items-center justify-center whitespace-nowrap font-extrabold text-white"
+        style={{
+          transform: big ? "rotate(-14deg)" : "rotate(-14deg)",
+          width: big ? "140%" : "auto",
+          padding: big ? "8px 0" : "5px 18px",
+          fontSize: big ? 24 : 16,
+          letterSpacing: big ? 6 : 3,
+          background: big ? "rgba(192,94,20,.92)" : "rgba(192,94,20,.85)",
+          border: "3px solid #fff",
+          boxShadow: "0 3px 12px rgba(0,0,0,.35)",
+        }}
+      >
+        {text}
+      </span>
+      {sub && (
+        <span
+          className="mt-3 rounded-full px-3 py-1 text-[12px] font-bold"
+          style={{ background: "rgba(255,255,255,.9)", color: "#c05e14", boxShadow: "0 1px 6px rgba(0,0,0,.2)" }}
+        >
+          {sub}
+        </span>
+      )}
+    </div>
   );
 }
 
