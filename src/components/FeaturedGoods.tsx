@@ -11,7 +11,7 @@ import { goodsCategory } from "@/lib/goodsCategories";
  * 表示は楽市楽座トップと同じく画面の左右幅いっぱい（親側で-mx-4）。
  */
 export function FeaturedGoods({ offers }: { offers: Offer[] }) {
-  // 応援完了していない物資を、写真ありを先頭に最大6件（楽市楽座のパワープッシュと同じ6枠）。写真なしはワラエルのタイル
+  // 応援完了していない・写真ありの物資を最大6件（楽市楽座のパワープッシュと同じ6枠）
   const goods = offers.filter((o) => o.kind === "goods" && !o.done);
   const withImage = goods.filter((o) => o.image_urls?.length || o.image_url);
   const noImage = goods.filter((o) => !(o.image_urls?.length || o.image_url));
@@ -25,10 +25,8 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
     const start = dayOfYear % withImage.length;
     for (let i = 0; i < Math.min(6, withImage.length); i++) picks.push(withImage[(start + i) % withImage.length]);
   }
-  for (const o of noImage) {
-    if (picks.length >= 6) break;
-    picks.push(o);
-  }
+  // 写真ありの投稿だけを並べる（写真なしはワラエルのタイルになって見栄えが落ちるので出さない）
+  void noImage;
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
