@@ -37,18 +37,22 @@ language sql stable security definer set search_path = public as $$
   )
 $$;
 
--- TalKを始められるか: 事務局ボット / 管理者 が絡めば常にOK、それ以外は友達承認済みのみ
+-- TalKを始められるか（u1=始める人, u2=相手）: 事務局ボットが絡む / 始める人が管理者 / 友達承認済み。
+-- 一般人→管理者 は友達申請が必要（片方向の例外）
 create or replace function public.can_talk(u1 uuid, u2 uuid) returns boolean
 language sql stable security definer set search_path = public as $$
   select u1 = office_bot_id() or u2 = office_bot_id()
-      or is_admin(u1) or is_admin(u2)
+      or is_admin(u1)
       or are_friends(u1, u2)
 $$;
 
--- chats の作成に can_talk を要求（既存チャットはそのまま）
+-- chats の作成に can_talk(自分, 相手) を要求（既存チャットはそのまま）
 drop policy if exists "chats insert mine" on public.chats;
 create policy "chats insert mine" on public.chats for insert
-with check ((auth.uid() = a or auth.uid() = b) and can_talk(a, b));
+with check (
+  (auth.uid() = a or auth.uid() = b)
+  and can_talk(auth.uid(), case when auth.uid() = a then b else a end)
+);
 
 -- 申請/承認の🔔通知
 create or replace function public.notify_friendship()
