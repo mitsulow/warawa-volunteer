@@ -607,6 +607,12 @@ export async function sendDm(chatId: string, myId: string, body: string) {
   return { error };
 }
 
+/** 自分のDMを削除（RLS: sender本人のみ） */
+export async function deleteDm(id: string) {
+  const supabase = createClient();
+  return supabase.from("messages").delete().eq("id", id);
+}
+
 export async function markDmRead(chatId: string, myId: string) {
   const supabase = createClient();
   await supabase

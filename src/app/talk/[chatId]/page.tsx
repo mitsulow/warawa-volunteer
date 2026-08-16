@@ -4,6 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
+  deleteDm,
   fetchChatPartner,
   fetchDm,
   fetchDmSince,
@@ -15,10 +16,63 @@ import {
 import { Avatar } from "@/components/Avatar";
 import { MenuButton } from "@/components/MenuButton";
 import { MessageInput } from "@/components/MessageInput";
+import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
   return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/** 吹き出し1つ（LINE風: 既読・時刻は吹き出しの外。長押し→削除(自分のだけ)/コピー） */
+function Bubble({
+  m,
+  mine,
+  onDelete,
+}: {
+  m: DmMessage;
+  mine: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const lp = useLongPress((x, y) => setMenu({ x, y }));
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(m.body);
+    } catch {}
+  };
+  return (
+    <div className={`flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}>
+      {mine && (
+        <div className="shrink-0 text-right text-[10px] leading-tight text-gray-400">
+          {m.read_at && <div>既読</div>}
+          <div>{fmtTime(m.created_at)}</div>
+        </div>
+      )}
+      <div
+        {...lp.handlers}
+        className={`max-w-[75%] select-none whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-[15px] leading-relaxed ${
+          mine ? "bg-[#d96a1a] text-white" : "bg-white shadow-sm"
+        } ${menu ? "opacity-70" : ""}`}
+        style={{ WebkitTouchCallout: "none" } as React.CSSProperties}
+      >
+        {m.body}
+      </div>
+      {!mine && (
+        <div className="shrink-0 text-[10px] leading-tight text-gray-400">{fmtTime(m.created_at)}</div>
+      )}
+      {menu && (
+        <BubbleMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            { label: "コピー", onClick: copy },
+            ...(mine ? [{ label: "削除", danger: true, onClick: () => onDelete(m.id) }] : []),
+          ]}
+        />
+      )}
+    </div>
+  );
 }
 
 /** 1対1 Talk。5秒ポーリング・増分取得（OneSea方式） */
@@ -84,6 +138,16 @@ export default function TalkPage({
     setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
   };
 
+  const remove = async (id: string) => {
+    if (!window.confirm("このメッセージを削除しますか？")) return;
+    const { error } = await deleteDm(id);
+    if (error) {
+      window.alert("削除できませんでした");
+      return;
+    }
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  };
+
   if (!session.loading && !myId) {
     return (
       <main className="p-6 text-center">
@@ -110,30 +174,10 @@ export default function TalkPage({
         )}
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {messages.map((m) => {
-          const mine = m.sender_id === myId;
-          return (
-            <div
-              key={m.id}
-              className={`flex ${mine ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${
-                  mine ? "bg-[#d96a1a] text-white" : "bg-white shadow-sm"
-                }`}
-              >
-                {m.body}
-                <span
-                  className={`block text-[10px] mt-0.5 ${mine ? "text-white/70" : "text-gray-400"}`}
-                >
-                  {fmtTime(m.created_at)}
-                  {mine && m.read_at ? " 既読" : ""}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+        {messages.map((m) => (
+          <Bubble key={m.id} m={m} mine={m.sender_id === myId} onDelete={remove} />
+        ))}
         <div ref={bottomRef} />
       </div>
 

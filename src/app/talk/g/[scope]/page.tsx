@@ -4,6 +4,7 @@ import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
+  deleteBoardMessage,
   fetchBoard,
   fetchBoardSince,
   markGroupRead,
@@ -15,10 +16,82 @@ import {
 import { Avatar } from "@/components/Avatar";
 import { MenuButton } from "@/components/MenuButton";
 import { MessageInput } from "@/components/MessageInput";
+import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
   return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/** 吹き出し1つ（LINE風: 時刻は吹き出しの外。長押し→削除(自分 or 管理者)/コピー） */
+function Bubble({
+  m,
+  mine,
+  canDelete,
+  onDelete,
+}: {
+  m: BoardMessage;
+  mine: boolean;
+  canDelete: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const lp = useLongPress((x, y) => setMenu({ x, y }));
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(m.body);
+    } catch {}
+  };
+  return (
+    <div className={`flex gap-2 ${mine ? "justify-end" : "justify-start"}`}>
+      {!mine && (
+        <Link href={`/u/${m.user_id}`} className="shrink-0 self-end">
+          <Avatar name={m.profiles?.display_name ?? "参加者"} url={m.profiles?.avatar_url} size={28} />
+        </Link>
+      )}
+      <div className={`max-w-[78%] ${mine ? "text-right" : ""}`}>
+        {!mine && (
+          <p className="mb-0.5 px-1 text-[10px] text-[#a09888]">{m.profiles?.display_name ?? "参加者"}</p>
+        )}
+        <div className={`flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}>
+          {mine && <span className="shrink-0 text-[10px] leading-tight text-[#b8b0a0]">{fmtTime(m.created_at)}</span>}
+          <div
+            {...lp.handlers}
+            className={`inline-block select-none rounded-2xl px-3 py-2 text-left text-[15px] leading-relaxed ${
+              mine ? "text-white" : "bg-white shadow-sm"
+            } ${menu ? "opacity-70" : ""}`}
+            style={{ ...(mine ? { background: "#d96a1a" } : {}), WebkitTouchCallout: "none" } as React.CSSProperties}
+          >
+            {(m.pref || m.city) && (
+              <span
+                className={`block text-[11px] font-bold ${mine ? "text-white/90" : ""}`}
+                style={mine ? undefined : { color: "#c05e14" }}
+              >
+                {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
+              </span>
+            )}
+            {m.body && <span className="whitespace-pre-wrap break-words">{m.body}</span>}
+            {m.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={m.image_url} alt="" className="mt-1 max-h-56 max-w-full rounded-lg object-contain" />
+            )}
+          </div>
+          {!mine && <span className="shrink-0 text-[10px] leading-tight text-[#b8b0a0]">{fmtTime(m.created_at)}</span>}
+        </div>
+      </div>
+      {menu && (
+        <BubbleMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            { label: "コピー", onClick: copy },
+            ...(canDelete ? [{ label: "削除", danger: true, onClick: () => onDelete(m.id) }] : []),
+          ]}
+        />
+      )}
+    </div>
+  );
 }
 
 const META: Record<BoardScope, { name: string; emoji: string; backTo: string }> = {
@@ -103,6 +176,16 @@ export default function GroupTalkPage({
     if (url) await send(url);
   };
 
+  const remove = async (id: string) => {
+    if (!window.confirm("このメッセージを削除しますか？（掲示板からも消えます）")) return;
+    const { error } = await deleteBoardMessage(id);
+    if (error) {
+      window.alert("削除できませんでした");
+      return;
+    }
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+  };
+
   const meta = META[scope];
 
   return (
@@ -129,58 +212,15 @@ export default function GroupTalkPage({
       </header>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
-        {messages.map((m) => {
-          const mine = m.user_id === myId;
-          return (
-            <div key={m.id} className={`flex gap-2 ${mine ? "justify-end" : "justify-start"}`}>
-              {!mine && (
-                <Link href={`/u/${m.user_id}`} className="shrink-0 self-end">
-                  <Avatar
-                    name={m.profiles?.display_name ?? "参加者"}
-                    url={m.profiles?.avatar_url}
-                    size={28}
-                  />
-                </Link>
-              )}
-              <div className={`max-w-[75%] ${mine ? "text-right" : ""}`}>
-                {!mine && (
-                  <p className="mb-0.5 px-1 text-[10px] text-[#a09888]">
-                    {m.profiles?.display_name ?? "参加者"}
-                  </p>
-                )}
-                <div
-                  className={`inline-block rounded-2xl px-3 py-2 text-left text-sm ${
-                    mine ? "text-white" : "bg-white shadow-sm"
-                  }`}
-                  style={mine ? { background: "#d96a1a" } : undefined}
-                >
-                  {(m.pref || m.city) && (
-                    <span
-                      className={`block text-[11px] font-bold ${mine ? "text-white/90" : ""}`}
-                      style={mine ? undefined : { color: "#c05e14" }}
-                    >
-                      {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
-                    </span>
-                  )}
-                  {m.body && <span className="whitespace-pre-wrap break-words">{m.body}</span>}
-                  {m.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.image_url}
-                      alt=""
-                      className="mt-1 max-h-56 max-w-full rounded-lg object-contain"
-                    />
-                  )}
-                  <span
-                    className={`block text-[10px] ${mine ? "text-white/70" : "text-[#b8b0a0]"}`}
-                  >
-                    {fmtTime(m.created_at)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {messages.map((m) => (
+          <Bubble
+            key={m.id}
+            m={m}
+            mine={m.user_id === myId}
+            canDelete={!!myId && (m.user_id === myId || session.isAdmin)}
+            onDelete={remove}
+          />
+        ))}
         <div ref={bottomRef} />
       </div>
 
