@@ -47,6 +47,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 
 ### 2026-08-16 の変更（新しい順）
 - **寄付フロー刷新**: 4ボタン(寄付をする/現地へ行く/物資を送る/その他)は折りたたみ無しで常時表示。寄付=`DonateDialog`(OffersSection内)で口数(1口1,000円・±/クイック/最大1万口)→ offers(kind=money, detail「私はX口（X,000円）の寄付をする予定です。」)を作りフィードに並べる＋`/api/donate-talk`({units})で事務局から口座案内TalK(直近10分は重複送信しない)。申込は2択: ①寄付予定を掲示板(フィード)に並べる=offer作成 / ②並べずに寄付=offer無し。どちらもTalK送信。未ログインでもダイアログは開ける(申込ボタンで参加)。ゆうちょ手順は赤字「※ゆうちょ銀行から振り込む場合はこちら▽」の折りたたみ(枠なし)
+- **寄付申込の保管**: `donations`テーブル(user_id/units/amount/listed/email=Google認証メール/display_name)。`/api/donate-talk`がservice roleで毎回insert(①②とも)。RLSは管理者のみSELECT。事務局 /office に「💰 寄付申込」一覧＋「メールアドレスを全部コピー」(後日メール連絡用。送信基盤は未定=Gmailアプリパスワード案 or Resend)
 - フィード(助けたい/掲示板)は offers **4種すべて**表示。チップ=PostKit `CHIP_STYLE`(寄付をする=金/物資を送る=橙/現地へ行く=青/持ち寄ります=緑)・タップでその種別だけ絞り込み(`KindFilterBar`)
 - 表記「@わらわ〜ボランティアNo.X」（旧「@ボランティアNo.X」）
 - **画面が開くのが遅い対策**: /talk/g/[scope] は generateStaticParams(board/voice)でSSG、/talk/[chatId] と /u/[id] は layout.tsx で `dynamic="force-static"`（クライアント描画のみなのでシェルを静的化・サーバー関数のコールドスタート回避）。/post/[type]/[id] はサーバー描画のまま

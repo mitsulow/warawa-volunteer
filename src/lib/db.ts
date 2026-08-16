@@ -203,6 +203,29 @@ export async function fetchIsAdmin(userId: string): Promise<boolean> {
   return !!data;
 }
 
+/* ---------- 寄付申込（事務局のみ閲覧・メール連絡用） ---------- */
+
+export interface Donation {
+  id: string;
+  user_id: string;
+  units: number;
+  amount: number;
+  listed: boolean;
+  email: string | null;
+  display_name: string | null;
+  created_at: string;
+}
+
+export async function fetchDonations(): Promise<Donation[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("donations")
+    .select("id, user_id, units, amount, listed, email, display_name, created_at")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  return (data as Donation[]) ?? [];
+}
+
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =

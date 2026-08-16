@@ -38,8 +38,28 @@ export async function POST(req: Request) {
     chatId = created.id as string;
   }
 
-  const { units: rawUnits } = (await req.json().catch(() => ({}))) as { units?: number };
+  const { units: rawUnits, listed } = (await req.json().catch(() => ({}))) as {
+    units?: number;
+    listed?: boolean;
+  };
   const units = Math.min(10000, Math.max(1, Math.floor(Number(rawUnits) || 1)));
+
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  const name = prof?.display_name || "参加者";
+
+  // 寄付申込を保管（あとで事務局からメール連絡するため。Google認証のメールアドレスを一緒に保存。管理者だけ閲覧可）
+  await admin.from("donations").insert({
+    user_id: user.id,
+    units,
+    amount: units * 1000,
+    listed: !!listed,
+    email: user.email ?? null,
+    display_name: name,
+  });
 
   // 連打対策: 直近10分以内に寄付案内を送っていたら重複送信しない
   const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -53,13 +73,6 @@ export async function POST(req: Request) {
     .limit(1)
     .maybeSingle();
   if (dup) return NextResponse.json({ ok: true, skipped: "already-sent" });
-
-  const { data: prof } = await admin
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-  const name = prof?.display_name || "参加者";
 
   const body =
     `${name}さん、${units.toLocaleString()}口（${(units * 1000).toLocaleString()}円）の寄付のお申し込みありがとうございます。以下の口座への振り込みをお願い致します。\n\n` +

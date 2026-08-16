@@ -164,7 +164,7 @@ function DonateDialog({
     }
     setBusy(false);
     // 事務局アカウントから口座案内のTalKを自動送信（口数入り）
-    firePush("/api/donate-talk", { units });
+    firePush("/api/donate-talk", { units, listed: publish });
     setListed(publish);
     setSent(true);
   };

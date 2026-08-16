@@ -8,6 +8,8 @@ import {
   deletePopup,
   fetchAllPopups,
   fetchBodyApplications,
+  fetchDonations,
+  type Donation,
   fetchReports,
   resolveReport,
   setOfferStatus,
@@ -32,6 +34,7 @@ function fmtDate(iso: string) {
 export default function OfficePage() {
   const session = useSession();
   const [apps, setApps] = useState<BodyApplication[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [popups, setPopups] = useState<Popup[]>([]);
@@ -44,6 +47,7 @@ export default function OfficePage() {
 
   const reload = () => {
     fetchBodyApplications().then(setApps);
+    fetchDonations().then(setDonations);
     fetchReports().then(setReports);
     fetchAllPopups().then(setPopups);
   };
@@ -197,6 +201,59 @@ export default function OfficePage() {
             </p>
           ) : (
             <div className="space-y-2.5">{open.map(card)}</div>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-2 flex items-center text-sm font-extrabold text-[#5a5448]">
+            💰 寄付申込（{donations.length}件・
+            <span className="num">{donations.reduce((a, d) => a + d.amount, 0).toLocaleString()}</span>円）
+            {donations.some((d) => d.email) && (
+              <button
+                className="ml-auto rounded-full border px-2.5 py-1 text-[11px] font-bold"
+                style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
+                onClick={async () => {
+                  const emails = Array.from(new Set(donations.map((d) => d.email).filter(Boolean))) as string[];
+                  try {
+                    await navigator.clipboard.writeText(emails.join(", "));
+                    alert(`${emails.length}件のメールアドレスをコピーしました`);
+                  } catch {}
+                }}
+              >
+                ✉️ メールアドレスを全部コピー
+              </button>
+            )}
+          </h2>
+          {donations.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-6 text-center text-sm text-[#a09888]">
+              まだ寄付の申し込みはありません
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-[#ede5d8] bg-white shadow-sm">
+              {donations.map((d) => (
+                <div key={d.id} className="flex items-center gap-2 border-b border-[#f0ece0] px-3 py-2 text-[12.5px] last:border-b-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-[#3a3428]">
+                      <Link href={`/u/${d.user_id}`} className="no-underline" style={{ color: "#3a3428" }}>
+                        {d.display_name ?? "参加者"}
+                      </Link>
+                      {d.email && (
+                        <a href={`mailto:${d.email}`} className="ml-1.5 font-normal" style={{ color: "#d96a1a" }}>
+                          {d.email}
+                        </a>
+                      )}
+                    </p>
+                    <p className="text-[10.5px] text-[#b8b0a0]">
+                      {fmtDate(d.created_at)}・{d.listed ? "掲示板に掲載" : "非掲載"}
+                    </p>
+                  </div>
+                  <div className="num shrink-0 text-right">
+                    <p className="font-extrabold" style={{ color: "#c05e14" }}>{d.units.toLocaleString()}口</p>
+                    <p className="text-[10.5px] text-[#8a8070]">{d.amount.toLocaleString()}円</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
