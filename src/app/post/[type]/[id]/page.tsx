@@ -20,6 +20,7 @@ import {
   type Offer,
 } from "@/lib/db";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
+import { useCropQueue } from "@/components/ImageCropper";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { DotsMenu } from "@/components/PostKit";
@@ -60,6 +61,17 @@ export default function PostPage({
   const [editImgs, setEditImgs] = useState<ImagePair[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const crop = useCropQueue(async (files) => {
+    if (!session.userId) return;
+    setUploading(true);
+    const pairs: ImagePair[] = [];
+    for (const f of files) {
+      const p = await uploadImagePair(session.userId, f);
+      if (p) pairs.push(p);
+    }
+    if (pairs.length) setEditImgs((prev) => [...prev, ...pairs].slice(0, 4));
+    setUploading(false);
+  });
   const [reportOpen, setReportOpen] = useState(false);
   const editStarted = useRef(false);
   // いいね・コメント（フィードと同じ挙動。通知から飛んで来た人がその場で読める）
@@ -267,18 +279,11 @@ export default function PostPage({
                       accept="image/*"
                       multiple
                       className="hidden"
-                      onChange={async (e) => {
+                      onChange={(e) => {
                         if (!session.userId || !e.target.files?.length || uploading) return;
-                        setUploading(true);
                         const files = Array.from(e.target.files).slice(0, 4 - editImgs.length);
-                        const pairs: ImagePair[] = [];
-                        for (const f of files) {
-                          const p = await uploadImagePair(session.userId, f);
-                          if (p) pairs.push(p);
-                        }
-                        if (pairs.length) setEditImgs((prev) => [...prev, ...pairs].slice(0, 4));
-                        setUploading(false);
                         e.target.value = "";
+                        crop.start(files);
                       }}
                     />
                   </label>
@@ -365,6 +370,7 @@ export default function PostPage({
         )}
       </div>
 
+      {crop.element}
       {showJoin && <JoinDialog onClose={() => setShowJoin(false)} />}
 
       {reportOpen && session.userId && (

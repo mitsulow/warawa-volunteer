@@ -20,6 +20,7 @@ import { CommentSection } from "@/components/CommentSection";
 import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
+import { useCropQueue } from "@/components/ImageCropper";
 import { firePush } from "@/lib/push";
 import { Avatar } from "@/components/Avatar";
 import { BodyApplyDialog } from "@/components/BodyApplyDialog";
@@ -353,6 +354,16 @@ function OfferDialog({
   const [detail, setDetail] = useState("");
   const [images, setImages] = useState<ImagePair[]>([]);
   const [uploading, setUploading] = useState(false);
+  const crop = useCropQueue(async (files) => {
+    setUploading(true);
+    const pairs: ImagePair[] = [];
+    for (const f of files) {
+      const pair = await uploadImagePair(userId, f);
+      if (pair) pairs.push(pair);
+    }
+    if (pairs.length) setImages((prev) => [...prev, ...pairs].slice(0, 4));
+    setUploading(false);
+  });
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -518,24 +529,18 @@ function OfferDialog({
                     accept="image/*"
                     multiple
                     className="hidden"
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       if (!e.target.files?.length || uploading) return;
-                      setUploading(true);
                       const files = Array.from(e.target.files).slice(0, 4 - images.length);
-                      const pairs: ImagePair[] = [];
-                      for (const f of files) {
-                        const pair = await uploadImagePair(userId, f);
-                        if (pair) pairs.push(pair);
-                      }
-                      if (pairs.length) setImages((prev) => [...prev, ...pairs].slice(0, 4));
-                      setUploading(false);
                       e.target.value = "";
+                      crop.start(files);
                     }}
                   />
                 </label>
               )}
             </div>
 
+            {crop.element}
             {/* OGPプレビュー */}
             {loadingOGP && (
               <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#b0a898]">

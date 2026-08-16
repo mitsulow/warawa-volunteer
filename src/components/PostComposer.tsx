@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sendBoardMessage, type BoardScope } from "@/lib/db";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
+import { useCropQueue } from "@/components/ImageCropper";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { SnsIcon } from "@/components/SnsIcon";
 import { DEFAULT_PREF, PREF_ORDER, fetchMunicipalities } from "@/lib/prefs";
@@ -90,6 +91,18 @@ export function PostComposer({
   const [loadingOGP, setLoadingOGP] = useState(false);
   const [images, setImages] = useState<ImagePair[]>([]);
   const [uploading, setUploading] = useState(false);
+  // 写真は選んだ後に1枚ずつ切り抜き（そのまま使うも可）→ アップロード
+  const crop = useCropQueue(async (files) => {
+    if (!userId) return;
+    setUploading(true);
+    const pairs: ImagePair[] = [];
+    for (const f of files) {
+      const pair = await uploadImagePair(userId, f);
+      if (pair) pairs.push(pair);
+    }
+    if (pairs.length) setImages((prev) => [...prev, ...pairs].slice(0, 4));
+    setUploading(false);
+  });
   const [pref, setPref] = useState(DEFAULT_PREF);
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<Record<string, string[]>>({});
@@ -177,6 +190,7 @@ export function PostComposer({
 
   const overlay = (
     <>
+      {crop.element}
       {sending && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40">
           <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-8 py-6 shadow-2xl">
@@ -334,18 +348,11 @@ export function PostComposer({
               accept="image/*"
               multiple
               className="hidden"
-              onChange={async (e) => {
+              onChange={(e) => {
                 if (!userId || !e.target.files?.length || uploading) return;
-                setUploading(true);
                 const files = Array.from(e.target.files).slice(0, 4 - images.length);
-                const pairs: ImagePair[] = [];
-                for (const f of files) {
-                  const pair = await uploadImagePair(userId, f);
-                  if (pair) pairs.push(pair);
-                }
-                if (pairs.length) setImages((prev) => [...prev, ...pairs].slice(0, 4));
-                setUploading(false);
                 e.target.value = "";
+                crop.start(files);
               }}
             />
           </label>
