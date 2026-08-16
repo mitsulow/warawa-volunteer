@@ -468,7 +468,7 @@ function OfferDialog({
               </div>
             )}
             <label className="mt-3 block text-sm font-bold">
-              {isGoods ? "私はこういう物を出せます" : "私が持ち寄れるもの・アイディア・その他"}
+              {isGoods ? "私はこういう物を出せます" : "私が持ち寄れる「アイディア」や意見、その他の情報はこちらへ"}
             </label>
             <textarea
               className="mt-1 w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#d96a1a]"
