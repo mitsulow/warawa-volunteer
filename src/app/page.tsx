@@ -257,6 +257,13 @@ export default function Home() {
           >
             📖 使い方（かんたんガイド）
           </Link>
+          <button
+            onClick={() => window.dispatchEvent(new Event("warawa:installPrompt"))}
+            className="mx-auto mt-2 block rounded-full border px-4 py-2 text-[13px] font-bold"
+            style={{ borderColor: "#e8dcc4", color: "#8a7a5a", background: "#fff" }}
+          >
+            📱 ホーム画面に追加する
+          </button>
         </footer>
       </div>
 

@@ -63,6 +63,23 @@ export function InstallPrompt() {
     };
   }, []);
 
+  // ☰メニューやフッターの「ホーム画面に追加」から、スヌーズ中でも手動で出せる
+  useEffect(() => {
+    const onManual = () => {
+      const standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as unknown as { standalone?: boolean }).standalone === true;
+      if (standalone) {
+        window.alert("すでにホーム画面のアプリとして開いています");
+        return;
+      }
+      setGuide(false);
+      setShow(true);
+    };
+    window.addEventListener("warawa:installPrompt", onManual);
+    return () => window.removeEventListener("warawa:installPrompt", onManual);
+  }, []);
+
   const install = async () => {
     if (deferred) {
       await deferred.prompt();

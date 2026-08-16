@@ -128,6 +128,16 @@ export function MenuButton({
                 </a>
               );
             })}
+            <button
+              className="flex w-full items-center gap-3 border-b border-[#f6efe4] px-5 py-3 text-left text-[14px] font-medium text-[#3a3428]"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event("warawa:installPrompt"));
+              }}
+            >
+              <img src="/icons/tab-home.png" alt="" className="h-[22px] w-[22px] object-contain" />
+              ホーム画面に追加
+            </button>
             {userId ? (
               <button
                 className="flex w-full items-center gap-3 px-5 py-3 text-left text-[14px] font-medium text-[#c04030]"
