@@ -516,13 +516,13 @@ function OfferDialog({
             {isGoods && (
               <div className="mt-3 rounded-xl border p-3" style={{ borderColor: "#e8dcc4", background: "#fffaf0" }}>
                 <label className="block text-[13px] font-bold text-[#3a3428]">
-                  数量 <span className="font-normal text-[#a09888]">（例：カップラーメン10個、米5kg）</span>
+                  数量 <span className="font-normal text-[#a09888]">（例：自然栽培のお米5kg、手作り味噌2kg、無添加の梅干し30個）</span>
                 </label>
                 <input
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   maxLength={40}
-                  placeholder="例：10個"
+                  placeholder="例：味噌2kg"
                   className="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-[14px] outline-none focus:border-[#d96a1a]"
                   style={{ borderColor: "#e8dcc4" }}
                 />
@@ -573,7 +573,7 @@ function OfferDialog({
                       />
                       <span className="text-[13px] text-[#5a5448]">か所（人）まで</span>
                     </div>
-                    <p className="mt-1 text-[11px] text-[#8a7a5a]">例：「カップラーメン10個」を1か所にまとめて送るなら「1」、1個ずつ10人に送れるなら「10」</p>
+                    <p className="mt-1 text-[11px] text-[#8a7a5a]">例：「無添加の梅干し30個」を1か所にまとめて送るなら「1」、3個ずつ10人に送れるなら「10」</p>
                   </div>
                 )}
               </div>

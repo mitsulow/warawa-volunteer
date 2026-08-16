@@ -163,7 +163,7 @@ export function GoodsSupportBlock({
                 onChange={(e) => setMsg(e.target.value)}
                 rows={2}
                 maxLength={200}
-                placeholder="ひとこと（任意）例：〇〇市の避難所で3世帯分ほしいです"
+                placeholder="ひとこと（任意）例：〇〇市の避難所で3世帯分いただきたいです。発酵食品が助かります"
                 className="w-full rounded-lg border p-2 text-[13px] outline-none focus:border-[#d96a1a]"
                 style={{ borderColor: "#e8dcc4" }}
               />
