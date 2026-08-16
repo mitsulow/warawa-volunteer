@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { adminClient, sendPushTo, userFromRequest } from "@/lib/pushServer";
+import { OFFICE_BOT_ID } from "@/lib/config";
 
 export const runtime = "nodejs";
 
-/** 事務局アカウント（みつろう） */
-const OFFICE_USER_ID = "ef90d04d-99c8-4a8a-967a-5a46f15eedcc";
+/** 差出人 = 事務局ボットアカウント（管理者は /talk の「事務局の受信箱」から返信できる） */
+const OFFICE_USER_ID = OFFICE_BOT_ID;
 
 /**
  * 「寄付をする」を押した人へ、事務局アカウントから自動でTalKを送る。
@@ -109,8 +110,8 @@ export async function POST(req: Request) {
     .eq("id", chatId);
 
   await sendPushTo(admin, user.id, {
-    title: "事務局からTalK",
-    body: "寄付のご案内をお送りしました",
+    title: "事務局からTalKが届いてます",
+    body: `寄付予定 ${units.toLocaleString()}口 ${(units * 1000).toLocaleString()}円 の口座のご案内`,
     url: `/talk/${chatId}`,
     tag: `dm-${chatId}`,
   });

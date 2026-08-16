@@ -6,13 +6,13 @@ import { useSession } from "@/lib/useSession";
 import {
   fetchBroadcastSummary,
   fetchChatList,
+  fetchOfficeInbox,
   fetchGroupSummaries,
   type BoardScope,
   type ChatSummary,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { BottomNav } from "@/components/BottomNav";
-import { MenuButton } from "@/components/MenuButton";
 
 function fmtTime(iso: string | null) {
   if (!iso) return "";
@@ -28,10 +28,42 @@ const GROUPS: Array<{ scope: BoardScope; name: string; emoji: string; sub: strin
   { scope: "board", name: "みんなの掲示板", emoji: "💬", sub: "全員の連絡板" },
 ];
 
+/** 1対1トークの1行。未読数はアイコンの右上に赤丸（LINE/OneSea風） */
+function ChatRowItem({ c, office = false }: { c: ChatSummary; office?: boolean }) {
+  return (
+    <Link
+      href={`/talk/${c.id}`}
+      className={`flex items-center gap-3 px-4 py-3 no-underline active:bg-gray-50 ${office ? "bg-[#fffaf0]" : "bg-white"}`}
+    >
+      <span className="relative shrink-0">
+        <Avatar name={c.partnerName} url={c.partnerAvatar} size={44} />
+        {c.unread > 0 && (
+          <span
+            className="num absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full border-2 border-white bg-[#e05040] px-1 text-[10px] font-bold text-white"
+            style={{ lineHeight: 1 }}
+          >
+            {c.unread > 99 ? "99+" : c.unread}
+          </span>
+        )}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm text-[#3a3428] ${c.unread > 0 ? "font-extrabold" : "font-bold"}`}>{c.partnerName}</p>
+        <p className={`truncate text-xs ${c.unread > 0 ? "font-bold text-[#3a3428]" : "text-[#a09888]"}`}>
+          {c.lastBody ?? "（まだメッセージがありません）"}
+        </p>
+      </div>
+      <div className="shrink-0 text-right">
+        <p className="text-[10px] text-[#b8b0a0]">{fmtTime(c.lastAt)}</p>
+      </div>
+    </Link>
+  );
+}
+
 /** TalKタブ: グループトーク（掲示板と同期）2部屋をピン留め + 1対1トーク一覧 */
 export default function TalkListPage() {
   const session = useSession();
   const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [inbox, setInbox] = useState<ChatSummary[]>([]);
   const [groups, setGroups] = useState<Record<
     BoardScope,
     { lastBody: string | null; lastAt: string | null; unread: number }
@@ -43,13 +75,15 @@ export default function TalkListPage() {
     if (!session.userId) return;
     let alive = true;
     const load = async () => {
-      const [c, g, b] = await Promise.all([
+      const [c, g, b, ib] = await Promise.all([
         fetchChatList(session.userId!),
         fetchGroupSummaries(session.userId!),
         fetchBroadcastSummary(session.userId!).catch(() => null),
+        session.isAdmin ? fetchOfficeInbox(session.userId!).catch(() => []) : Promise.resolve([]),
       ]);
       if (!alive) return;
       setChats(c);
+      setInbox(ib);
       setGroups(g);
       setBc(b);
       setLoaded(true);
@@ -62,19 +96,24 @@ export default function TalkListPage() {
       alive = false;
       clearInterval(timer);
     };
-  }, [session.userId]);
+  }, [session.userId, session.isAdmin]);
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
-        <h1 className="flex items-center gap-2.5 text-lg font-bold" style={{ color: "#d96a1a" }}>
-          <MenuButton inline />
-          <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="ホームへ">
-            ←
+        <div className="relative flex items-center justify-center">
+          <Link
+            href="/"
+            className="absolute left-0 rounded-full border px-3 py-1 text-[12.5px] font-bold no-underline"
+            style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }}
+          >
+            戻る
           </Link>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" /> TalK
-        </h1>
+          <h1 className="flex items-center gap-2 text-lg font-bold" style={{ color: "#d96a1a" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/icon-talk-green.webp" alt="" className="h-6 w-6 object-contain" /> TalK
+          </h1>
+        </div>
       </header>
 
       {!session.loading && !session.userId && (
@@ -147,30 +186,29 @@ export default function TalkListPage() {
             );
           })}
 
-          {/* 1対1トーク */}
+          {/* 1対1トーク（未読数はアイコンの右上に赤丸） */}
           {chats.map((c) => (
-            <Link
-              key={c.id}
-              href={`/talk/${c.id}`}
-              className="flex items-center gap-3 bg-white px-4 py-3 no-underline active:bg-gray-50"
-            >
-              <Avatar name={c.partnerName} url={c.partnerAvatar} size={44} />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-[#3a3428]">{c.partnerName}</p>
-                <p className="truncate text-xs text-[#a09888]">
-                  {c.lastBody ?? "（まだメッセージがありません）"}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-[10px] text-[#b8b0a0]">{fmtTime(c.lastAt)}</p>
-                {c.unread > 0 && (
-                  <span className="mt-1 inline-block rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {c.unread}
+            <ChatRowItem key={c.id} c={c} />
+          ))}
+
+          {/* 事務局の受信箱（管理者だけ）: 事務局ボット宛のTalK。開くと事務局として返信できる */}
+          {session.isAdmin && inbox.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 bg-[#fdf0e0] px-4 py-1.5 text-[11.5px] font-extrabold" style={{ color: "#c05e14" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/office-avatar.png" alt="" className="h-5 w-5 rounded-full" />
+                事務局の受信箱（管理者のみ・事務局として返信）
+                {inbox.reduce((n, c) => n + c.unread, 0) > 0 && (
+                  <span className="num ml-auto rounded-full bg-[#e05040] px-1.5 py-0.5 text-[10px] text-white">
+                    {inbox.reduce((n, c) => n + c.unread, 0)}
                   </span>
                 )}
               </div>
-            </Link>
-          ))}
+              {inbox.map((c) => (
+                <ChatRowItem key={c.id} c={c} office />
+              ))}
+            </>
+          )}
 
           {loaded && chats.length === 0 && (
             <p className="px-6 py-6 text-center text-sm text-[#a09888]">

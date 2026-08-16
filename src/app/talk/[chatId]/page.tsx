@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
   deleteDm,
+  fetchChatMeta,
   fetchChatPartner,
+  fetchProfile,
   fetchDm,
   fetchDmSince,
   markDmRead,
@@ -16,6 +18,7 @@ import {
 import { Avatar } from "@/components/Avatar";
 import { MenuButton } from "@/components/MenuButton";
 import { MessageInput } from "@/components/MessageInput";
+import { OFFICE_BOT_ID } from "@/lib/config";
 import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 
 function fmtTime(iso: string) {
@@ -91,40 +94,57 @@ export default function TalkPage({
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const myId = session.userId;
+  // 事務局の受信箱から開いた場合（管理者・自分は参加者でない・事務局ボットのチャット）は「事務局として」読む/書く
+  const [actAs, setActAs] = useState<string | null>(null);
+  const meId = actAs ?? myId;
 
   useEffect(() => {
     if (!myId) return;
     let alive = true;
-    fetchChatPartner(chatId, myId).then((p) => alive && setPartner(p));
-    fetchDm(chatId).then((rows) => {
+    const timers: ReturnType<typeof setInterval>[] = [];
+    (async () => {
+      const meta = await fetchChatMeta(chatId);
+      if (!alive) return;
+      const asOffice =
+        !!meta && meta.a !== myId && meta.b !== myId && (meta.a === OFFICE_BOT_ID || meta.b === OFFICE_BOT_ID);
+      const me = asOffice ? OFFICE_BOT_ID : myId;
+      setActAs(asOffice ? OFFICE_BOT_ID : null);
+      if (asOffice && meta) {
+        const partnerId = meta.a === OFFICE_BOT_ID ? meta.b : meta.a;
+        fetchProfile(partnerId).then((p) => alive && setPartner(p));
+      } else {
+        fetchChatPartner(chatId, myId).then((p) => alive && setPartner(p));
+      }
+      const rows = await fetchDm(chatId);
       if (!alive) return;
       setMessages(rows);
       if (rows.length) cursorRef.current = rows[rows.length - 1].created_at;
-      markDmRead(chatId, myId);
+      markDmRead(chatId, me);
       setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
-    });
-    const timer = setInterval(async () => {
-      if (document.hidden || !cursorRef.current) return;
-      const fresh = await fetchDmSince(chatId, cursorRef.current);
-      if (!alive || fresh.length === 0) return;
-      cursorRef.current = fresh[fresh.length - 1].created_at;
-      setMessages((prev) => {
-        const seen = new Set(prev.map((m) => m.id));
-        return [...prev, ...fresh.filter((m) => !seen.has(m.id))];
-      });
-      markDmRead(chatId, myId);
-      setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
-    }, 5000);
+      const timer = setInterval(async () => {
+        if (document.hidden || !cursorRef.current) return;
+        const fresh = await fetchDmSince(chatId, cursorRef.current);
+        if (!alive || fresh.length === 0) return;
+        cursorRef.current = fresh[fresh.length - 1].created_at;
+        setMessages((prev) => {
+          const seen = new Set(prev.map((m) => m.id));
+          return [...prev, ...fresh.filter((m) => !seen.has(m.id))];
+        });
+        markDmRead(chatId, me);
+        setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
+      }, 5000);
+      timers.push(timer);
+    })();
     return () => {
       alive = false;
-      clearInterval(timer);
+      timers.forEach(clearInterval);
     };
   }, [chatId, myId]);
 
   const send = async () => {
-    if (!myId || !body.trim()) return;
+    if (!meId || !body.trim()) return;
     setBusy(true);
-    await sendDm(chatId, myId, body.trim());
+    await sendDm(chatId, meId, body.trim());
     setBody("");
     setBusy(false);
     const fresh = await fetchDmSince(chatId, cursorRef.current ?? "1970-01-01");
@@ -172,11 +192,16 @@ export default function TalkPage({
             <span className="font-bold">{partner.display_name || "参加者"}</span>
           </>
         )}
+        {actAs && (
+          <span className="ml-auto shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[10.5px] font-bold">
+            事務局として返信
+          </span>
+        )}
       </header>
 
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
         {messages.map((m) => (
-          <Bubble key={m.id} m={m} mine={m.sender_id === myId} onDelete={remove} />
+          <Bubble key={m.id} m={m} mine={m.sender_id === meId} onDelete={remove} />
         ))}
         <div ref={bottomRef} />
       </div>

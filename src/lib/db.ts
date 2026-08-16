@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase";
 import { firePush } from "@/lib/push";
 import { TERMS_VERSION } from "@/lib/terms";
+import { OFFICE_BOT_ID } from "@/lib/config";
 
 export interface Profile {
   id: string;
@@ -740,20 +741,88 @@ export async function fetchChatList(myId: string): Promise<ChatSummary[]> {
   });
 }
 
-/** ナビバッジ用: DM未読 + 掲示板グループ未読 + お知らせ未読の合計 */
+/** チャットの参加者（事務局受信箱の判定用） */
+export async function fetchChatMeta(chatId: string): Promise<{ a: string; b: string } | null> {
+  const supabase = createClient();
+  const { data } = await supabase.from("chats").select("a, b").eq("id", chatId).maybeSingle();
+  return (data as { a: string; b: string } | null) ?? null;
+}
+
+/**
+ * 事務局の受信箱（管理者のみ・RLSで許可）: 事務局ボットが参加しているチャット一覧。
+ * 自分自身が参加者のチャット（自分が寄付した時など）は通常のTalK一覧側に出るので除外。
+ */
+export async function fetchOfficeInbox(myId: string): Promise<ChatSummary[]> {
+  const supabase = createClient();
+  const { data: chats } = await supabase
+    .from("chats")
+    .select(
+      "id, a, b, last_message_at, pa:profiles!chats_a_fkey(display_name, avatar_url), pb:profiles!chats_b_fkey(display_name, avatar_url)"
+    )
+    .or(`a.eq.${OFFICE_BOT_ID},b.eq.${OFFICE_BOT_ID}`)
+    .order("last_message_at", { ascending: false, nullsFirst: false });
+  const rows = ((chats as unknown as ChatRow[]) ?? []).filter((c) => c.a !== myId && c.b !== myId);
+  if (rows.length === 0) return [];
+  const ids = rows.map((c) => c.id);
+  const [{ data: lasts }, { data: unreads }] = await Promise.all([
+    supabase.from("messages").select("chat_id, body, created_at").in("chat_id", ids).order("created_at", { ascending: false }).limit(300),
+    supabase.from("messages").select("chat_id").in("chat_id", ids).is("read_at", null).neq("sender_id", OFFICE_BOT_ID),
+  ]);
+  const lastBy = new Map<string, { body: string; created_at: string }>();
+  for (const m of lasts ?? []) if (!lastBy.has(m.chat_id)) lastBy.set(m.chat_id, m);
+  const unreadBy = new Map<string, number>();
+  for (const m of unreads ?? []) unreadBy.set(m.chat_id, (unreadBy.get(m.chat_id) ?? 0) + 1);
+  return rows.map((c) => {
+    const partnerIsA = c.b === OFFICE_BOT_ID;
+    const partner = (partnerIsA ? c.pa : c.pb) ?? { display_name: "参加者", avatar_url: null };
+    const last = lastBy.get(c.id);
+    return {
+      id: c.id,
+      partnerId: partnerIsA ? c.a : c.b,
+      partnerName: partner.display_name || "参加者",
+      partnerAvatar: partner.avatar_url,
+      lastBody: last?.body ?? null,
+      lastAt: last?.created_at ?? c.last_message_at,
+      unread: unreadBy.get(c.id) ?? 0,
+    };
+  });
+}
+
+/** ナビバッジ用: DM未読 + (管理者は事務局受信箱の未読) + 掲示板グループ未読 + お知らせ未読の合計 */
 export async function fetchUnreadTotal(myId: string): Promise<number> {
   const supabase = createClient();
-  const [{ count }, groups, bc] = await Promise.all([
-    supabase
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .is("read_at", null)
-      .neq("sender_id", myId),
+  const [{ data: myChats }, groups, bc, admin] = await Promise.all([
+    supabase.from("chats").select("id, a, b").or(`a.eq.${myId},b.eq.${myId},a.eq.${OFFICE_BOT_ID},b.eq.${OFFICE_BOT_ID}`),
     fetchGroupSummaries(myId).catch(() => null),
     fetchBroadcastSummary(myId).catch(() => null),
+    fetchIsAdmin(myId).catch(() => false),
   ]);
+  const rows = (myChats ?? []) as Array<{ id: string; a: string; b: string }>;
+  const mine = rows.filter((c) => c.a === myId || c.b === myId).map((c) => c.id);
+  const office = admin
+    ? rows.filter((c) => (c.a === OFFICE_BOT_ID || c.b === OFFICE_BOT_ID) && c.a !== myId && c.b !== myId).map((c) => c.id)
+    : [];
+  let dm = 0;
+  if (mine.length) {
+    const { count } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("chat_id", mine)
+      .is("read_at", null)
+      .neq("sender_id", myId);
+    dm += count ?? 0;
+  }
+  if (office.length) {
+    const { count } = await supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("chat_id", office)
+      .is("read_at", null)
+      .neq("sender_id", OFFICE_BOT_ID);
+    dm += count ?? 0;
+  }
   const g = groups ? groups.board.unread : 0; // 助けてはTalK非同期のため掲示板のみ
-  return (count ?? 0) + g + (bc?.unread ?? 0);
+  return dm + g + (bc?.unread ?? 0);
 }
 
 /* ---------- 投稿の編集・削除・通報 ---------- */

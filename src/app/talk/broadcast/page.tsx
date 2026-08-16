@@ -87,7 +87,7 @@ export default function BroadcastPage() {
             <div className="flex items-center gap-2">
               <img src="/waraeru-v2.png" alt="" className="h-6 w-6 object-contain" />
               <span className="text-[12px] font-bold" style={{ color: "#c05e14" }}>
-                事務局{b.profiles?.display_name ? `（${b.profiles.display_name}）` : ""}
+                事務局
               </span>
               <span className="ml-auto text-[10px] text-[#b8b0a0]">{fmtTime(b.created_at)}</span>
             </div>
