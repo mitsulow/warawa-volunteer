@@ -753,10 +753,8 @@ export function OffersSection({
   }, [userId]);
 
   useEffect(() => {
-    const keys = offers
-      .filter((o) => o.kind === "goods" || o.kind === "other")
-      .map((o) => `offer:${o.id}`)
-      .slice(0, 100);
+    // 4種すべての記事のいいね/コメント数を取る（以前は物資・その他だけで、寄付・現地へ行くの分が消えて見えていた）
+    const keys = offers.map((o) => `offer:${o.id}`).slice(0, 200);
     if (keys.length === 0) return;
     fetchFeedLikes(keys, userId).then(({ counts, mine }) => {
       setLikeCounts(counts);
