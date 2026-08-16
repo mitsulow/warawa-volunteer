@@ -98,6 +98,13 @@ export default function Home() {
     ["voice", "助けて", "現地からの声"],
     ["board", "掲示板", "これまでの取り組み"],
   ];
+  // 選択中タブの「ひとこと説明」: タブから吹き出しの尻尾でつながる帯として表示
+  const TAB_LEAD: Record<Tab, string> = {
+    offers: "「わたし」に出来る事を持ち寄る",
+    voice: "現地で今欲しい物、やって欲しい事の掲示板",
+    board: "現地の様子・これまでの取り組みを共有する掲示板",
+  };
+  const tabIndex = TABS.findIndex(([id]) => id === tab);
 
   return (
     <main className="overflow-x-clip pb-24" style={{ background: "#faf6ee" }}>
@@ -177,12 +184,25 @@ export default function Home() {
             className="overflow-hidden rounded-b-2xl p-2"
             style={{ border: "3px solid #d96a1a", background: "#fffdf8" }}
           >
+        {/* タブ直下の説明帯: 選択中タブの真下から尻尾が伸びて、タブと一体に見える */}
+        <div className="relative -mx-2 -mt-2 mb-2" style={{ background: "#fdeedd", borderBottom: "1px solid #f0d0a8" }}>
+          <span
+            className="absolute -top-px h-0 w-0"
+            style={{
+              left: `calc(${(tabIndex * 2 + 1) * (100 / 6)}% - 8px)`,
+              borderLeft: "8px solid transparent",
+              borderRight: "8px solid transparent",
+              borderTop: "8px solid #d96a1a",
+            }}
+            aria-hidden
+          />
+          <p className="px-3 pb-2 pt-3 text-center text-[14px] font-extrabold leading-snug" style={{ color: "#c05e14" }}>
+            {TAB_LEAD[tab]}
+          </p>
+        </div>
 
         {tab === "voice" && (
           <div>
-            <p className="mb-2 text-center text-xs font-medium text-[#8a8070]">
-              現地で今欲しい物、やって欲しい事の掲示板
-            </p>
             <GroupFeed
               scope="voice"
               userId={session.userId}
@@ -196,9 +216,6 @@ export default function Home() {
 
         {tab === "offers" && (
           <div>
-            <p className="mb-2 text-center text-xs font-medium text-[#8a8070]">
-              「わたし」に出来る事を持ち寄る
-            </p>
           <OffersSection
             userId={session.userId}
             profile={session.profile}
