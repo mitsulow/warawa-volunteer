@@ -17,9 +17,10 @@ import { Avatar } from "@/components/Avatar";
 
 /**
  * 助けて(voice)カードの「私が応援します」ブロック。
- * - 見る人: 🙌 私が応援します（ひとこと任意）→ 投稿主に🔔
- * - 投稿主: 応援者一覧 → 「この人にお願いする」→ 自動で友達承認 → TalKで送り先など相談
- * - 投稿主/管理者: TalKでの取引が完了したら「応援完了」（写真が白黒になり「応援完了」のたすき）
+ * - 見る人: 🙌 私が応援します → その瞬間に成立（1人だけ）。写真は白黒＋「現在やり取り中」になり、他の人は押せない（重複送付の防止）
+ *   自動で友達承認されるので、すぐTalKで送り先などを相談できる
+ * - 投稿主: 応援者を確認・TalK。決裂したら「違う人に応援を求める」→ 募集中に戻る
+ * - 投稿主/管理者: TalKでの取引が完了したら「応援完了」（「応援完了」のたすき）
  */
 export function VoiceSupportBlock({
   message,
@@ -41,17 +42,19 @@ export function VoiceSupportBlock({
   const router = useRouter();
   const isOwner = !!userId && userId === message.user_id;
   const done = message.status === "done";
-  const pending = counts?.pending ?? 0;
-  const accepted = counts?.accepted ?? 0;
-  const [open, setOpen] = useState(false);
+  const active = (counts?.pending ?? 0) + (counts?.accepted ?? 0) > 0; // 現在やり取り中
   const [list, setList] = useState<VoiceSupport[] | null>(null);
   const [asking, setAsking] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (open && (isOwner || isAdmin)) fetchVoiceSupportsFor(message.id).then(setList);
-  }, [open, isOwner, isAdmin, message.id]);
+    if ((isOwner || isAdmin) && active) fetchVoiceSupportsFor(message.id).then(setList);
+    else setList(null);
+  }, [isOwner, isAdmin, active, message.id, counts?.accepted, counts?.pending]);
+
+  const current = list?.find((r) => r.status === "accepted" || r.status === "pending") ?? null;
+  const myActive = mySupport && (mySupport.status === "accepted" || mySupport.status === "pending") ? mySupport : null;
 
   const offerHelp = async () => {
     if (!userId) {
@@ -59,11 +62,13 @@ export function VoiceSupportBlock({
       return;
     }
     if (busy) return;
+    if (!window.confirm("この「助けて」に応援しますか？\n押すとあなたに決まり（他の人は応援できなくなります）、投稿主とTalKで送り先などを相談できます。")) return;
     setBusy(true);
     const { error } = await sendVoiceSupport(message.id, userId, msg);
     setBusy(false);
     if (error) {
-      window.alert("送れませんでした（すでに手を挙げているか、受付が終了しています）");
+      window.alert("送れませんでした（すでに他の方がやり取り中か、受付が終了しています）");
+      onChanged();
       return;
     }
     setAsking(false);
@@ -71,68 +76,54 @@ export function VoiceSupportBlock({
     onChanged();
   };
 
-  const decide = async (r: VoiceSupport, status: "accepted" | "declined") => {
-    if (busy) return;
-    const q =
-      status === "accepted"
-        ? `${r.profiles?.display_name ?? "この方"}さんに応援をお願いしますか？\nお願いすると友達として登録され、TalKで送り先などを相談できます。`
-        : "この応援を見送りますか？";
-    if (!window.confirm(q)) return;
+  const release = async () => {
+    if (!current || busy) return;
+    if (!window.confirm(`${current.profiles?.display_name ?? "この方"}さんとのやり取りをいったん終えて、違う人に応援を求めますか？\n（投稿は募集中に戻り、また「私が応援します」を押せるようになります）`)) return;
     setBusy(true);
-    await respondVoiceSupport(r.id, status);
+    await respondVoiceSupport(current.id, "declined");
     setBusy(false);
-    setList(null);
-    fetchVoiceSupportsFor(message.id).then(setList);
     onChanged();
   };
 
   return (
     <div className="mt-2 rounded-xl border px-3 py-2" style={{ borderColor: "#f0e6d2", background: "#fffdf8" }}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
-        <span className={done ? "font-bold text-[#a09888]" : "font-bold"} style={done ? undefined : { color: "#2e7d4f" }}>
-          {done ? "✅ 応援完了" : accepted > 0 ? `応援者が決まりました（${accepted}人）` : pending > 0 ? `🙌 応援したい人 ${pending}人` : "🙌 応援を待っています"}
+        <span className="font-bold" style={{ color: done ? "#a09888" : active ? "#c05e14" : "#2e7d4f" }}>
+          {done ? "✅ 応援完了" : active ? "🔄 現在やり取り中" : "🙌 応援を待っています"}
         </span>
       </div>
 
-      {/* 見る人: 私が応援します */}
+      {/* 見る人 */}
       {!isOwner && !done && (
         <div className="mt-2">
-          {mySupport ? (
+          {myActive ? (
             <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
-              {mySupport.status === "accepted" ? (
-                <>
-                  <span className="font-bold" style={{ color: "#2e7d4f" }}>✅ あなたにお願いされました</span>
-                  {userId && (
-                    <button
-                      onClick={async () => {
-                        const chatId = await getOrCreateChat(userId, message.user_id);
-                        if (chatId) router.push(`/talk/${chatId}`);
-                      }}
-                      className="rounded-full px-3 py-1 text-[11.5px] font-bold text-white"
-                      style={{ background: "#d96a1a" }}
-                    >
-                      TalKで相談する
-                    </button>
-                  )}
-                </>
-              ) : mySupport.status === "declined" ? (
-                <span className="text-[#a09888]">今回は見送りになりました</span>
-              ) : (
-                <>
-                  <span className="text-[#8a7a5a]">手を挙げました（返事待ち）</span>
-                  <button
-                    onClick={async () => {
-                      if (!window.confirm("応援の申し出を取り消しますか？")) return;
-                      await cancelVoiceSupport(mySupport.id);
-                      onChanged();
-                    }}
-                    className="text-[11.5px] text-[#a09888] underline"
-                  >
-                    取り消す
-                  </button>
-                </>
+              <span className="font-bold" style={{ color: "#2e7d4f" }}>✅ あなたが応援中です</span>
+              {userId && (
+                <button
+                  onClick={async () => {
+                    const chatId = await getOrCreateChat(userId, message.user_id);
+                    if (chatId) router.push(`/talk/${chatId}`);
+                  }}
+                  className="rounded-full px-3 py-1 text-[11.5px] font-bold text-white"
+                  style={{ background: "#d96a1a" }}
+                >
+                  TalKで相談する
+                </button>
               )}
+              <button
+                onClick={async () => {
+                  if (!window.confirm("応援を取り下げますか？（投稿は募集中に戻ります）")) return;
+                  await cancelVoiceSupport(myActive.id);
+                  onChanged();
+                }}
+                className="text-[11.5px] text-[#a09888] underline"
+              >
+                取り下げる
+              </button>
             </div>
+          ) : active ? (
+            <p className="text-[12px] text-[#a09888]">他の方がやり取り中のため、いまは応援できません</p>
           ) : asking ? (
             <div className="mt-1">
               <textarea
@@ -150,9 +141,9 @@ export function VoiceSupportBlock({
                   onClick={offerHelp}
                   disabled={busy}
                   className="rounded-full px-4 py-1.5 text-[12.5px] font-bold text-white disabled:opacity-50"
-                  style={{ background: "#d96a1a" }}
+                  style={{ background: "#2e7d4f" }}
                 >
-                  応援を申し出る
+                  私が応援します
                 </button>
               </div>
             </div>
@@ -168,75 +159,62 @@ export function VoiceSupportBlock({
         </div>
       )}
 
-      {/* 投稿主/管理者: 応援者一覧・応援完了 */}
+      {/* 投稿主/管理者 */}
       {(isOwner || isAdmin) && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setOpen(!open)}
-            className="rounded-full border px-3 py-1 text-[12px] font-bold"
-            style={{ borderColor: "#e8dcc4", color: "#5a5448", background: "#fff" }}
-          >
-            応援者 {pending + accepted}人 {open ? "△" : "▽"}
-          </button>
-          <button
-            onClick={async () => {
-              const next = done ? "open" : "done";
-              if (!window.confirm(next === "done" ? "「応援完了」にしますか？\nTalKでのやり取り（取引）がお互いに完了した時点で押してください。写真に応援完了のたすきが付き、募集を終了します。" : "応援完了を取り消して、募集中に戻しますか？")) return;
-              await setBoardStatus(message.id, next);
-              onChanged();
-            }}
-            className="rounded-full px-3 py-1 text-[12px] font-bold text-white"
-            style={{ background: done ? "#a09888" : "#c05e14" }}
-          >
-            {done ? "応援完了を取り消す" : "✅ 応援完了にする"}
-          </button>
-        </div>
-      )}
-      {open && (isOwner || isAdmin) && (
-        <div className="mt-2 space-y-1.5">
-          {list === null ? (
-            <p className="text-[12px] text-[#a09888]">読み込み中…</p>
-          ) : list.length === 0 ? (
-            <p className="text-[12px] text-[#a09888]">まだ手を挙げた人はいません</p>
-          ) : (
-            list.map((r) => (
-              <div key={r.id} className="flex items-start gap-2 rounded-lg bg-white px-2 py-1.5" style={{ border: "1px solid #f0e6d2" }}>
-                <Link href={`/u/${r.user_id}`} className="shrink-0">
-                  <Avatar name={r.profiles?.display_name ?? "参加者"} url={r.profiles?.avatar_url} size={30} />
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[12.5px] font-bold text-[#3a3428]">
-                    {r.profiles?.display_name ?? "参加者"}
-                    {r.status === "accepted" && <span className="ml-1.5 text-[11px]" style={{ color: "#2e7d4f" }}>✅ お願い済み</span>}
-                    {r.status === "declined" && <span className="ml-1.5 text-[11px] text-[#a09888]">見送り</span>}
-                  </p>
-                  {r.message && <p className="whitespace-pre-wrap text-[12px] text-[#5a5448]">{r.message}</p>}
-                </div>
-                {r.status === "pending" && !done && isOwner && (
-                  <div className="flex shrink-0 flex-col gap-1">
-                    <button onClick={() => decide(r, "accepted")} disabled={busy} className="rounded-full px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-50" style={{ background: "#2e7d4f" }}>
-                      この人にお願いする
-                    </button>
-                    <button onClick={() => decide(r, "declined")} disabled={busy} className="rounded-full border px-2.5 py-1 text-[11px] font-bold text-[#a09888]" style={{ borderColor: "#e8dcc4" }}>
-                      見送る
-                    </button>
+        <div className="mt-2">
+          {active && (
+            <div className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5" style={{ border: "1px solid #f0e6d2" }}>
+              {current ? (
+                <>
+                  <Link href={`/u/${current.user_id}`} className="shrink-0">
+                    <Avatar name={current.profiles?.display_name ?? "参加者"} url={current.profiles?.avatar_url} size={30} />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] font-bold text-[#3a3428]">{current.profiles?.display_name ?? "参加者"} さんが応援中</p>
+                    {current.message && <p className="whitespace-pre-wrap text-[12px] text-[#5a5448]">{current.message}</p>}
                   </div>
-                )}
-                {r.status === "accepted" && userId && isOwner && (
-                  <button
-                    onClick={async () => {
-                      const chatId = await getOrCreateChat(userId, r.user_id);
-                      if (chatId) router.push(`/talk/${chatId}`);
-                    }}
-                    className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
-                    style={{ background: "#d96a1a" }}
-                  >
-                    TalK
-                  </button>
-                )}
-              </div>
-            ))
+                  {userId && isOwner && (
+                    <button
+                      onClick={async () => {
+                        const chatId = await getOrCreateChat(userId, current.user_id);
+                        if (chatId) router.push(`/talk/${chatId}`);
+                      }}
+                      className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
+                      style={{ background: "#d96a1a" }}
+                    >
+                      TalK
+                    </button>
+                  )}
+                </>
+              ) : (
+                <p className="text-[12px] text-[#a09888]">応援者を読み込み中…</p>
+              )}
+            </div>
           )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {active && !done && (
+              <button
+                onClick={release}
+                disabled={busy || !current}
+                className="rounded-full border px-3 py-1 text-[12px] font-bold disabled:opacity-50"
+                style={{ borderColor: "#c0392b", color: "#c0392b", background: "#fff" }}
+              >
+                違う人に応援を求める
+              </button>
+            )}
+            <button
+              onClick={async () => {
+                const next = done ? "open" : "done";
+                if (!window.confirm(next === "done" ? "「応援完了」にしますか？\nTalKでのやり取り（取引）がお互いに完了した時点で押してください。写真に応援完了のたすきが付き、募集を終了します。" : "応援完了を取り消して、募集中に戻しますか？")) return;
+                await setBoardStatus(message.id, next);
+                onChanged();
+              }}
+              className="rounded-full px-3 py-1 text-[12px] font-bold text-white"
+              style={{ background: done ? "#a09888" : "#c05e14" }}
+            >
+              {done ? "応援完了を取り消す" : "✅ 応援完了にする"}
+            </button>
+          </div>
         </div>
       )}
     </div>

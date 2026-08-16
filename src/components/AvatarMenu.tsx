@@ -13,9 +13,11 @@ import { fetchNotifUnread } from "@/lib/notifications";
 export function AvatarMenu({
   userId,
   profile,
+  isAdmin = false,
 }: {
   userId: string;
   profile: Profile;
+  isAdmin?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [notifN, setNotifN] = useState(0); // 🔔お知らせ未読
@@ -128,11 +130,20 @@ export function AvatarMenu({
           <Link href="/guide" className={item} onClick={() => setOpen(false)}>
             📖 使い方
           </Link>
+          {isAdmin && (
+            <Link href="/office" className={`${item} border-t border-[#f0e9dc]`} onClick={() => setOpen(false)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/icon-megaphone.webp" alt="" className="h-5 w-5 object-contain" />
+              事務局ページ
+            </Link>
+          )}
           <button
-            className={`${item} border-t border-[#f0e9dc] text-[#c04030]`}
+            className={`${item} border-t border-[#f0e9dc]`}
             onClick={logout}
           >
-            🚪 ログアウト
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/icon-logout.webp" alt="" className="h-5 w-5 object-contain" />
+            <span className="text-[#c04030]">ログアウト</span>
           </button>
         </div>
       )}

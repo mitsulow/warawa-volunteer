@@ -387,7 +387,8 @@ export async function fetchVoiceSupportsFor(messageId: string): Promise<VoiceSup
 export async function sendVoiceSupport(messageId: string, userId: string, message: string) {
   await ensureProfile(userId);
   const supabase = createClient();
-  return supabase.from("voice_supports").insert({ message_id: messageId, user_id: userId, message: message.trim() || null });
+  // 押した瞬間に成立（1人だけ）。RLSで「他にやり取り中の人がいる」場合は弾かれる
+  return supabase.from("voice_supports").insert({ message_id: messageId, user_id: userId, message: message.trim() || null, status: "accepted" });
 }
 
 export async function cancelVoiceSupport(id: string) {

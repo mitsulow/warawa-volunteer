@@ -30,6 +30,8 @@ export function notifText(n: NotificationRow): string {
       return `${who}さんが物資の受け取りを希望しています`;
     case "voice_support":
       return `${who}さんが「私が応援します」と手を挙げました`;
+    case "voice_release":
+      return `${who}さんが別の方に応援を求めることになりました`;
     case "voice_accept":
       return `${who}さんがあなたに応援をお願いしました`;
     case "goods_accept":

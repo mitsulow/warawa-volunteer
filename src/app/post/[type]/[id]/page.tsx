@@ -352,7 +352,13 @@ export default function PostPage({
               <PhotoCarousel
                 className="-mx-4 mt-2"
                 images={images}
-                stamp={(!isBoard && offer!.kind === "goods" && offer!.done) || (isBoard && board!.scope === "voice" && board!.status === "done") ? "応援完了" : null}
+                stamp={
+                  (!isBoard && offer!.kind === "goods" && offer!.done) || (isBoard && board!.scope === "voice" && board!.status === "done")
+                    ? "応援完了"
+                    : isBoard && board!.scope === "voice" && (supCount?.pending ?? 0) + (supCount?.accepted ?? 0) > 0
+                      ? "現在やり取り中"
+                      : null
+                }
                 onOpen={(i) => setLb(i)}
               />
             )}

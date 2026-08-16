@@ -374,13 +374,19 @@ export function GroupFeed({
                     className="-mx-3 mt-2"
                     images={images}
                     thumbs={thumbs}
-                    stamp={m.status === "done" ? "応援完了" : null}
+                    stamp={
+                      m.status === "done"
+                        ? "応援完了"
+                        : (supCounts.get(m.id)?.pending ?? 0) + (supCounts.get(m.id)?.accepted ?? 0) > 0
+                          ? "現在やり取り中"
+                          : null
+                    }
                     onOpen={(i) => setLightbox({ urls: images, idx: i })}
                   />
                 )}
-                {m.status === "done" && images.length === 0 && (
+                {images.length === 0 && (m.status === "done" || (supCounts.get(m.id)?.pending ?? 0) + (supCounts.get(m.id)?.accepted ?? 0) > 0) && (
                   <div className="mt-2 rounded-lg py-1.5 text-center text-[13px] font-extrabold tracking-[2px]" style={{ background: "#fdf0e0", color: "#c05e14" }}>
-                    応援完了
+                    {m.status === "done" ? "応援完了" : "現在やり取り中"}
                   </div>
                 )}
                 <VoiceSupportBlock
