@@ -23,7 +23,6 @@ import { Avatar } from "@/components/Avatar";
 import { AdminSection } from "@/components/AdminSection";
 import { SnsIcon } from "@/components/SnsIcon";
 import { BottomNav } from "@/components/BottomNav";
-import { MenuButton } from "@/components/MenuButton";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -172,9 +171,8 @@ export default function OfficePage() {
         className="sticky top-0 z-30 flex items-center gap-2.5 px-4 py-3 text-white"
         style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
-        <MenuButton inline light />
-        <Link href="/" className="text-xl text-white no-underline" aria-label="戻る">
-          ←
+        <Link href="/" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
+          戻る
         </Link>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icons/icon-megaphone.webp" alt="" className="h-6 w-6 object-contain" />

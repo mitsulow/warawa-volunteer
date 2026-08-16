@@ -14,7 +14,6 @@ import {
   type BoardScope,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
-import { MenuButton } from "@/components/MenuButton";
 import { MessageInput } from "@/components/MessageInput";
 import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 
@@ -194,9 +193,8 @@ export default function GroupTalkPage({
         className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
         style={{ background: "#d96a1a" }}
       >
-        <MenuButton inline light />
-        <Link href="/talk" className="text-xl text-white no-underline" aria-label="戻る">
-          ←
+        <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
+          戻る
         </Link>
         <span className="text-xl">{meta.emoji}</span>
         <div className="min-w-0 flex-1">

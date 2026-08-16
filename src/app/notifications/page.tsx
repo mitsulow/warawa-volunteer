@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
-import { MenuButton } from "@/components/MenuButton";
 import {
   type NotificationRow,
   fetchNotifications,
@@ -73,9 +72,8 @@ export default function NotificationsPage() {
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <MenuButton inline />
-          <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="戻る">
-            ←
+          <Link href="/" className="shrink-0 rounded-full border px-3 py-1 text-[12.5px] font-bold no-underline" style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }} aria-label="戻る">
+            戻る
           </Link>
           <h1 className="text-[17px] font-bold" style={{ color: "#d96a1a" }}>
             🔔 お知らせ

@@ -9,7 +9,6 @@ import {
   sendBroadcast,
   type Broadcast,
 } from "@/lib/db";
-import { MenuButton } from "@/components/MenuButton";
 import { MessageInput } from "@/components/MessageInput";
 
 /* eslint-disable @next/next/no-img-element */
@@ -61,9 +60,8 @@ export default function BroadcastPage() {
         className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
         style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
-        <MenuButton inline light />
-        <Link href="/talk" className="text-xl text-white no-underline" aria-label="戻る">
-          ←
+        <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
+          戻る
         </Link>
         <span className="text-xl">📢</span>
         <div className="min-w-0 flex-1">

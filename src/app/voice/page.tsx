@@ -6,7 +6,6 @@ import { useSession } from "@/lib/useSession";
 import { GroupFeed } from "@/components/GroupFeed";
 import { JoinDialog } from "@/components/JoinDialog";
 import { BottomNav } from "@/components/BottomNav";
-import { MenuButton } from "@/components/MenuButton";
 
 /** 現地からの声（欲しい物・やって欲しい事）— グループTalKと同期した掲示板ビュー */
 export default function VoicePage() {
@@ -17,9 +16,8 @@ export default function VoicePage() {
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
         <div className="flex h-[52px] items-center gap-3 px-4">
-          <MenuButton inline />
-          <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="戻る">
-            ←
+          <Link href="/" className="shrink-0 rounded-full border px-3 py-1 text-[12.5px] font-bold no-underline" style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }} aria-label="戻る">
+            戻る
           </Link>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/waraeru-v2.png" alt="" className="h-8 w-8 object-contain" />

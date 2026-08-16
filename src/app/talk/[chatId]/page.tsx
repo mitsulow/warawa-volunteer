@@ -16,7 +16,6 @@ import {
   type Profile,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
-import { MenuButton } from "@/components/MenuButton";
 import { MessageInput } from "@/components/MessageInput";
 import { OFFICE_BOT_ID } from "@/lib/config";
 import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
@@ -182,9 +181,8 @@ export default function TalkPage({
   return (
     <main className="flex flex-col h-dvh">
       <header className="flex items-center gap-3 px-4 py-3 bg-[#d96a1a] text-white sticky top-0">
-        <MenuButton inline light />
-        <Link href="/talk" className="text-xl" aria-label="戻る">
-          ←
+        <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
+          戻る
         </Link>
         {partner && (
           <>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import { BottomNav } from "@/components/BottomNav";
-import { MenuButton } from "@/components/MenuButton";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -44,9 +43,8 @@ export default function GuidePage() {
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <MenuButton inline />
-          <Link href="/" className="text-xl no-underline" style={{ color: "#d96a1a" }} aria-label="戻る">
-            ←
+          <Link href="/" className="shrink-0 rounded-full border px-3 py-1 text-[12.5px] font-bold no-underline" style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }} aria-label="戻る">
+            戻る
           </Link>
           <img src="/waraeru-v2.png" alt="" className="h-8 w-8 object-contain" />
           <h1 className="text-[17px] font-bold" style={{ color: "#d96a1a" }}>
