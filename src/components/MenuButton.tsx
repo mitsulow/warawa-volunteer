@@ -51,15 +51,15 @@ export function MenuButton({
   };
 
   const MENU: Array<{ href: string; icon: string; label: string }> = [
-    { href: "/?tab=offers", icon: "/icons/icon-gift.webp", label: "助けたい" },
+    { href: "/?tab=offers", icon: "/icons/icon-heart.webp", label: "助けたい" },
     { href: "/?tab=voice", icon: "/icons/icon-tasukete.webp", label: "助けて" },
-    { href: "/?tab=board", icon: "/icons/icon-listing.webp", label: "掲示板" },
+    { href: "/?tab=board", icon: "/icons/icon-keijiban.webp", label: "掲示板" },
     { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
     ...(userId
       ? [{ href: `/u/${userId}`, icon: "/icons/icon-meishi.webp", label: "マイページ" }]
       : []),
     { href: "/guide", icon: "/icons/icon-star.webp", label: "使い方" },
-    { href: "/terms", icon: "/icons/icon-listing.webp", label: "ご利用にあたって" },
+    { href: "/terms", icon: "/icons/icon-post.webp", label: "ご利用にあたって" },
     ...(admin
       ? [{ href: "/office", icon: "/icons/icon-megaphone.webp", label: "事務局ページ" }]
       : []),
@@ -133,7 +133,8 @@ export function MenuButton({
                 className="flex w-full items-center gap-3 px-5 py-3 text-left text-[14px] font-medium text-[#c04030]"
                 onClick={logout}
               >
-                🚪 ログアウト
+                <img src="/icons/icon-logout.webp" alt="" className="h-[22px] w-[22px] object-contain" />
+                ログアウト
               </button>
             ) : (
               <Link
