@@ -3,6 +3,63 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+/** 記事の種別チップ。項目別に色分け（物資=オレンジ / 持ち寄り=緑）。タップでその種別だけの絞り込み */
+export type ChipKind = "goods" | "other";
+export const CHIP_STYLE: Record<ChipKind, { label: string; bg: string; fg: string; border: string }> = {
+  goods: { label: "物資を出します", bg: "#fdf0e0", fg: "#c05e14", border: "#f0d0a8" },
+  other: { label: "持ち寄ります", bg: "#e6f4ea", fg: "#2e7d4f", border: "#b8dfc4" },
+};
+
+export function KindChip({
+  kind,
+  active = false,
+  onClick,
+}: {
+  kind: ChipKind;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const c = CHIP_STYLE[kind];
+  return (
+    <button
+      onClick={onClick}
+      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={
+        active
+          ? { background: c.fg, color: "#fff", border: `1px solid ${c.fg}` }
+          : { background: c.bg, color: c.fg, border: `1px solid ${c.border}` }
+      }
+      aria-pressed={active}
+      title={active ? "絞り込みを解除" : `「${c.label}」だけを見る`}
+    >
+      {c.label}
+    </button>
+  );
+}
+
+/** 絞り込み中の帯（フィード上部）: 「◯◯」だけを表示中 ／ すべて表示 */
+export function KindFilterBar({
+  kind,
+  onClear,
+}: {
+  kind: ChipKind | null;
+  onClear: () => void;
+}) {
+  if (!kind) return null;
+  const c = CHIP_STYLE[kind];
+  return (
+    <div
+      className="-mx-2 mb-0 flex items-center justify-between border-b px-3 py-1.5 text-[12.5px] font-bold"
+      style={{ background: c.bg, color: c.fg, borderColor: c.border }}
+    >
+      <span>「{c.label}」だけを表示中</span>
+      <button onClick={onClear} className="rounded-full bg-white px-2.5 py-[3px] text-[11.5px]" style={{ color: c.fg, border: `1px solid ${c.border}` }}>
+        すべて表示
+      </button>
+    </div>
+  );
+}
+
 /** 投稿カード右上の「⋯」メニュー（OneSea PostKitから移植: 編集/削除/通報） */
 export function DotsMenu({
   canEdit,

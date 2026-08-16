@@ -21,7 +21,7 @@ import { deleteBoardMessage, deleteOffer } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { DotsMenu } from "@/components/PostKit";
+import { DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
 
@@ -72,7 +72,7 @@ interface FeedItem {
   avatar: string | null;
   memberNo: number | null;
   createdAt: string;
-  chip: string | null;
+  chip: ChipKind | null;
   body: string;
   images: string[]; // 本体
   thumbs: string[]; // サムネ
@@ -107,6 +107,8 @@ export function ActivityFeed({
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [poster, setPoster] = useState<string | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
+  // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
+  const [kindFilter, setKindFilter] = useState<ChipKind | null>(null);
   const cursorRef = useRef<string | null>(null);
 
   const pullBoard = async () => {
@@ -177,13 +179,14 @@ export function ActivityFeed({
         avatar: o.profiles?.avatar_url ?? null,
         memberNo: o.profiles?.member_no ?? null,
         createdAt: o.created_at,
-        chip: o.kind === "goods" ? "物資を出します" : "持ち寄ります",
+        chip: o.kind as ChipKind,
         body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
         images: o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [],
         thumbs: o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [],
         embed: (o.embed as OGPEmbed | null) ?? null,
       })),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const visible = kindFilter ? items.filter((i) => i.chip === kindFilter) : items;
 
   useEffect(() => {
     const keys = items.map((i) => i.key).slice(0, 100);
@@ -267,12 +270,13 @@ export function ActivityFeed({
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div>
-        {items.length === 0 && (
+        <KindFilterBar kind={kindFilter} onClear={() => setKindFilter(null)} />
+        {visible.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
             まだ取り組みがありません。最初のひとことをどうぞ
           </p>
         )}
-        {items.slice(0, 80).map((it) => {
+        {visible.slice(0, 80).map((it) => {
           const bodyExpanded = expandedBody.has(it.key);
           const idx = imgIdx.get(it.key) ?? 0;
           return (
@@ -303,12 +307,11 @@ export function ActivityFeed({
                     </div>
                   </div>
                   {it.chip && (
-                    <span
-                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                      style={{ background: "#fdf0e0", color: "#c05e14", border: "1px solid #f0d0a8" }}
-                    >
-                      {it.chip}
-                    </span>
+                    <KindChip
+                      kind={it.chip}
+                      active={kindFilter === it.chip}
+                      onClick={() => setKindFilter(kindFilter === it.chip ? null : it.chip)}
+                    />
                   )}
                   {userId && (
                     <DotsMenu

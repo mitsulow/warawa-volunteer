@@ -16,7 +16,7 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
-import { DotsMenu } from "@/components/PostKit";
+import { DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { firePush } from "@/lib/push";
@@ -503,6 +503,8 @@ export function OffersSection({
   const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
+  // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
+  const [kindFilter, setKindFilter] = useState<ChipKind | null>(null);
 
   const reload = () => fetchOffers().then(setOffers);
   useEffect(() => {
@@ -575,7 +577,9 @@ export function OffersSection({
   };
 
   // フィードに並ぶのは物資とその他だけ（体=事務局申請のみ・お金=案内のみ）
-  const feed = offers.filter((o) => o.kind === "goods" || o.kind === "other");
+  const feed = offers.filter(
+    (o) => (o.kind === "goods" || o.kind === "other") && (!kindFilter || o.kind === kindFilter)
+  );
 
   return (
     <div>
@@ -624,6 +628,7 @@ export function OffersSection({
       )}
 
       <div>
+        <KindFilterBar kind={kindFilter} onClear={() => setKindFilter(null)} />
         {feed.length === 0 && (
           <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
             まだ投稿がありません
@@ -666,12 +671,11 @@ export function OffersSection({
                       )}
                     </div>
                   </div>
-                  <span
-                    className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                    style={{ background: "#fdf0e0", color: "#c05e14", border: "1px solid #f0d0a8" }}
-                  >
-                    {o.kind === "goods" ? "物資を出します" : "持ち寄ります"}
-                  </span>
+                  <KindChip
+                    kind={o.kind as ChipKind}
+                    active={kindFilter === o.kind}
+                    onClick={() => setKindFilter(kindFilter === o.kind ? null : (o.kind as ChipKind))}
+                  />
                   {userId && (
                     <DotsMenu
                       canEdit={userId === o.user_id || isAdmin}
