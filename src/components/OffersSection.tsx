@@ -110,7 +110,20 @@ function fmtTime(iso: string) {
 }
 
 /** 💰 振込のご案内（表示のみ・フィードには並ばない） */
+const YUCHO_STEPS = [
+  "送金",
+  "他行銀行へのご送金",
+  "画面指示に従う",
+  "金融機関の選択",
+  "次を表示",
+  "その他",
+  "金融機関の選択",
+  "英字",
+  "GMOあおぞらネット銀行",
+];
+
 function BankDialog({ onClose }: { onClose: () => void }) {
+  const [yuchoOpen, setYuchoOpen] = useState(false);
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -137,6 +150,31 @@ function BankDialog({ onClose }: { onClose: () => void }) {
         <p className="mt-2 text-[14px] font-bold leading-relaxed text-[#5a5448]">
           ※なお、小銭の両替手数料の関係から、1口（1,000円）以上からの寄付をお願いしております。ご協力お願い致します。
         </p>
+        {/* ゆうちょ銀行から振り込む人向けの手順（折りたたみ） */}
+        <button
+          className="mt-2 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-[13px] font-bold"
+          style={{ borderColor: "#e8dcc4", background: "#fffaf0", color: "#5a5448" }}
+          onClick={() => setYuchoOpen(!yuchoOpen)}
+        >
+          <span>ゆうちょ銀行から振り込む方はこちらをタップ</span>
+          <span className="text-[#b0a898]">{yuchoOpen ? "△" : "▽"}</span>
+        </button>
+        {yuchoOpen && (
+          <div
+            className="mt-1 rounded-xl border px-3 py-2.5 text-[13px] leading-relaxed text-[#3a3428]"
+            style={{ borderColor: "#e8dcc4", background: "#fff" }}
+          >
+            <p className="mb-1 font-bold">《ゆうちょ銀行からの振込手順》</p>
+            <ol className="space-y-0.5">
+              {YUCHO_STEPS.map((step, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="num w-4 shrink-0 text-right text-[11px] font-bold text-[#a09888]">{i + 1}</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
         <button
           className="mt-2 w-full rounded-xl border py-2 text-[12.5px] font-bold"
           style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
