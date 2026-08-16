@@ -130,6 +130,14 @@ export function AvatarMenu({
           <Link href="/guide" className={item} onClick={() => setOpen(false)}>
             📖 使い方
           </Link>
+          {/* OneSeaと同じ位置・同じ小さめ表記: 使い方の下、事務局/ログアウトの上 */}
+          <Link
+            href="/bug-report"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2.5 border-t border-[#f0e9dc] px-4 py-2 text-left text-[11px] font-medium text-[#8a8070] no-underline active:bg-[#faf4ea]"
+          >
+            <span className="flex h-[16px] w-[16px] flex-shrink-0 items-center justify-center text-[12px]">🐛</span> バグを事務局へ報告
+          </Link>
           {isAdmin && (
             <Link href="/office" className={`${item} border-t border-[#f0e9dc]`} onClick={() => setOpen(false)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}

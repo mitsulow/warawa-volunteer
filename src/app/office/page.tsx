@@ -9,6 +9,9 @@ import {
   fetchAllPopups,
   fetchBodyApplications,
   fetchDonations,
+  fetchBugReports,
+  resolveBugReport,
+  type BugReport,
   type Donation,
   fetchReports,
   resolveReport,
@@ -34,6 +37,7 @@ export default function OfficePage() {
   const session = useSession();
   const [apps, setApps] = useState<BodyApplication[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [bugs, setBugs] = useState<BugReport[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [popups, setPopups] = useState<Popup[]>([]);
@@ -47,6 +51,7 @@ export default function OfficePage() {
   const reload = () => {
     fetchBodyApplications().then(setApps);
     fetchDonations().then(setDonations);
+    fetchBugReports().then(setBugs);
     fetchReports().then(setReports);
     fetchAllPopups().then(setPopups);
   };
@@ -199,6 +204,42 @@ export default function OfficePage() {
             </p>
           ) : (
             <div className="space-y-2.5">{open.map(card)}</div>
+          )}
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
+            🐛 バグ報告 {bugs.filter((b) => b.status === "open").length > 0 && `（未対応 ${bugs.filter((b) => b.status === "open").length}件）`}
+          </h2>
+          {bugs.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-5 text-center text-sm text-[#a09888]">報告はありません</p>
+          ) : (
+            <div className="space-y-2">
+              {bugs.map((b) => (
+                <div key={b.id} className="rounded-xl border bg-white p-3 text-[12.5px]" style={{ borderColor: b.status === "open" ? "#f0d0a8" : "#ede5d8", opacity: b.status === "open" ? 1 : 0.6 }}>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#3a3428]">{b.profiles?.display_name ?? "参加者"}</span>
+                    <span className="text-[10.5px] text-[#b8b0a0]">{fmtDate(b.created_at)}{b.page_url ? `・${b.page_url}` : ""}</span>
+                    {b.status === "open" ? (
+                      <button
+                        onClick={async () => {
+                          await resolveBugReport(b.id);
+                          reload();
+                        }}
+                        className="ml-auto rounded-lg px-2.5 py-1 text-[11px] font-bold text-white"
+                        style={{ background: "#2e7d4f" }}
+                      >
+                        対応済みにする
+                      </button>
+                    ) : (
+                      <span className="ml-auto text-[11px] font-bold" style={{ color: "#2e7d4f" }}>対応済み</span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 whitespace-pre-wrap text-[#4a4438]">{b.body}</p>
+                  {b.ua && <p className="mt-1 truncate text-[10px] text-[#c0b8a8]">{b.ua}</p>}
+                </div>
+              ))}
+            </div>
           )}
         </section>
 

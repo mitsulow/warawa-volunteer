@@ -280,6 +280,34 @@ export async function fetchDonations(): Promise<Donation[]> {
   return (data as Donation[]) ?? [];
 }
 
+/* ---------- バグ報告（事務局のみ閲覧） ---------- */
+
+export interface BugReport {
+  id: string;
+  user_id: string | null;
+  body: string;
+  page_url: string | null;
+  ua: string | null;
+  status: "open" | "done";
+  created_at: string;
+  profiles: { display_name: string } | null;
+}
+
+export async function fetchBugReports(): Promise<BugReport[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("bug_reports")
+    .select("id, user_id, body, page_url, ua, status, created_at, profiles(display_name)")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return (data as unknown as BugReport[]) ?? [];
+}
+
+export async function resolveBugReport(id: string) {
+  const supabase = createClient();
+  return supabase.from("bug_reports").update({ status: "done" }).eq("id", id);
+}
+
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
