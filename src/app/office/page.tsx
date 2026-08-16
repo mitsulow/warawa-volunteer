@@ -9,6 +9,7 @@ import {
   fetchAllPopups,
   fetchBodyApplications,
   fetchDonations,
+  deleteDonations,
   fetchBugReports,
   fetchBannedUsers,
   setUserBanned,
@@ -29,6 +30,7 @@ import { Avatar } from "@/components/Avatar";
 import { AdminSection } from "@/components/AdminSection";
 import { SnsIcon } from "@/components/SnsIcon";
 import { BottomNav } from "@/components/BottomNav";
+import { useLongPress } from "@/components/BubbleMenu";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -36,10 +38,78 @@ function fmtDate(iso: string) {
 }
 
 /** 🏛 事務局ページ（管理者のみ）。現地入り申請の確認と決定、管理者の管理 */
+/** 寄付一覧の1行（長押しで選択モードに入る） */
+function DonationRow({
+  d,
+  selMode,
+  selected,
+  onLongPress,
+  onToggle,
+}: {
+  d: Donation;
+  selMode: boolean;
+  selected: boolean;
+  onLongPress: () => void;
+  onToggle: () => void;
+}) {
+  const lp = useLongPress(() => onLongPress());
+  return (
+    <div
+      {...lp.handlers}
+      onClick={() => selMode && onToggle()}
+      className={`flex select-none items-center gap-2 border-b border-[#f0ece0] px-3 py-2 text-[12.5px] last:border-b-0 ${selMode ? "cursor-pointer" : ""}`}
+      style={{ background: selected ? "#fdeedd" : undefined, WebkitTouchCallout: "none" } as React.CSSProperties}
+    >
+      {selMode && (
+        <span
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-bold text-white"
+          style={{ borderColor: selected ? "#d96a1a" : "#c8bfae", background: selected ? "#d96a1a" : "#fff" }}
+        >
+          {selected ? "✓" : ""}
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-bold text-[#3a3428]">
+          {selMode ? (
+            <span>{d.display_name ?? "参加者"}</span>
+          ) : (
+            <Link href={`/u/${d.user_id}`} className="no-underline" style={{ color: "#3a3428" }}>
+              {d.display_name ?? "参加者"}
+            </Link>
+          )}
+          {d.email && !selMode && (
+            <a href={`mailto:${d.email}`} className="ml-1.5 font-normal" style={{ color: "#d96a1a" }}>
+              {d.email}
+            </a>
+          )}
+          {d.email && selMode && <span className="ml-1.5 font-normal text-[#a09888]">{d.email}</span>}
+        </p>
+        <p className="text-[10.5px] text-[#b8b0a0]">
+          {fmtDate(d.created_at)}・{d.listed ? "掲示板に掲載" : "非掲載"}
+        </p>
+      </div>
+      <div className="num shrink-0 text-right">
+        <p className="font-extrabold" style={{ color: "#c05e14" }}>{d.units.toLocaleString()}口</p>
+        <p className="text-[10.5px] text-[#8a8070]">{d.amount.toLocaleString()}円</p>
+      </div>
+    </div>
+  );
+}
+
 export default function OfficePage() {
   const session = useSession();
   const [apps, setApps] = useState<BodyApplication[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
+  // 寄付一覧: 長押しで選択モード → 複数選択して削除（テスト分の掃除）
+  const [selMode, setSelMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleSel = (id: string) =>
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   const [bugs, setBugs] = useState<BugReport[]>([]);
   const [banned, setBanned] = useState<Profile[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
@@ -364,31 +434,54 @@ export default function OfficePage() {
               まだ寄付の申し込みはありません
             </p>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-[#ede5d8] bg-white shadow-sm">
-              {donations.map((d) => (
-                <div key={d.id} className="flex items-center gap-2 border-b border-[#f0ece0] px-3 py-2 text-[12.5px] last:border-b-0">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-[#3a3428]">
-                      <Link href={`/u/${d.user_id}`} className="no-underline" style={{ color: "#3a3428" }}>
-                        {d.display_name ?? "参加者"}
-                      </Link>
-                      {d.email && (
-                        <a href={`mailto:${d.email}`} className="ml-1.5 font-normal" style={{ color: "#d96a1a" }}>
-                          {d.email}
-                        </a>
-                      )}
-                    </p>
-                    <p className="text-[10.5px] text-[#b8b0a0]">
-                      {fmtDate(d.created_at)}・{d.listed ? "掲示板に掲載" : "非掲載"}
-                    </p>
-                  </div>
-                  <div className="num shrink-0 text-right">
-                    <p className="font-extrabold" style={{ color: "#c05e14" }}>{d.units.toLocaleString()}口</p>
-                    <p className="text-[10.5px] text-[#8a8070]">{d.amount.toLocaleString()}円</p>
-                  </div>
+            <>
+              {selMode ? (
+                <div className="mb-2 flex items-center gap-2 rounded-xl px-3 py-2 text-[12.5px] font-bold" style={{ background: "#fdeedd", color: "#c05e14" }}>
+                  <span>{selected.size}件を選択中</span>
+                  <button
+                    className="ml-auto rounded-full px-3 py-1 text-[12px] font-bold text-white disabled:opacity-40"
+                    style={{ background: "#c0392b" }}
+                    disabled={selected.size === 0}
+                    onClick={async () => {
+                      if (!window.confirm(`選択した ${selected.size} 件の寄付申込を削除しますか？（元に戻せません）`)) return;
+                      await deleteDonations(Array.from(selected));
+                      setSelected(new Set());
+                      setSelMode(false);
+                      reload();
+                    }}
+                  >
+                    削除する
+                  </button>
+                  <button
+                    className="rounded-full border bg-white px-3 py-1 text-[12px] font-bold text-[#8a7a5a]"
+                    style={{ borderColor: "#e8dcc4" }}
+                    onClick={() => {
+                      setSelMode(false);
+                      setSelected(new Set());
+                    }}
+                  >
+                    やめる
+                  </button>
                 </div>
-              ))}
-            </div>
+              ) : (
+                <p className="mb-1.5 text-[11px] text-[#a09888]">行を長押しすると選択モードになり、複数まとめて削除できます（テスト分の掃除など）</p>
+              )}
+              <div className="overflow-hidden rounded-xl border border-[#ede5d8] bg-white shadow-sm">
+                {donations.map((d) => (
+                  <DonationRow
+                    key={d.id}
+                    d={d}
+                    selMode={selMode}
+                    selected={selected.has(d.id)}
+                    onLongPress={() => {
+                      setSelMode(true);
+                      setSelected((prev) => new Set(prev).add(d.id));
+                    }}
+                    onToggle={() => toggleSel(d.id)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </section>
         )}

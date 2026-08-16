@@ -289,6 +289,12 @@ export interface Donation {
   created_at: string;
 }
 
+/** 管理者: 寄付申込の削除（テスト分の掃除など） */
+export async function deleteDonations(ids: string[]) {
+  const supabase = createClient();
+  return supabase.from("donations").delete().in("id", ids);
+}
+
 export async function fetchDonations(): Promise<Donation[]> {
   const supabase = createClient();
   const { data } = await supabase
