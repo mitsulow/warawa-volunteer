@@ -187,7 +187,7 @@ export default function Home() {
         {/* タブ直下の説明帯: 選択中タブの真下から尻尾が伸びて、タブと一体に見える */}
         <div className="relative -mx-2 -mt-2 mb-2" style={{ background: "#fdeedd", borderBottom: "1px solid #f0d0a8" }}>
           <span
-            className="absolute -top-px h-0 w-0"
+            className="absolute top-0 h-0 w-0"
             style={{
               left: `calc(${(tabIndex * 2 + 1) * (100 / 6)}% - 8px)`,
               borderLeft: "8px solid transparent",
