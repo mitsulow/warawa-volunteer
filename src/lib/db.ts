@@ -994,7 +994,8 @@ export async function fetchChatList(myId: string): Promise<ChatSummary[]> {
     unreadBy.set(m.chat_id, (unreadBy.get(m.chat_id) ?? 0) + 1);
   }
 
-  return rows.map((c) => {
+  // まだ1通も無いチャット（相手が「TalKで連絡を取る」を押しただけ等）は一覧に出さない。最初の1通が届いたら現れる
+  return rows.filter((c) => lastBy.has(c.id)).map((c) => {
     const partnerIsA = c.b === myId;
     const partner = (partnerIsA ? c.pa : c.pb) ?? {
       display_name: "参加者",
