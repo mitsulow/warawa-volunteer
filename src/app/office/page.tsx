@@ -13,6 +13,8 @@ import {
   fetchBugReports,
   fetchBannedUsers,
   setUserBanned,
+  fetchShadowedUsers,
+  setUserShadow,
   type Profile,
   resolveBugReport,
   type BugReport,
@@ -112,6 +114,7 @@ export default function OfficePage() {
     });
   const [bugs, setBugs] = useState<BugReport[]>([]);
   const [banned, setBanned] = useState<Profile[]>([]);
+  const [shadowed, setShadowed] = useState<Profile[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   // 用件ごとのタブ + 未対応/対応済みのセグメント（OneSea事務局方式）
@@ -131,6 +134,7 @@ export default function OfficePage() {
     fetchDonations().then(setDonations);
     fetchBugReports().then(setBugs);
     fetchBannedUsers().then(setBanned);
+    fetchShadowedUsers().then(setShadowed);
     fetchReports().then(setReports);
     fetchAllPopups().then(setPopups);
   };
@@ -342,6 +346,34 @@ export default function OfficePage() {
 
         {tab === "manage" && (
         <section>
+          <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">👻 見えないモード中のユーザー（{shadowed.length}人）</h2>
+          <p className="mb-2 text-[11.5px] text-[#a09888]">本人には普通に使えているように見えますが、他の参加者からは投稿・コメント・いいね・希望が一切見えず、TalKも始められません。設定はその人のマイページの「👻 見えないモードにする」から。</p>
+          {shadowed.length === 0 ? (
+            <p className="mb-4 rounded-xl border border-dashed border-[#e0d6c6] bg-white py-4 text-center text-sm text-[#a09888]">いません</p>
+          ) : (
+            <div className="mb-4 space-y-1.5">
+              {shadowed.map((p) => (
+                <div key={p.id} className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2 text-[12.5px]">
+                  <Link href={`/u/${p.id}`}><Avatar name={p.display_name} url={p.avatar_url} size={30} /></Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-[#3a3428]">{p.display_name}</p>
+                    <p className="text-[10.5px] text-[#b8b0a0]">{p.shadow_at ? fmtDate(p.shadow_at) : ""}{p.shadow_reason ? `・${p.shadow_reason}` : ""}</p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!window.confirm(`${p.display_name} さんの見えないモードを解除しますか？`)) return;
+                      await setUserShadow(p.id, false);
+                      reload();
+                    }}
+                    className="rounded-full border px-2.5 py-1 text-[11px] font-bold text-[#8a7a5a]"
+                    style={{ borderColor: "#e8dcc4" }}
+                  >
+                    解除
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">🚫 書き込み禁止中のユーザー（{banned.length}人）</h2>
           <p className="mb-2 text-[11.5px] text-[#a09888]">禁止にするには、そのユーザーのマイページ（アイコンをタップ）で「🚫 書き込み禁止にする」を押します。閲覧はできますが、投稿・コメント・TalK・いいね等が全部できなくなります。</p>
           {banned.length === 0 ? (

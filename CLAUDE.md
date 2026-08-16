@@ -54,6 +54,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - **物資のジャンル**: offers.category(rice/veg/ferment/sweets/sake/daily/other・`src/lib/goodsCategories.ts`)。投稿時に必須選択。カード(GoodsSupportBlock)と「現地へ届けたい物資候補」右下に表示。既存7件は内容から手動振り分け済み
 - **事務局ページはタブ制(OneSea方式)**: 🏃現地入り／⚑通報／🐛バグ／💰寄付／📢配信(お知らせ配信+全面ポップアップ)／🛠管理(書き込み禁止+管理者の管理)。現地入り・通報・バグは「未対応／対応済み」セグメント。通報は削除ではなく post_reports.status(open/done)で保持・未対応に戻せる
 - **毎晩バックアップ**: `scripts/backup.py`(全publicテーブル+auth.users(メール)+storage一覧をJSONで デスクトップ/わらわ〜バックアップ/YYYY-MM-DD/・30日保持)。Windowsタスクスケジューラ `WarawaVolunteerBackup` 毎日03:30(`scripts/backup.cmd`・ログ scripts/backup_run.log)。手動は「バックアップ取って」→ `python scripts/backup.py`
+- **見えないモード(シャドウBAN・2026-08-17)**: profiles.shadow_at/shadow_reason・`is_shadowed()`・`visible_author(author)`(=シャドウでない or 本人 or 管理者)。board_messages/offers/feed_comments/feed_likes のSELECTと goods_requests/voice_supports のSELECT・集計RPCに適用。can_talk はシャドウならfalse、messages/friendships insertも禁止。通知トリガはシャドウの行動を無視。管理者はマイページ「👻 見えないモードにする」・/office管理タブで解除（`scripts/shadowban.sql`,`shadowban2.sql`）
 - **書き込み禁止(BAN)**: profiles.banned_at/banned_reason・`is_banned()`・書き込み系12テーブルに restrictive「no banned insert/update」(`scripts/ban.sql`)。管理者はマイページの「🚫 書き込み禁止にする」・/office「書き込み禁止中のユーザー」で解除。本人のトップに停止バナー
 - 使い方 /guide は5ステップ+べんりメモ(寄付口数/届け方/応援のながれ/友達申請/バグ報告)に更新済み
 - 🐛バグ報告(OneSea移植): 右上アバターメニュー(使い方の下・小さめ表記)→ /bug-report → `bug_reports`(RLS: 本人insert・管理者read/update)→ /office「🐛 バグ報告」で対応済みに

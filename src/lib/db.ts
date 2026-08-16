@@ -18,11 +18,14 @@ export interface Profile {
   terms_version?: string | null;
   banned_at?: string | null;
   banned_reason?: string | null;
+  /** 見えないモード（本人には普通に見えるが他の人からは投稿等が見えない・TalK不可） */
+  shadow_at?: string | null;
+  shadow_reason?: string | null;
   created_at: string;
 }
 
 const PROFILE_SELECT =
-  "id, display_name, avatar_url, cover_url, bio, sns, member_no, terms_accepted_at, terms_version, banned_at, banned_reason, created_at";
+  "id, display_name, avatar_url, cover_url, bio, sns, member_no, terms_accepted_at, terms_version, banned_at, banned_reason, shadow_at, shadow_reason, created_at";
 
 /** 管理者: 書き込み禁止(BAN)の設定/解除 */
 export async function setUserBanned(userId: string, banned: boolean, reason?: string) {
@@ -31,6 +34,21 @@ export async function setUserBanned(userId: string, banned: boolean, reason?: st
     .from("profiles")
     .update({ banned_at: banned ? new Date().toISOString() : null, banned_reason: banned ? reason ?? null : null })
     .eq("id", userId);
+}
+
+/** 管理者: 見えないモード（シャドウ）の設定/解除 */
+export async function setUserShadow(userId: string, on: boolean, reason?: string) {
+  const supabase = createClient();
+  return supabase
+    .from("profiles")
+    .update({ shadow_at: on ? new Date().toISOString() : null, shadow_reason: on ? reason ?? null : null })
+    .eq("id", userId);
+}
+
+export async function fetchShadowedUsers(): Promise<Profile[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("profiles").select(PROFILE_SELECT).not("shadow_at", "is", null).order("shadow_at", { ascending: false });
+  return cdnify((data as Profile[]) ?? []);
 }
 
 export async function fetchBannedUsers(): Promise<Profile[]> {

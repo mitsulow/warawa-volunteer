@@ -15,6 +15,7 @@ import {
   removeFriendship,
   sendFriendRequest,
   setUserBanned,
+  setUserShadow,
   type FriendState,
   uploadPhoto,
   upsertMyProfile,
@@ -307,6 +308,31 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                 style={profile.banned_at ? { borderColor: "#e8dcc4", color: "#8a7a5a", background: "#fff" } : { borderColor: "#c0392b", color: "#c0392b", background: "#fff" }}
               >
                 {profile.banned_at ? "禁止を解除する" : "🚫 書き込み禁止にする（管理者）"}
+              </button>
+              {profile.shadow_at && (
+                <span className="rounded-full px-2.5 py-1 text-[11px] font-bold text-white" style={{ background: "#6b5b95" }}>
+                  👻 見えないモード中{profile.shadow_reason ? `（${profile.shadow_reason}）` : ""}
+                </span>
+              )}
+              <button
+                onClick={async () => {
+                  if (profile.shadow_at) {
+                    if (!window.confirm("見えないモードを解除しますか？（この人の投稿がみんなに見えるようになります）")) return;
+                    await setUserShadow(profile.id, false);
+                  } else {
+                    const reason = window.prompt(
+                      "この人を「見えないモード」にします。\n本人には普通に投稿・コメントできているように見えますが、他の参加者からは一切見えず、TalKも始められません。\n理由（任意・本人には見えません）:",
+                      ""
+                    );
+                    if (reason === null) return;
+                    await setUserShadow(profile.id, true, reason.trim() || undefined);
+                  }
+                  load();
+                }}
+                className="rounded-full border px-3 py-1 text-[11px] font-bold"
+                style={profile.shadow_at ? { borderColor: "#e8dcc4", color: "#8a7a5a", background: "#fff" } : { borderColor: "#6b5b95", color: "#6b5b95", background: "#fff" }}
+              >
+                {profile.shadow_at ? "見えないモードを解除" : "👻 見えないモードにする（管理者）"}
               </button>
             </div>
           )}
