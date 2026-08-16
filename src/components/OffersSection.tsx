@@ -527,12 +527,15 @@ function OfferDialog({
                   style={{ borderColor: "#e8dcc4" }}
                 />
                 <p className="mt-3 text-[13px] font-bold text-[#3a3428]">届け方を選んでください</p>
-                <div className="mt-1 space-y-1.5">
+                <p className="mt-1 text-[12px] font-bold" style={{ color: "#c0392b" }}>
+                  ※送料については必ず支援する人の負担で物資をお届けください
+                </p>
+                <div className="mt-1.5 space-y-1.5">
                   {(
                     [
-                      ["orange", "🟠 オレンジ軍団に支援を託す", "炊き出し場所などへ送付。事務局が現地のニーズを確認してTalKで連絡します"],
-                      ["direct", "🤝 個人的に支援する", "受け取りたい人と直接やり取り。希望者から選んでTalKで受け渡し"],
-                      ["both", "両方可", "事務局経由でも、個人へでも"],
+                      ["orange", "🟠 避難所や炊き出し所などにまとめて送る", "現地入りするチーム「オレンジ軍団」にて物資を受け取り、炊き出しの際に熊本の人に届けます。"],
+                      ["direct", "🤝 個人間で直接送る", "受け取りたい人と直接個人間でやり取りをする（TalK画面で送付先などを相談し合って下さい）"],
+                      ["both", "両方可能", "避難所へも、個人間でも、どちらでもOKの場合選択。"],
                     ] as Array<[GoodsRoute, string, string]>
                   ).map(([v, t, d]) => (
                     <button

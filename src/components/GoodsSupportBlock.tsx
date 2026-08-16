@@ -18,9 +18,9 @@ import { Avatar } from "@/components/Avatar";
 /* eslint-disable @next/next/no-img-element */
 
 export const ROUTE_LABEL: Record<Offer["route"], string> = {
-  orange: "🟠 オレンジ軍団に託す（炊き出し場所などへ送付）",
-  direct: "🤝 個人的に支援（欲しい人と直接やり取り）",
-  both: "🟠🤝 両方可（事務局経由でも個人でも）",
+  orange: "🟠 避難所や炊き出し所などにまとめて送る",
+  direct: "🤝 個人間で直接送る",
+  both: "🟠🤝 両方可能（避難所へも個人間でも）",
 };
 
 /**
