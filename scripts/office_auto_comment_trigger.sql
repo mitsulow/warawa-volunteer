@@ -1,3 +1,4 @@
+-- ※ office_auto_comment_goods の最新版は scripts/goods_direct.sql 側（届け方で文面が変わる）。このファイルは旧版。
 create or replace function public.office_auto_comment_goods()
 returns trigger
 language plpgsql

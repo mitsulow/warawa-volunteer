@@ -26,6 +26,10 @@ export function notifText(n: NotificationRow): string {
       return `${who}さんから友達申請が届きました`;
     case "friend_accept":
       return `${who}さんが友達申請を承認しました`;
+    case "goods_request":
+      return `${who}さんが物資の受け取りを希望しています`;
+    case "goods_accept":
+      return `${who}さんが物資の受け取り相手にあなたを選びました`;
     default:
       return `${who}さんからお知らせがあります`;
   }

@@ -44,6 +44,14 @@ export interface Offer {
   thumb_urls: string[] | null;
   embed: { url: string; title?: string; description?: string; image?: string; platform?: string } | null;
   status: "open" | "confirmed" | "done";
+  /** 物資の届け方: orange=オレンジ軍団に託す(事務局経由) / direct=個人的に支援 / both=両方可 */
+  route: "orange" | "direct" | "both";
+  /** 数量（自由記述: 例「10個」「5kg」） */
+  quantity: string | null;
+  /** 個人的に支援: 送り先は何か所(何人)まで（送料は送り手負担） */
+  slots: number;
+  /** 応援完了（SOLD OUT相当） */
+  done: boolean;
   created_at: string;
   profiles: {
     display_name: string;
@@ -52,6 +60,7 @@ export interface Offer {
     sns?: Record<string, string> | null;
   } | null;
 }
+export type GoodsRoute = Offer["route"];
 
 export type BoardScope = "board" | "voice";
 
@@ -271,7 +280,7 @@ export async function fetchDonations(): Promise<Donation[]> {
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
-  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, created_at, profiles(display_name, avatar_url, member_no, sns)";
+  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, route, slots, quantity, done, created_at, profiles(display_name, avatar_url, member_no, sns)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
@@ -300,7 +309,7 @@ export async function addOffer(
   detail: string,
   title?: string | null,
   imageUrl?: string | null,
-  extras?: { imageUrls?: string[]; thumbUrls?: string[]; embed?: Offer["embed"] }
+  extras?: { imageUrls?: string[]; thumbUrls?: string[]; embed?: Offer["embed"]; route?: GoodsRoute; slots?: number; quantity?: string | null }
 ) {
   await ensureProfile(userId);
   const supabase = createClient();
@@ -313,7 +322,80 @@ export async function addOffer(
     image_urls: extras?.imageUrls?.length ? extras.imageUrls : null,
     thumb_urls: extras?.thumbUrls?.length ? extras.thumbUrls : null,
     embed: extras?.embed ?? null,
+    route: extras?.route ?? "orange",
+    slots: Math.min(999, Math.max(1, extras?.slots ?? 1)),
+    quantity: extras?.quantity?.trim() || null,
   });
+}
+
+/* ---------- 個人的に支援（受け取り希望・応援完了） ---------- */
+
+export interface GoodsRequest {
+  id: string;
+  offer_id: string;
+  user_id: string;
+  message: string | null;
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  profiles: { display_name: string; avatar_url: string | null } | null;
+}
+
+/** 希望者数（誰でも件数だけ） */
+export async function fetchGoodsRequestCounts(ids: string[]): Promise<Map<string, { pending: number; accepted: number }>> {
+  const m = new Map<string, { pending: number; accepted: number }>();
+  if (!ids.length) return m;
+  const supabase = createClient();
+  const { data } = await supabase.rpc("goods_request_counts", { ids });
+  for (const r of (data ?? []) as Array<{ offer_id: string; pending: number; accepted: number }>) {
+    m.set(r.offer_id, { pending: r.pending, accepted: r.accepted });
+  }
+  return m;
+}
+
+/** 自分が出した希望（RLSで自分の分だけ返る） */
+export async function fetchMyGoodsRequests(userId: string): Promise<GoodsRequest[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("goods_requests")
+    .select("id, offer_id, user_id, message, status, created_at, profiles(display_name, avatar_url)")
+    .eq("user_id", userId)
+    .limit(200);
+  return (data as unknown as GoodsRequest[]) ?? [];
+}
+
+/** 投稿主: この投稿への希望者一覧 */
+export async function fetchGoodsRequestsFor(offerId: string): Promise<GoodsRequest[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("goods_requests")
+    .select("id, offer_id, user_id, message, status, created_at, profiles(display_name, avatar_url)")
+    .eq("offer_id", offerId)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return cdnify((data as unknown as GoodsRequest[]) ?? []);
+}
+
+export async function sendGoodsRequest(offerId: string, userId: string, message: string) {
+  await ensureProfile(userId);
+  const supabase = createClient();
+  return supabase.from("goods_requests").insert({ offer_id: offerId, user_id: userId, message: message.trim() || null });
+}
+
+export async function cancelGoodsRequest(id: string) {
+  const supabase = createClient();
+  return supabase.from("goods_requests").delete().eq("id", id);
+}
+
+/** 投稿主: この人に決めた / 見送る */
+export async function respondGoodsRequest(id: string, status: "accepted" | "declined") {
+  const supabase = createClient();
+  return supabase.from("goods_requests").update({ status, responded_at: new Date().toISOString() }).eq("id", id);
+}
+
+/** 応援完了（SOLD OUT）の切替。本人 or 管理者 */
+export async function setOfferDone(id: string, done: boolean) {
+  const supabase = createClient();
+  return supabase.from("offers").update({ done, done_at: done ? new Date().toISOString() : null }).eq("id", id);
 }
 
 export async function setOfferStatus(id: string, status: Offer["status"]) {

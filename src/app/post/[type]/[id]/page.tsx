@@ -9,6 +9,9 @@ import {
   deleteOffer,
   fetchBoardMessageById,
   fetchCommentCounts,
+  fetchGoodsRequestCounts,
+  fetchMyGoodsRequests,
+  type GoodsRequest,
   fetchFeedLikes,
   fetchLikersFor,
   fetchOfferById,
@@ -29,6 +32,7 @@ import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { GoodsSupportBlock } from "@/components/GoodsSupportBlock";
 import { JoinDialog } from "@/components/JoinDialog";
 
 /* eslint-disable @next/next/no-img-element */
@@ -83,6 +87,17 @@ export default function PostPage({
   const [commentCount, setCommentCount] = useState(0);
   const [showJoin, setShowJoin] = useState(false);
   const itemKeyRef = `${type}:${id}`;
+  const [reqCount, setReqCount] = useState<{ pending: number; accepted: number } | undefined>(undefined);
+  const [myReq, setMyReq] = useState<GoodsRequest | null>(null);
+  const loadRequests = () => {
+    if (isBoard) return;
+    fetchGoodsRequestCounts([id]).then((m) => setReqCount(m.get(id)));
+    if (session.userId) fetchMyGoodsRequests(session.userId).then((rs) => setMyReq(rs.find((r) => r.offer_id === id) ?? null));
+  };
+  useEffect(() => {
+    loadRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, session.userId]);
 
   useEffect(() => {
     fetchFeedLikes([itemKeyRef], session.userId).then(({ counts, mine }) => {
@@ -321,7 +336,23 @@ export default function PostPage({
                 <EmbedCard embed={board!.embed as OGPEmbed} />
               </div>
             )}
-            {images.length > 0 && <PhotoCarousel className="-mx-4 mt-2" images={images} />}
+            {images.length > 0 && (
+              <PhotoCarousel className="-mx-4 mt-2" images={images} stamp={!isBoard && offer!.kind === "goods" && offer!.done ? "応援完了" : null} />
+            )}
+            {!isBoard && offer!.kind === "goods" && (
+              <GoodsSupportBlock
+                offer={offer!}
+                userId={session.userId}
+                isAdmin={session.isAdmin}
+                counts={reqCount}
+                myRequest={myReq}
+                requireJoin={() => setShowJoin(true)}
+                onChanged={() => {
+                  load();
+                  loadRequests();
+                }}
+              />
+            )}
 
             {/* いいね + コメント数（フィードと同じアイコン文法） */}
             <div className="mt-3 flex items-center gap-4">

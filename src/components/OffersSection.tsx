@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   addOffer,
+  fetchGoodsRequestCounts,
+  fetchMyGoodsRequests,
+  type GoodsRequest,
+  type GoodsRoute,
   ensureProfile,
   deleteOffer,
   fetchCommentCounts,
@@ -19,6 +23,7 @@ import {
 import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { GoodsSupportBlock } from "@/components/GoodsSupportBlock";
 import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
@@ -354,6 +359,10 @@ function OfferDialog({
   onDone: () => void;
 }) {
   const [detail, setDetail] = useState("");
+  // 届け方（物資のみ）: オレンジ軍団に託す / 個人的に支援 / 両方可 + 数量 + 送り先の数
+  const [route, setRoute] = useState<GoodsRoute>("orange");
+  const [quantity, setQuantity] = useState("");
+  const [slots, setSlots] = useState("1");
   const [images, setImages] = useState<ImagePair[]>([]);
   const [uploading, setUploading] = useState(false);
   const crop = useCropQueue(async (files) => {
@@ -429,6 +438,9 @@ function OfferDialog({
       imageUrls: images.map((i) => i.full),
       thumbUrls: images.map((i) => i.thumb),
       embed: embed ?? null,
+      route: isGoods ? route : "orange",
+      slots: isGoods && route !== "orange" ? Math.min(999, Math.max(1, Number(slots) || 1)) : 1,
+      quantity: isGoods ? quantity : null,
     });
     setBusy(false);
     if (e) {
@@ -498,6 +510,70 @@ function OfferDialog({
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
             />
+
+            {/* 物資: 数量 + 届け方 */}
+            {isGoods && (
+              <div className="mt-3 rounded-xl border p-3" style={{ borderColor: "#e8dcc4", background: "#fffaf0" }}>
+                <label className="block text-[13px] font-bold text-[#3a3428]">
+                  数量 <span className="font-normal text-[#a09888]">（例：カップラーメン10個、米5kg）</span>
+                </label>
+                <input
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  maxLength={40}
+                  placeholder="例：10個"
+                  className="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-[14px] outline-none focus:border-[#d96a1a]"
+                  style={{ borderColor: "#e8dcc4" }}
+                />
+                <p className="mt-3 text-[13px] font-bold text-[#3a3428]">届け方を選んでください</p>
+                <div className="mt-1 space-y-1.5">
+                  {(
+                    [
+                      ["orange", "🟠 オレンジ軍団に支援を託す", "炊き出し場所などへ送付。事務局が現地のニーズを確認してTalKで連絡します"],
+                      ["direct", "🤝 個人的に支援する", "受け取りたい人と直接やり取り。希望者から選んでTalKで受け渡し"],
+                      ["both", "両方可", "事務局経由でも、個人へでも"],
+                    ] as Array<[GoodsRoute, string, string]>
+                  ).map(([v, t, d]) => (
+                    <button
+                      type="button"
+                      key={v}
+                      onClick={() => setRoute(v)}
+                      className="flex w-full items-start gap-2 rounded-lg border px-2.5 py-2 text-left"
+                      style={route === v ? { borderColor: "#d96a1a", background: "#fdf0e0" } : { borderColor: "#e8dcc4", background: "#fff" }}
+                    >
+                      <span className="mt-0.5 flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full border-2" style={{ borderColor: route === v ? "#d96a1a" : "#c8bfae" }}>
+                        {route === v && <span className="h-[8px] w-[8px] rounded-full" style={{ background: "#d96a1a" }} />}
+                      </span>
+                      <span>
+                        <span className="block text-[13px] font-bold text-[#3a3428]">{t}</span>
+                        <span className="block text-[11px] text-[#8a7a5a]">{d}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {route !== "orange" && (
+                  <div className="mt-2">
+                    <label className="block text-[13px] font-bold text-[#3a3428]">
+                      送り先は何か所まで？ <span className="font-normal text-[#a09888]">（送料はご負担いただくため）</span>
+                    </label>
+                    <div className="mt-1 flex items-center gap-2">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={999}
+                        value={slots}
+                        onChange={(e) => setSlots(e.target.value)}
+                        className="num w-24 rounded-lg border bg-white px-3 py-2 text-center text-[15px] font-bold outline-none focus:border-[#d96a1a]"
+                        style={{ borderColor: "#e8dcc4" }}
+                      />
+                      <span className="text-[13px] text-[#5a5448]">か所（人）まで</span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-[#8a7a5a]">例：「カップラーメン10個」を1か所にまとめて送るなら「1」、1個ずつ10人に送れるなら「10」</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 写真（CotoZuteと同じサムネ+本体2枚方式・最大4枚） */}
             <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
@@ -638,6 +714,13 @@ export function OffersSection({
   const [dialog, setDialog] = useState<OfferKind | null>(null);
   // CotoZuteと同じ記事挙動（いいね/コメント/…メニュー/折りたたみ/写真拡大）
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
+  const [reqCounts, setReqCounts] = useState<Map<string, { pending: number; accepted: number }>>(new Map());
+  const [myReqs, setMyReqs] = useState<Map<string, GoodsRequest>>(new Map());
+  const loadRequests = (list: Offer[]) => {
+    const ids = list.filter((o) => o.kind === "goods" && o.route !== "orange").map((o) => o.id);
+    fetchGoodsRequestCounts(ids).then(setReqCounts);
+    if (userId) fetchMyGoodsRequests(userId).then((rs) => setMyReqs(new Map(rs.map((r) => [r.offer_id, r]))));
+  };
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [likers, setLikers] = useState<Record<string, Liker[]>>({});
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
@@ -650,10 +733,20 @@ export function OffersSection({
   // 最初は「物資」だけ。「すべて」で寄付・動けます・アイディアも並ぶ
   const [kindFilter, setKindFilter] = useState<ChipKind | null>("goods");
 
-  const reload = () => fetchOffers().then(setOffers);
+  const reload = () =>
+    fetchOffers().then((o) => {
+      setOffers(o);
+      loadRequests(o);
+    });
   useEffect(() => {
     reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // ログイン状態が確定したら「自分の希望」を取り直す
+  useEffect(() => {
+    if (offers.length) loadRequests(offers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     const keys = offers
@@ -902,7 +995,26 @@ export function OffersSection({
                     className="-mx-3 mt-2"
                     images={images}
                     thumbs={thumbs}
+                    stamp={o.kind === "goods" && o.done ? "応援完了" : null}
                     onOpen={(i) => setLightbox({ urls: images, idx: i })}
+                  />
+                )}
+                {o.kind === "goods" && o.done && images.length === 0 && (
+                  <div className="mt-2 rounded-lg py-1.5 text-center text-[13px] font-extrabold tracking-[2px]" style={{ background: "#fdf0e0", color: "#c05e14" }}>
+                    応援完了
+                  </div>
+                )}
+
+                {/* 物資: 届け方・数量・受け取り希望・応援完了 */}
+                {o.kind === "goods" && (
+                  <GoodsSupportBlock
+                    offer={o}
+                    userId={userId}
+                    isAdmin={isAdmin}
+                    counts={reqCounts.get(o.id)}
+                    myRequest={myReqs.get(o.id) ?? null}
+                    requireJoin={requireJoin}
+                    onChanged={reload}
                   />
                 )}
 
