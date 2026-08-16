@@ -16,6 +16,7 @@ import {
   type BoardScope,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
+import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostComposer } from "@/components/PostComposer";
@@ -70,6 +71,7 @@ export function GroupFeed({
   const router = useRouter();
   const [messages, setMessages] = useState<BoardMessage[]>([]);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [likers, setLikers] = useState<Record<string, Liker[]>>({});
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
@@ -342,14 +344,14 @@ export function GroupFeed({
                     <EmbedCard embed={m.embed as OGPEmbed} />
                   </div>
                 )}
-                {images.map((full, i) => (
-                  <img
-                    key={full}
-                    src={thumbs[i] ?? full}
-                    alt=""
-                    className="mt-2 w-full rounded-lg object-cover"
+                {images.length > 0 && (
+                  <PhotoCarousel
+                    className="-mx-3 mt-2"
+                    images={images}
+                    thumbs={thumbs}
+                    onOpen={(i) => setLightbox({ urls: images, idx: i })}
                   />
-                ))}
+                )}
                 {/* いいね+コメント（CotoZuteと同じ。「私は出せます」と返して、あとはTalKで） */}
                 <div className="mt-2 flex items-center gap-4">
                   <button className="flex items-center gap-1" onClick={() => like(`board:${m.id}`)} aria-label="いいね">
@@ -455,14 +457,9 @@ export function GroupFeed({
                   <EmbedCard embed={m.embed as OGPEmbed} />
                 </div>
               )}
-              {images.map((full, i) => (
-                <img
-                  key={full}
-                  src={thumbs[i] ?? full}
-                  alt=""
-                  className="mt-2 w-full rounded-lg object-cover"
-                />
-              ))}
+              {images.length > 0 && (
+                <PhotoCarousel className="mt-2 overflow-hidden rounded-lg" images={images} thumbs={thumbs} onOpen={(i) => setLightbox({ urls: images, idx: i })} />
+              )}
             </div>
           );
         })}
@@ -476,6 +473,19 @@ export function GroupFeed({
           meId={userId}
           onClose={() => setReport(null)}
         />
+      )}
+
+      {/* ライトボックス（タップでフル画質） */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-3"
+          onClick={() => setLightbox(null)}
+        >
+          <img src={lightbox.urls[lightbox.idx]} alt="" className="max-h-full max-w-full object-contain" />
+          <button className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white" aria-label="閉じる">
+            ✕
+          </button>
+        </div>
       )}
     </div>
   );

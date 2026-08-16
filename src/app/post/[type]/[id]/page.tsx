@@ -27,6 +27,7 @@ import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { CommentSection } from "@/components/CommentSection";
+import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { JoinDialog } from "@/components/JoinDialog";
 
 /* eslint-disable @next/next/no-img-element */
@@ -319,11 +320,7 @@ export default function PostPage({
                 <EmbedCard embed={board!.embed as OGPEmbed} />
               </div>
             )}
-            {images.map((u) => (
-              <div key={u} className="-mx-4 mt-2">
-                <img src={u} alt="" className="w-full object-cover" />
-              </div>
-            ))}
+            {images.length > 0 && <PhotoCarousel className="-mx-4 mt-2" images={images} />}
 
             {/* いいね + コメント数（フィードと同じアイコン文法） */}
             <div className="mt-3 flex items-center gap-4">

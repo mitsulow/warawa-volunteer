@@ -17,6 +17,7 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
+import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
@@ -895,53 +896,13 @@ export function OffersSection({
                 )}
 
                 {/* 写真（左右いっぱい）。複数枚はインスタ式: 横スワイプ+●ドット */}
-                {images.length === 1 && (
-                  <div className="-mx-3 mt-2">
-                    <button
-                      onClick={() => setLightbox({ urls: images, idx: 0 })}
-                      className="block w-full"
-                      aria-label="写真をフル画質で見る"
-                    >
-                      <img src={thumbs[0] ?? images[0]} alt="" className="w-full object-cover" />
-                    </button>
-                  </div>
-                )}
-                {images.length > 1 && (
-                  <div className="-mx-3 mt-2">
-                    <div
-                      className="hide-scrollbar flex snap-x snap-mandatory overflow-x-auto"
-                      onScroll={(e) => {
-                        const el = e.currentTarget;
-                        const i = Math.round(el.scrollLeft / el.clientWidth);
-                        if (i !== idx) setImgIdx((p) => new Map(p).set(key, i));
-                      }}
-                    >
-                      {images.map((full, i) => (
-                        <button
-                          key={full}
-                          onClick={() => setLightbox({ urls: images, idx: i })}
-                          className="w-full flex-shrink-0 snap-center"
-                          aria-label={`写真${i + 1}`}
-                        >
-                          <img
-                            src={thumbs[i] ?? full}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            style={{ aspectRatio: "1" }}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-1.5 flex justify-center gap-1">
-                      {images.map((_, i) => (
-                        <span
-                          key={i}
-                          className="rounded-full"
-                          style={{ width: 6, height: 6, background: i === idx ? "#d96a1a" : "#d8d4c8" }}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                {images.length > 0 && (
+                  <PhotoCarousel
+                    className="-mx-3 mt-2"
+                    images={images}
+                    thumbs={thumbs}
+                    onOpen={(i) => setLightbox({ urls: images, idx: i })}
+                  />
                 )}
 
                 {/* アイコン行（左寄せ・CotoZuteと同じ） */}
