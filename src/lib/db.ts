@@ -31,7 +31,12 @@ export interface Offer {
   embed: { url: string; title?: string; description?: string; image?: string; platform?: string } | null;
   status: "open" | "confirmed" | "done";
   created_at: string;
-  profiles: { display_name: string; avatar_url: string | null; member_no?: number | null } | null;
+  profiles: {
+    display_name: string;
+    avatar_url: string | null;
+    member_no?: number | null;
+    sns?: Record<string, string> | null;
+  } | null;
 }
 
 export type BoardScope = "board" | "voice";
@@ -229,7 +234,7 @@ export async function fetchDonations(): Promise<Donation[]> {
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
-  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, created_at, profiles(display_name, avatar_url, member_no, sns)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();

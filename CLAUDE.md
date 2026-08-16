@@ -49,6 +49,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - **寄付ダイアログ最終形(2026-08-16昼・ユーザー指定レイアウト)**: ①②③の説明文 → 「予定している寄付金額」プルダウン(1/3/5/10/20/30/50/100口＋その他入力・最大1万口) → 「掲示板への記載」2択ラジオ(並べる/並べない) → 口座情報コピー(口座は小さく1行表示) → 「この内容で申し込む」。口座番号は事務局TalK(「寄付予定X口X円です。以下の口座へお振込みを…」+ゆうちょ手順)で届く
 - **寄付フロー刷新**: 4ボタン(寄付をする/現地へ行く/物資を送る/その他)は折りたたみ無しで常時表示。寄付=`DonateDialog`(OffersSection内)で口数(1口1,000円・±/クイック/最大1万口)→ offers(kind=money, detail「私はX口（X,000円）の寄付をする予定です。」)を作りフィードに並べる＋`/api/donate-talk`({units})で事務局から口座案内TalK(直近10分は重複送信しない)。申込は2択: ①寄付予定を掲示板(フィード)に並べる=offer作成 / ②並べずに寄付=offer無し。どちらもTalK送信。未ログインでもダイアログは開ける(申込ボタンで参加)。ゆうちょ手順は赤字「※ゆうちょ銀行から振り込む場合はこちら▽」の折りたたみ(枠なし)
 - **寄付申込の保管**: `donations`テーブル(user_id/units/amount/listed/email=Google認証メール/display_name)。`/api/donate-talk`がservice roleで毎回insert(①②とも)。RLSは管理者のみSELECT。事務局 /office に「💰 寄付申込」一覧＋「メールアドレスを全部コピー」(後日メール連絡用。送信基盤は未定=Gmailアプリパスワード案 or Resend)
+- 現地入り立候補(body offer)もフィードに並ぶ: 公開はニックネーム・アイコン・SNS一覧(profiles.sns・OFFER_SELECTに追加)・私にできる事PR・動ける期間のみ。本名/電話/住所は profile_private(事務局のみ)。BodyApplyDialogの説明文にも明記
 - フィード(助けたい/掲示板)は offers **4種すべて**表示。チップ=PostKit `CHIP_STYLE`(寄付をする=金/物資を送る=橙/現地へ行く=青/持ち寄ります=緑)・タップでその種別だけ絞り込み(`KindFilterBar`)
 - 表記「@わらわ〜ボランティアNo.X」（旧「@ボランティアNo.X」）
 - **画面が開くのが遅い対策**: /talk/g/[scope] は generateStaticParams(board/voice)でSSG、/talk/[chatId] と /u/[id] は layout.tsx で `dynamic="force-static"`（クライアント描画のみなのでシェルを静的化・サーバー関数のコールドスタート回避）。/post/[type]/[id] はサーバー描画のまま

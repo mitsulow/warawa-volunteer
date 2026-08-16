@@ -22,6 +22,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
+import { SnsIcon } from "@/components/SnsIcon";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
 
@@ -73,6 +74,7 @@ interface FeedItem {
   memberNo: number | null;
   createdAt: string;
   chip: ChipKind | null;
+  sns: Record<string, string> | null;
   body: string;
   images: string[]; // 本体
   thumbs: string[]; // サムネ
@@ -164,6 +166,7 @@ export function ActivityFeed({
       memberNo: m.profiles?.member_no ?? null,
       createdAt: m.created_at,
       chip: null,
+      sns: null,
       body: m.body,
       images: m.image_urls?.length ? m.image_urls : m.image_url ? [m.image_url] : [],
       thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
@@ -179,6 +182,7 @@ export function ActivityFeed({
         memberNo: o.profiles?.member_no ?? null,
         createdAt: o.created_at,
         chip: o.kind as ChipKind,
+        sns: o.kind === "body" ? (o.profiles?.sns ?? null) : null,
         body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
         images: o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [],
         thumbs: o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [],
@@ -324,6 +328,24 @@ export function ActivityFeed({
                     />
                   )}
                 </div>
+
+                {it.sns && Object.keys(it.sns).length > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {Object.entries(it.sns).map(([platform, url]) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={platform}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border bg-white"
+                        style={{ borderColor: "#e8dcc4" }}
+                      >
+                        <SnsIcon platform={platform.replace(/\d+$/, "")} size={18} />
+                      </a>
+                    ))}
+                  </div>
+                )}
 
                 {/* 本文（1行 → もっと見る → 折りたたむ・CotoZuteと同じ） */}
                 {it.body.trim() && (

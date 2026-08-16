@@ -811,6 +811,25 @@ export function OffersSection({
                   )}
                 </div>
 
+                {/* 現地へ行く: SNS一覧（Googleのニックネーム・アイコン・SNS・PR・動ける期間だけを公開。本名/電話/住所は事務局の審査用） */}
+                {o.kind === "body" && o.profiles?.sns && Object.keys(o.profiles.sns).length > 0 && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {Object.entries(o.profiles.sns).map(([platform, url]) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={platform}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border bg-white"
+                        style={{ borderColor: "#e8dcc4" }}
+                      >
+                        <SnsIcon platform={platform.replace(/\d+$/, "")} size={18} />
+                      </a>
+                    ))}
+                  </div>
+                )}
+
                 {/* 本文（1行 → もっと見る → 折りたたむ・CotoZuteと同じ） */}
                 {body.trim() && (
                   <div className="mt-2">
