@@ -154,6 +154,11 @@ export default function Home() {
         </div>
       </header>
 
+      {session.profile?.banned_at && (
+        <div className="mx-4 mt-3 rounded-xl border px-3 py-2 text-[12.5px] font-bold" style={{ borderColor: "#f5b7b1", background: "#fdecea", color: "#c0392b" }}>
+          🚫 このアカウントは書き込みが停止されています。閲覧はできます。心当たりがない場合は事務局までお知らせください。
+        </div>
+      )}
       <div className="space-y-3 px-4 pt-3">
         {/* フォルダ型タブ: 選択中のタブが下のセクションとつながって見える（画面フチまで全幅） */}
         <div className="-mx-4">
@@ -250,7 +255,7 @@ export default function Home() {
             className="mb-3 inline-block rounded-full border-2 px-5 py-2.5 text-[15px] font-extrabold no-underline"
             style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
           >
-            📖 使い方（かんたん3ステップ）
+            📖 使い方（かんたんガイド）
           </Link>
         </footer>
       </div>

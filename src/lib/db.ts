@@ -16,11 +16,28 @@ export interface Profile {
   member_no: number | null;
   terms_accepted_at?: string | null;
   terms_version?: string | null;
+  banned_at?: string | null;
+  banned_reason?: string | null;
   created_at: string;
 }
 
 const PROFILE_SELECT =
-  "id, display_name, avatar_url, cover_url, bio, sns, member_no, terms_accepted_at, terms_version, created_at";
+  "id, display_name, avatar_url, cover_url, bio, sns, member_no, terms_accepted_at, terms_version, banned_at, banned_reason, created_at";
+
+/** 管理者: 書き込み禁止(BAN)の設定/解除 */
+export async function setUserBanned(userId: string, banned: boolean, reason?: string) {
+  const supabase = createClient();
+  return supabase
+    .from("profiles")
+    .update({ banned_at: banned ? new Date().toISOString() : null, banned_reason: banned ? reason ?? null : null })
+    .eq("id", userId);
+}
+
+export async function fetchBannedUsers(): Promise<Profile[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("profiles").select(PROFILE_SELECT).not("banned_at", "is", null).order("banned_at", { ascending: false });
+  return cdnify((data as Profile[]) ?? []);
+}
 
 /** 了承事項に同意（profiles に日時と版を記録。改訂したら TERMS_VERSION が変わり再表示される） */
 export async function acceptTerms(userId: string) {

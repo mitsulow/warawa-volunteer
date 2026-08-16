@@ -14,6 +14,7 @@ import {
   getOrCreateChat,
   removeFriendship,
   sendFriendRequest,
+  setUserBanned,
   type FriendState,
   uploadPhoto,
   upsertMyProfile,
@@ -280,6 +281,33 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
               {!canTalk && friend?.status !== "pending_received" && (
                 <span className="text-[10.5px] text-[#a09888]">友達申請が承認されるとTalKが使えます</span>
               )}
+            </div>
+          )}
+          {/* 管理者: 書き込み禁止(BAN) */}
+          {session.isAdmin && !isMe && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {profile.banned_at && (
+                <span className="rounded-full px-2.5 py-1 text-[11px] font-bold text-white" style={{ background: "#c0392b" }}>
+                  🚫 書き込み禁止中{profile.banned_reason ? `（${profile.banned_reason}）` : ""}
+                </span>
+              )}
+              <button
+                onClick={async () => {
+                  if (profile.banned_at) {
+                    if (!window.confirm("書き込み禁止を解除しますか？")) return;
+                    await setUserBanned(profile.id, false);
+                  } else {
+                    const reason = window.prompt("このユーザーを書き込み禁止にします。理由（任意・本人には見えません）:", "");
+                    if (reason === null) return;
+                    await setUserBanned(profile.id, true, reason.trim() || undefined);
+                  }
+                  load();
+                }}
+                className="rounded-full border px-3 py-1 text-[11px] font-bold"
+                style={profile.banned_at ? { borderColor: "#e8dcc4", color: "#8a7a5a", background: "#fff" } : { borderColor: "#c0392b", color: "#c0392b", background: "#fff" }}
+              >
+                {profile.banned_at ? "禁止を解除する" : "🚫 書き込み禁止にする（管理者）"}
+              </button>
             </div>
           )}
 
