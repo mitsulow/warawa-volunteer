@@ -35,7 +35,7 @@ import { Avatar } from "@/components/Avatar";
 import { BodyApplyDialog } from "@/components/BodyApplyDialog";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { SnsIcon } from "@/components/SnsIcon";
+import { SnsIcon, snsHref } from "@/components/SnsIcon";
 import type { Profile } from "@/lib/db";
 import { useRef } from "react";
 
@@ -954,7 +954,7 @@ export function OffersSection({
                     {Object.entries(o.profiles.sns).map(([platform, url]) => (
                       <a
                         key={platform}
-                        href={url}
+                        href={snsHref(platform, url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={platform}

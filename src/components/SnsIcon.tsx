@@ -161,3 +161,37 @@ export function detectPlatform(url: string): string {
   if (/threads\.net/.test(url)) return "threads";
   return "website";
 }
+
+/**
+ * SNS欄の値をタップできるURLにする。
+ * URLならそのまま。「momoso45」「@momoso45」のようなIDだけでもサービスごとのURLに組み立てる（IDだけ登録して404になる事故の防止）
+ */
+export function snsHref(platform: string, value: string): string {
+  const v = (value ?? "").trim();
+  if (!v) return "#";
+  if (/^https?:\/\//i.test(v)) return v;
+  const base = platform.replace(/\d+$/, "");
+  const handle = v.replace(/^@/, "").replace(/^\/+/, "");
+  switch (base) {
+    case "instagram":
+      return `https://instagram.com/${handle}`;
+    case "x":
+      return `https://x.com/${handle}`;
+    case "youtube":
+      return handle.startsWith("@") ? `https://youtube.com/${handle}` : `https://youtube.com/@${handle}`;
+    case "tiktok":
+      return `https://tiktok.com/@${handle}`;
+    case "facebook":
+      return `https://facebook.com/${handle}`;
+    case "threads":
+      return `https://threads.net/@${handle}`;
+    case "note":
+      return `https://note.com/${handle}`;
+    case "ameblo":
+      return `https://ameblo.jp/${handle}`;
+    case "line":
+      return /^https?:/.test(v) ? v : `https://line.me/R/ti/p/${handle}`;
+    default:
+      return `https://${handle}`;
+  }
+}

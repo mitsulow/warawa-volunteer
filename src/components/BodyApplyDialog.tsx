@@ -69,8 +69,6 @@ export function BodyApplyDialog({
       setError("市町村を選んでください");
       return;
     }
-    setBusy(true);
-    setError("");
     const sns: Record<string, string> = {};
     for (const line of snsLines.split(/\s+/)) {
       const url = line.trim();
@@ -80,6 +78,13 @@ export function BodyApplyDialog({
       while (sns[key]) key = `${detectPlatform(url)}${i++}`;
       sns[key] = url;
     }
+    // 本人確認のため SNS は必須（登録済みプロフィールのSNSがあればそれでも可）
+    if (Object.keys(sns).length === 0 && !(profile.sns && Object.keys(profile.sns).length > 0)) {
+      setError("本人確認のため、必ず1つ以上SNSを登録して下さい（URLを貼ってください）");
+      return;
+    }
+    setBusy(true);
+    setError("");
     await upsertMyProfile(userId, {
       display_name: name.trim(),
       sns: Object.keys(sns).length ? sns : profile.sns,
@@ -219,7 +224,9 @@ export function BodyApplyDialog({
 
             <label className="mt-3 block text-sm font-bold">
               本人を確認するため、やっているSNSを全て貼ってください
+              <span className="ml-1 rounded px-1.5 py-0.5 text-[11px] text-white" style={{ background: "#c0392b" }}>必須</span>
             </label>
+            <p className="mt-0.5 text-[12px] font-bold" style={{ color: "#c0392b" }}>本人確認のため、必ず1つ以上SNSを登録して下さい</p>
             <p className="mt-0.5 text-[11px] text-[#a09888]">
               URLを1行に1つ貼るだけでOK（Instagram / X / YouTube / Facebook / note / アメブロ / LINEなど）
             </p>

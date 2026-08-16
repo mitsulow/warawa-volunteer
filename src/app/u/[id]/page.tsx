@@ -22,7 +22,7 @@ import {
   type Profile,
 } from "@/lib/db";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { SnsIcon } from "@/components/SnsIcon";
+import { SnsIcon, snsHref } from "@/components/SnsIcon";
 import { RegisterDialog } from "@/components/RegisterDialog";
 import { BottomNav } from "@/components/BottomNav";
 import { AvatarCropper } from "@/components/AvatarCropper";
@@ -337,7 +337,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
               {Object.entries(profile.sns).map(([platform, url]) => (
                 <a
                   key={platform}
-                  href={url}
+                  href={snsHref(platform, url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ede5d8] bg-white"

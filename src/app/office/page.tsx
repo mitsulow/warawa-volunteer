@@ -28,7 +28,7 @@ import {
 import { uploadImagePair } from "@/lib/images";
 import { Avatar } from "@/components/Avatar";
 import { AdminSection } from "@/components/AdminSection";
-import { SnsIcon } from "@/components/SnsIcon";
+import { SnsIcon, snsHref } from "@/components/SnsIcon";
 import { BottomNav } from "@/components/BottomNav";
 import { useLongPress } from "@/components/BubbleMenu";
 
@@ -237,7 +237,7 @@ export default function OfficePage() {
           )}
           {p?.sns &&
             Object.entries(p.sns).map(([platform, url]) => (
-              <a key={platform} href={url} target="_blank" rel="noopener noreferrer" aria-label={platform}>
+              <a key={platform} href={snsHref(platform, url)} target="_blank" rel="noopener noreferrer" aria-label={platform}>
                 <SnsIcon platform={platform.replace(/\d+$/, "")} size={18} />
               </a>
             ))}
