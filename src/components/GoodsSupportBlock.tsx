@@ -14,6 +14,7 @@ import {
   type Offer,
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
+import { goodsCategory } from "@/lib/goodsCategories";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -103,6 +104,11 @@ export function GoodsSupportBlock({
     <div className="mt-2 rounded-xl border px-3 py-2" style={{ borderColor: "#f0e6d2", background: "#fffdf8" }}>
       {/* 届け方 + 数量 + 残り枠 */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+        {goodsCategory(offer.category) && (
+          <span className="rounded-full px-2 py-[2px] text-[11px] font-bold" style={{ background: "#fdf0e0", color: "#c05e14", border: "1px solid #f0d0a8" }}>
+            {goodsCategory(offer.category)!.emoji} {goodsCategory(offer.category)!.short}
+          </span>
+        )}
         <span className="font-bold text-[#5a5448]">{ROUTE_LABEL[offer.route]}</span>
         {offer.quantity && (
           <span className="text-[#5a5448]">

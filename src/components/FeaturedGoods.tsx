@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Offer } from "@/lib/db";
+import { goodsCategory } from "@/lib/goodsCategories";
 
 /**
  * 現地へ届けたい物資候補（楽市楽座「本日のパワープッシュ楽座」を移植）。
@@ -128,10 +129,18 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden p-2">
                   <div className="min-w-0">
+                    {/* 大きい文字=1行目（タイトル or 本文の1行目）、小さい文字=残り（同じ内容の重複はしない） */}
                     <h2 className="line-clamp-1 text-sm font-bold leading-tight text-[#3a3428]">
-                      {o.title ?? o.detail}
+                      {o.title || o.detail.split("\n")[0]}
                     </h2>
-                    <p className="line-clamp-1 text-[10.5px] text-[#8a8070]">{o.detail}</p>
+                    <p className="line-clamp-1 text-[10.5px] text-[#8a8070]">
+                      {[
+                        o.quantity ? `数量 ${o.quantity}` : null,
+                        o.title ? o.detail.split("\n")[0] : o.detail.split("\n").slice(1).join(" "),
+                      ]
+                        .filter(Boolean)
+                        .join("・") || (goodsCategory(o.category)?.label ?? "")}
+                    </p>
                   </div>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     <div className="flex min-w-0 flex-1 items-center gap-1">
@@ -148,9 +157,8 @@ export function FeaturedGoods({ offers }: { offers: Offer[] }) {
                         {o.profiles?.display_name ?? ""}
                       </span>
                     </div>
-                    <div className="flex-shrink-0 text-[11px] font-bold" style={{ color: "#d96a1a" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/icons/icon-rice.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2 }} /> 物資
+                    <div className="flex-shrink-0 rounded-full px-2 py-[2px] text-[10.5px] font-bold" style={{ color: "#c05e14", background: "#fdf0e0", border: "1px solid #f0d0a8" }}>
+                      {goodsCategory(o.category) ? `${goodsCategory(o.category)!.emoji} ${goodsCategory(o.category)!.short}` : "🍚 物資"}
                     </div>
                   </div>
                 </div>

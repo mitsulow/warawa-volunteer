@@ -25,6 +25,7 @@ import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { Lightbox } from "@/components/Lightbox";
 import { GoodsSupportBlock } from "@/components/GoodsSupportBlock";
+import { GOODS_CATEGORIES, type GoodsCategory } from "@/lib/goodsCategories";
 import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
@@ -362,6 +363,7 @@ function OfferDialog({
   const [detail, setDetail] = useState("");
   // 届け方（物資のみ）: オレンジ軍団に託す / 個人的に支援 / 両方可 + 数量 + 送り先の数
   const [route, setRoute] = useState<GoodsRoute>("orange");
+  const [category, setCategory] = useState<GoodsCategory | null>(null);
   const [quantity, setQuantity] = useState("");
   const [slots, setSlots] = useState("1");
   const [images, setImages] = useState<ImagePair[]>([]);
@@ -433,6 +435,10 @@ function OfferDialog({
       setError("内容を書いてください");
       return;
     }
+    if (isGoods && !category) {
+      setError("物資のジャンルを選んでください");
+      return;
+    }
     setBusy(true);
     setError("");
     const { error: e } = await addOffer(userId, kind, detail.trim(), null, null, {
@@ -440,6 +446,7 @@ function OfferDialog({
       thumbUrls: images.map((i) => i.thumb),
       embed: embed ?? null,
       route: isGoods ? route : "orange",
+      category: isGoods ? category : null,
       slots: isGoods && route !== "orange" ? Math.min(999, Math.max(1, Number(slots) || 1)) : 1,
       quantity: isGoods ? quantity : null,
     });
@@ -512,10 +519,25 @@ function OfferDialog({
               onChange={(e) => setDetail(e.target.value)}
             />
 
-            {/* 物資: 数量 + 届け方 */}
+            {/* 物資: ジャンル + 数量 + 届け方 */}
             {isGoods && (
               <div className="mt-3 rounded-xl border p-3" style={{ borderColor: "#e8dcc4", background: "#fffaf0" }}>
-                <label className="block text-[13px] font-bold text-[#3a3428]">
+                <p className="text-[13px] font-bold text-[#3a3428]">物資のジャンル</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {GOODS_CATEGORIES.map((c) => (
+                    <button
+                      type="button"
+                      key={c.id}
+                      onClick={() => setCategory(c.id)}
+                      className="rounded-full border px-2.5 py-1 text-[12px] font-bold"
+                      style={category === c.id ? { background: "#d96a1a", color: "#fff", borderColor: "#d96a1a" } : { background: "#fff", color: "#5a5448", borderColor: "#e8dcc4" }}
+                    >
+                      {c.emoji} {c.short}
+                    </button>
+                  ))}
+                </div>
+                {category && <p className="mt-1 text-[11px] text-[#8a7a5a]">{GOODS_CATEGORIES.find((c) => c.id === category)?.label}</p>}
+                <label className="mt-3 block text-[13px] font-bold text-[#3a3428]">
                   数量 <span className="font-normal text-[#a09888]">（例：自然栽培野菜10kg、自然栽培のお米5kg、手作り味噌2kg）</span>
                 </label>
                 <input

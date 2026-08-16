@@ -65,6 +65,8 @@ export interface Offer {
   route: "orange" | "direct" | "both";
   /** 数量（自由記述: 例「10個」「5kg」） */
   quantity: string | null;
+  /** 物資のジャンル（goodsCategories.ts） */
+  category: string | null;
   /** 個人的に支援: 送り先は何か所(何人)まで（送料は送り手負担） */
   slots: number;
   /** 応援完了（SOLD OUT相当） */
@@ -328,7 +330,7 @@ export async function resolveBugReport(id: string) {
 /* ---------- offers（私にできる事） ---------- */
 
 const OFFER_SELECT =
-  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, route, slots, quantity, done, created_at, profiles(display_name, avatar_url, member_no, sns)";
+  "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, route, slots, quantity, category, done, created_at, profiles(display_name, avatar_url, member_no, sns)";
 
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
@@ -357,7 +359,7 @@ export async function addOffer(
   detail: string,
   title?: string | null,
   imageUrl?: string | null,
-  extras?: { imageUrls?: string[]; thumbUrls?: string[]; embed?: Offer["embed"]; route?: GoodsRoute; slots?: number; quantity?: string | null }
+  extras?: { imageUrls?: string[]; thumbUrls?: string[]; embed?: Offer["embed"]; route?: GoodsRoute; slots?: number; quantity?: string | null; category?: string | null }
 ) {
   await ensureProfile(userId);
   const supabase = createClient();
@@ -373,6 +375,7 @@ export async function addOffer(
     route: extras?.route ?? "orange",
     slots: Math.min(999, Math.max(1, extras?.slots ?? 1)),
     quantity: extras?.quantity?.trim() || null,
+    category: extras?.category ?? null,
   });
 }
 
