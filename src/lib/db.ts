@@ -604,9 +604,8 @@ export async function sendBoardMessage(
     pref: extras?.pref ?? null,
     city: extras?.city ?? null,
   });
-  if (!result.error) {
-    firePush("/api/push-group", { scope, body: body || "📷 写真" });
-  }
+  // 掲示板・助けての新規投稿は全員へのプッシュ通知はしない（2026-08-16 みつろう指示: ピコピコ鳴りすぎ防止）。
+  // 未読数（TalKのバッジ）と🔔お知らせは従来どおり。プッシュは 1対1TalK・事務局からのお知らせ配信・寄付案内のみ
   return result;
 }
 
