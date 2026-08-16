@@ -200,7 +200,7 @@ function DonateDialog({
                 </>
               )}
               <br />
-              口座番号は事務局からのTalKに届いています。
+              ボランティア口座番号は事務局からのTalKに記載してあります。
             </p>
             <button
               className="mt-4 w-full rounded-xl py-3 font-bold text-white"
