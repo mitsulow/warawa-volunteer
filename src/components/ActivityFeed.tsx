@@ -21,7 +21,7 @@ import { deleteBoardMessage, deleteOffer } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { DotsMenu, ShareButton } from "@/components/PostKit";
+import { DotsMenu } from "@/components/PostKit";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
 
@@ -453,11 +453,6 @@ export function ActivityFeed({
                       </span>
                     )}
                   </button>
-                  <ShareButton
-                    path={`/post/${it.key.replace(":", "/")}`}
-                    title="わらわ〜ボランティア"
-                    text={it.body}
-                  />
                 </div>
 
 

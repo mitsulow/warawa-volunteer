@@ -8,21 +8,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "わらわ〜ボランティア",
-  description: "届けたいのは「大丈夫」、配りたいのは「笑顔」。",
+  description:
+    "届けるのは、大丈夫。配るのは、笑顔。",
   metadataBase: new URL("https://warawa-volunteer.vercel.app"),
   openGraph: {
     title: "わらわ〜ボランティア",
-    description: "届けたいのは「大丈夫」、配りたいのは「笑顔」。",
+    description:
+      "届けるのは、大丈夫。配るのは、笑顔。",
     url: "https://warawa-volunteer.vercel.app",
     siteName: "わらわ〜ボランティア",
-    images: [{ url: "/ogp.png", width: 1200, height: 630 }],
+    images: ["/icon-512.png"],
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "わらわ〜ボランティア",
-    description: "届けたいのは「大丈夫」、配りたいのは「笑顔」。",
-    images: ["/ogp.png"],
   },
   icons: {
     icon: "/icon-192.png",
