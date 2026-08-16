@@ -19,7 +19,7 @@ import { Avatar } from "@/components/Avatar";
  * 助けて(voice)カードの「私が応援します」ブロック。
  * - 見る人: 🙌 私が応援します（ひとこと任意）→ 投稿主に🔔
  * - 投稿主: 応援者一覧 → 「この人にお願いする」→ 自動で友達承認 → TalKで送り先など相談
- * - 投稿主/管理者: 届いたら「応援完了」（写真が白黒になり「応援完了」のたすき）
+ * - 投稿主/管理者: TalKでの取引が完了したら「応援完了」（写真が白黒になり「応援完了」のたすき）
  */
 export function VoiceSupportBlock({
   message,
@@ -181,14 +181,14 @@ export function VoiceSupportBlock({
           <button
             onClick={async () => {
               const next = done ? "open" : "done";
-              if (!window.confirm(next === "done" ? "「応援完了」にしますか？（届いた印です。写真に応援完了のたすきが付き、募集を終了します）" : "応援完了を取り消して、募集中に戻しますか？")) return;
+              if (!window.confirm(next === "done" ? "「応援完了」にしますか？\nTalKでのやり取り（取引）がお互いに完了した時点で押してください。写真に応援完了のたすきが付き、募集を終了します。" : "応援完了を取り消して、募集中に戻しますか？")) return;
               await setBoardStatus(message.id, next);
               onChanged();
             }}
             className="rounded-full px-3 py-1 text-[12px] font-bold text-white"
             style={{ background: done ? "#a09888" : "#c05e14" }}
           >
-            {done ? "応援完了を取り消す" : "✅ 届きました（応援完了）"}
+            {done ? "応援完了を取り消す" : "✅ 応援完了にする"}
           </button>
         </div>
       )}

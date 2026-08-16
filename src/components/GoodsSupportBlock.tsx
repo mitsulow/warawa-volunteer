@@ -206,7 +206,7 @@ export function GoodsSupportBlock({
           <button
             onClick={async () => {
               const next = !offer.done;
-              if (!window.confirm(next ? "「応援完了」にしますか？（写真に応援完了のスタンプが付き、受付を終了します）" : "応援完了を取り消して、受付中に戻しますか？")) return;
+              if (!window.confirm(next ? "「応援完了」にしますか？\nTalKでのやり取り（取引）がお互いに完了した時点で押してください。写真に応援完了のスタンプが付き、受付を終了します。" : "応援完了を取り消して、受付中に戻しますか？")) return;
               await setOfferDone(offer.id, next);
               onChanged();
             }}
