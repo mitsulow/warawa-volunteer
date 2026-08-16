@@ -99,7 +99,7 @@ export function CommentSection({
                   {relTime(c.created_at)}
                 </span>
               </div>
-              <p className="break-words text-[13px] leading-relaxed text-[#33363a]">{c.body}</p>
+              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#33363a]">{c.body}</p>
             </div>
           </div>
         ))
@@ -109,9 +109,13 @@ export function CommentSection({
           <div className="relative min-h-[38px] flex-1">
             <textarea
               value={body}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={(e) => {
+                setBody(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              }}
               rows={1}
-              className="min-h-[38px] w-full resize-none rounded-full border border-[#dcdfe4] bg-white px-3.5 py-2 text-[13.5px] leading-snug outline-none focus:border-[#d96a1a]"
+              className="min-h-[38px] w-full resize-none rounded-2xl border border-[#dcdfe4] bg-white px-3.5 py-2 text-[13.5px] leading-snug outline-none focus:border-[#d96a1a]"
             />
             {!body && (
               <span className="pointer-events-none absolute left-3.5 top-2 text-[13.5px] text-[#9aa0a6]">

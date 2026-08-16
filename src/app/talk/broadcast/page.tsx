@@ -10,6 +10,7 @@ import {
   type Broadcast,
 } from "@/lib/db";
 import { MenuButton } from "@/components/MenuButton";
+import { MessageInput } from "@/components/MessageInput";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -100,17 +101,12 @@ export default function BroadcastPage() {
 
       {session.isAdmin && (
         <div className="flex gap-2 border-t border-[#ede5d8] bg-white p-3">
-          <input
-            className="flex-1 rounded-xl border border-[#e0d6c6] px-3 py-2"
+          <MessageInput
+            className="border-[#e0d6c6]"
             placeholder="全員へのお知らせを書く（例: 明日◯◯で炊き出しをやります）"
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                send();
-              }
-            }}
+            onChange={setBody}
+            onSend={send}
           />
           <button
             className="rounded-xl px-4 font-bold text-white disabled:opacity-50"

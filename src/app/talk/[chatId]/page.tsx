@@ -14,6 +14,7 @@ import {
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { MenuButton } from "@/components/MenuButton";
+import { MessageInput } from "@/components/MessageInput";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -137,17 +138,12 @@ export default function TalkPage({
       </div>
 
       <div className="flex gap-2 p-3 bg-white border-t border-gray-200">
-        <input
-          className="flex-1 rounded-xl border border-gray-300 px-3 py-2"
+        <MessageInput
+          className="border-gray-300"
           placeholder="メッセージを書く"
           value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              send();
-            }
-          }}
+          onChange={setBody}
+          onSend={send}
         />
         <button
           className="rounded-xl bg-[#d96a1a] px-4 text-white font-bold disabled:opacity-50"

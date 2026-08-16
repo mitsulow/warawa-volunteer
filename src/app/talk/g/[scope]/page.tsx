@@ -14,6 +14,7 @@ import {
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { MenuButton } from "@/components/MenuButton";
+import { MessageInput } from "@/components/MessageInput";
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -199,17 +200,12 @@ export default function GroupTalkPage({
           className="hidden"
           onChange={onFile}
         />
-        <input
-          className="flex-1 rounded-xl border border-[#e0d6c6] px-3 py-2"
+        <MessageInput
+          className="border-[#e0d6c6]"
           placeholder={myId ? "メッセージを書く" : "ログインすると書き込めます"}
           value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              send();
-            }
-          }}
+          onChange={setBody}
+          onSend={() => send()}
         />
         <button
           className="rounded-xl px-4 font-bold text-white disabled:opacity-50"
