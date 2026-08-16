@@ -7,6 +7,7 @@ import { saveMyEmail, upsertMyProfile, uploadPhoto } from "@/lib/db";
 import { TERMS_VERSION } from "@/lib/terms";
 import { TermsBody } from "@/components/TermsBody";
 import { SnsIcon } from "@/components/SnsIcon";
+import { AvatarCropper } from "@/components/AvatarCropper";
 
 /** SNS入力欄（OneSeaのプロフィール設定と同じ形式） */
 const SNS_FIELDS = [
@@ -49,9 +50,12 @@ export function RegisterDialog({
   const [name, setName] = useState(initial.display_name);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initial.avatar_url);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
-  const changeAvatar = async (file: File | null) => {
-    if (!file || avatarBusy) return;
+  // 写真を選ぶ → トリミング(位置/大きさ) → アップロード（その間は画像欄に「更新中…」）
+  const changeAvatar = async (file: File) => {
+    if (avatarBusy) return;
+    setCropFile(null);
     setAvatarBusy(true);
     const url = await uploadPhoto(file, userId);
     if (url) setAvatarUrl(url);
@@ -133,6 +137,11 @@ export function RegisterDialog({
         {/* アイコン（Googleの写真が入る。マイページと同じ✏️で変更できる） */}
         <div className="mt-3 flex justify-center">
           <div className="relative inline-block">
+            {avatarBusy && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-full bg-black/55 text-[11px] font-bold text-white">
+                更新中…
+              </div>
+            )}
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -165,10 +174,17 @@ export function RegisterDialog({
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => changeAvatar(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                e.target.value = "";
+                if (f) setCropFile(f);
+              }}
             />
           </div>
         </div>
+        {cropFile && (
+          <AvatarCropper file={cropFile} onDone={changeAvatar} onCancel={() => setCropFile(null)} />
+        )}
 
         <label className="mt-4 block text-sm font-bold">
           お名前{" "}

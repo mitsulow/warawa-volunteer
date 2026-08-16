@@ -19,6 +19,7 @@ import { SnsIcon } from "@/components/SnsIcon";
 import { RegisterDialog } from "@/components/RegisterDialog";
 import { BottomNav } from "@/components/BottomNav";
 import { MenuButton } from "@/components/MenuButton";
+import { AvatarCropper } from "@/components/AvatarCropper";
 
 /** マイページ（OneSeaのマイページから移植・簡素化版: カバー + 重なるアバター + 認証マーク + 出せる物資 + SNS） */
 export default function UserPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +33,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
   const coverInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   const load = () => {
     fetchProfile(id).then(setProfile);
@@ -114,6 +116,11 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
       {/* アバター + 名前 */}
       <div className="relative px-4">
         <div className="relative -mt-11 inline-block">
+          {busy === "avatar" && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-full bg-black/55 text-[11px] font-bold text-white">
+              更新中…
+            </div>
+          )}
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -147,8 +154,22 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => changeImage("avatar", e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  if (f) setCropFile(f);
+                }}
               />
+              {cropFile && (
+                <AvatarCropper
+                  file={cropFile}
+                  onDone={(f) => {
+                    setCropFile(null);
+                    changeImage("avatar", f);
+                  }}
+                  onCancel={() => setCropFile(null)}
+                />
+              )}
             </>
           )}
         </div>
