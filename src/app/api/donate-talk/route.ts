@@ -22,12 +22,24 @@ export async function POST(req: Request) {
   };
   const units = Math.min(10000, Math.max(1, Math.floor(Number(rawUnits) || 1)));
 
-  const { data: prof } = await admin
+  // プロフィール（マイページ）が無ければ作る。chats.a/b は profiles を参照するので、これが無いとTalKが作れない
+  const { data: prof0 } = await admin
     .from("profiles")
     .select("display_name")
     .eq("id", user.id)
     .maybeSingle();
-  const name = prof?.display_name || "参加者";
+  let name = prof0?.display_name || "";
+  if (!prof0) {
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+    name = (meta.full_name as string) || (meta.name as string) || "参加者";
+    await admin.from("profiles").insert({
+      id: user.id,
+      display_name: name,
+      avatar_url: (meta.picture as string) || (meta.avatar_url as string) || null,
+    });
+    if (user.email) await admin.from("profile_private").upsert({ id: user.id, email: user.email });
+  }
+  name = name || "参加者";
 
   // 寄付申込を保管（あとで事務局からメール連絡するため。Google認証のメールアドレスを一緒に保存。管理者だけ閲覧可）
   // ※事務局本人(みつろう)の申込も記録し、TalKも自分宛て(自分とのチャット)に届く＝動作確認用

@@ -9,20 +9,17 @@ import {
   fetchCommentCounts,
   fetchFeedLikes,
   fetchLikersFor,
-  fetchOffers,
   markGroupRead,
   toggleFeedLike,
   type BoardMessage,
   type Liker,
-  type Offer,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
-import { deleteBoardMessage, deleteOffer } from "@/lib/db";
+import { deleteBoardMessage } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
-import { SnsIcon } from "@/components/SnsIcon";
+import { DotsMenu } from "@/components/PostKit";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
 
@@ -73,8 +70,6 @@ interface FeedItem {
   avatar: string | null;
   memberNo: number | null;
   createdAt: string;
-  chip: ChipKind | null;
-  sns: Record<string, string> | null;
   body: string;
   images: string[]; // 本体
   thumbs: string[]; // サムネ
@@ -98,7 +93,6 @@ export function ActivityFeed({
 }) {
   const router = useRouter();
   const [boards, setBoards] = useState<BoardMessage[]>([]);
-  const [offers, setOffers] = useState<Offer[]>([]);
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [likers, setLikers] = useState<Record<string, Liker[]>>({});
@@ -110,7 +104,6 @@ export function ActivityFeed({
   const [poster, setPoster] = useState<string | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
-  const [kindFilter, setKindFilter] = useState<ChipKind | null>(null);
   const cursorRef = useRef<string | null>(null);
 
   const pullBoard = async () => {
@@ -144,52 +137,22 @@ export function ActivityFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  useEffect(() => {
-    let alive = true;
-    const load = () => fetchOffers().then((o) => alive && setOffers(o));
-    load();
-    const timer = setInterval(() => {
-      if (!document.hidden) load();
-    }, 60000);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, []);
-
-  const items: FeedItem[] = [
-    ...boards.map((m) => ({
+  // 掲示板 = つながりのための掲示板。助けたい/助けての投稿は混ぜない（それぞれのタブにだけ並ぶ）
+  const items: FeedItem[] = boards
+    .map((m) => ({
       key: `board:${m.id}`,
       userId: m.user_id,
       name: m.profiles?.display_name ?? "参加者",
       avatar: m.profiles?.avatar_url ?? null,
       memberNo: m.profiles?.member_no ?? null,
       createdAt: m.created_at,
-      chip: null,
-      sns: null,
       body: m.body,
       images: m.image_urls?.length ? m.image_urls : m.image_url ? [m.image_url] : [],
       thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
       embed: (m.embed as OGPEmbed | null) ?? null,
-    })),
-    // 助けたいの意思表明は4種すべて（寄付/現地へ行く/物資/その他）
-    ...offers
-      .map((o) => ({
-        key: `offer:${o.id}`,
-        userId: o.user_id,
-        name: o.profiles?.display_name ?? "参加者",
-        avatar: o.profiles?.avatar_url ?? null,
-        memberNo: o.profiles?.member_no ?? null,
-        createdAt: o.created_at,
-        chip: o.kind as ChipKind,
-        sns: o.kind === "body" ? (o.profiles?.sns ?? null) : null,
-        body: o.kind === "goods" && o.title ? `${o.title}\n${o.detail}` : o.detail,
-        images: o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [],
-        thumbs: o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [],
-        embed: (o.embed as OGPEmbed | null) ?? null,
-      })),
-  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const visible = kindFilter ? items.filter((i) => i.chip === kindFilter) : items;
+    }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const visible = items;
 
   useEffect(() => {
     const keys = items.map((i) => i.key).slice(0, 100);
@@ -201,7 +164,7 @@ export function ActivityFeed({
     fetchLikersFor(keys).then(setLikers);
     fetchCommentCounts(keys).then(setCommentCounts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boards.length, offers.length, userId]);
+  }, [boards.length, userId]);
 
   const like = async (key: string) => {
     if (!userId) {
@@ -231,14 +194,9 @@ export function ActivityFeed({
 
   const removeItem = async (it: FeedItem) => {
     if (!window.confirm("この投稿を削除しますか？")) return;
-    const [t, rawId] = it.key.split(":");
-    if (t === "board") {
-      await deleteBoardMessage(rawId);
-      setBoards((prev) => prev.filter((m) => m.id !== rawId));
-    } else {
-      await deleteOffer(rawId);
-      setOffers((prev) => prev.filter((o) => o.id !== rawId));
-    }
+    const rawId = it.key.split(":")[1];
+    await deleteBoardMessage(rawId);
+    setBoards((prev) => prev.filter((m) => m.id !== rawId));
   };
 
   return (
@@ -273,7 +231,6 @@ export function ActivityFeed({
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div>
-        <KindFilterTabs value={kindFilter} onChange={setKindFilter} />
         {visible.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
             まだ取り組みがありません。最初のひとことをどうぞ
@@ -309,43 +266,15 @@ export function ActivityFeed({
                       )}
                     </div>
                   </div>
-                  {it.chip && (
-                    <KindChip
-                      kind={it.chip}
-                      active={kindFilter === it.chip}
-                      onClick={() => setKindFilter(kindFilter === it.chip ? null : it.chip)}
-                    />
-                  )}
                   {userId && (
                     <DotsMenu
                       canEdit={userId === it.userId || isAdmin}
-                      onEdit={() => {
-                        const [t, rawId] = it.key.split(":");
-                        router.push(`/post/${t}/${rawId}?edit=1`);
-                      }}
+                      onEdit={() => router.push(`/post/board/${it.key.split(":")[1]}?edit=1`)}
                       onDelete={() => removeItem(it)}
                       onReport={() => setReport({ key: it.key, excerpt: it.body })}
                     />
                   )}
                 </div>
-
-                {it.sns && Object.keys(it.sns).length > 0 && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {Object.entries(it.sns).map(([platform, url]) => (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={platform}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border bg-white"
-                        style={{ borderColor: "#e8dcc4" }}
-                      >
-                        <SnsIcon platform={platform.replace(/\d+$/, "")} size={18} />
-                      </a>
-                    ))}
-                  </div>
-                )}
 
                 {/* 本文（1行 → もっと見る → 折りたたむ・CotoZuteと同じ） */}
                 {it.body.trim() && (

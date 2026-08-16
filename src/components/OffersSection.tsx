@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   addOffer,
+  ensureProfile,
   deleteOffer,
   fetchCommentCounts,
   fetchFeedLikes,
@@ -157,6 +158,7 @@ function DonateDialog({
       }
       onDone();
     }
+    if (!publish) await ensureProfile(userId);
     setBusy(false);
     // 事務局アカウントから「寄付予定X口X円・口座番号」のTalKを自動送信 + 寄付申込を保管
     firePush("/api/donate-talk", { units, listed: publish });
