@@ -47,6 +47,8 @@ export interface BoardMessage {
   pref: string | null;
   city: string | null;
   scope: BoardScope;
+  status: "open" | "done";
+  done_at: string | null;
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null; member_no: number | null } | null;
 }
@@ -280,8 +282,17 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
 /* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
 
 const BOARD_SELECT =
-  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, status, done_at, created_at, profiles(display_name, avatar_url, member_no)";
 const BOARD_SELECT_FULL = BOARD_SELECT;
+
+/** 助けて(voice)の「叶いました✅」: 本人 or 管理者が open⇔done を切り替える */
+export async function setBoardStatus(id: string, status: BoardMessage["status"]) {
+  const supabase = createClient();
+  return supabase
+    .from("board_messages")
+    .update({ status, done_at: status === "done" ? new Date().toISOString() : null })
+    .eq("id", id);
+}
 
 export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
   const supabase = createClient();

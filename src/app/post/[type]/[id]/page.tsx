@@ -17,7 +17,7 @@ import {
 import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { DotsMenu } from "@/components/PostKit";
+import { DotsMenu, ShareButton } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { MenuButton } from "@/components/MenuButton";
@@ -279,6 +279,23 @@ export default function PostPage({
                 <img src={u} alt="" className="w-full object-cover" />
               </div>
             ))}
+            {/* 状態バッジ + シェア（採用/叶いました） */}
+            <div className="mt-3 flex items-center gap-3">
+              {isBoard && board!.status === "done" && (
+                <span className="rounded-full px-2.5 py-[3px] text-[11.5px] font-bold text-white" style={{ background: "#2e9e5b" }}>
+                  ✅ 叶いました
+                </span>
+              )}
+              {!isBoard && offer!.status === "confirmed" && (offer!.kind === "goods" || offer!.kind === "other") && (
+                <span className="rounded-full px-2.5 py-[3px] text-[11.5px] font-bold text-white" style={{ background: "#2e9e5b" }}>
+                  ✅ 採用
+                </span>
+              )}
+              <span className="ml-auto flex items-center gap-1 text-[12px] font-bold text-[#8a8070]">
+                <ShareButton path={`/post/${type}/${id}`} title="わらわ〜ボランティア" text={body} />
+                シェア
+              </span>
+            </div>
           </>
         )}
       </div>

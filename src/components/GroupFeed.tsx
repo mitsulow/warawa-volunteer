@@ -11,6 +11,7 @@ import {
   fetchLikersFor,
   type Liker,
   markGroupRead,
+  setBoardStatus,
   toggleFeedLike,
   type BoardMessage,
   type BoardScope,
@@ -20,7 +21,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostComposer } from "@/components/PostComposer";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { DotsMenu } from "@/components/PostKit";
+import { DotsMenu, ShareButton } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { KYUSHU_PREFS, PREF_ORDER, fetchMunicipalities } from "@/lib/prefs";
 
@@ -148,6 +149,25 @@ export function GroupFeed({
     if (!window.confirm("この投稿を削除しますか？")) return;
     await deleteBoardMessage(id);
     setMessages((prev) => prev.filter((m) => m.id !== id));
+  };
+
+  // 叶いました✅: 本人 or 管理者が切り替え。フィード上の該当行だけ差し替える（全件再取得はしない）
+  const toggleDone = async (m: BoardMessage) => {
+    const next = m.status === "done" ? "open" : "done";
+    const q =
+      next === "done"
+        ? "この要望は叶いましたか？\n「叶いました✅」の印がつきます。"
+        : "「叶いました✅」を取り消しますか？";
+    if (!window.confirm(q)) return;
+    const { error } = await setBoardStatus(m.id, next);
+    if (error) return;
+    setMessages((prev) =>
+      prev.map((x) =>
+        x.id === m.id
+          ? { ...x, status: next, done_at: next === "done" ? new Date().toISOString() : null }
+          : x
+      )
+    );
   };
 
   const pull = async () => {
@@ -285,8 +305,16 @@ export function GroupFeed({
                       現地
                     </span>
                   )}
-                  <span className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-tight" style={{ color: "#c05e14" }}>
+                  <span className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-tight" style={{ color: m.status === "done" ? "#8a8070" : "#c05e14" }}>
                     {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
+                    {m.status === "done" && (
+                      <span
+                        className="ml-1.5 inline-block rounded-full px-2 py-[1px] align-middle text-[10.5px] font-bold text-white"
+                        style={{ background: "#2e9e5b" }}
+                      >
+                        ✅ 叶いました
+                      </span>
+                    )}
                   </span>
                   <span className="shrink-0 self-start text-[10px] text-[#c0b8a8]">
                     {fmtTime(m.created_at)}
@@ -368,6 +396,25 @@ export function GroupFeed({
                       </span>
                     )}
                   </button>
+                  <ShareButton
+                    path={`/post/board/${m.id}`}
+                    title="わらわ〜ボランティア 助けて"
+                    text={m.body}
+                  />
+                  {/* 叶いました✅: 投稿者本人か管理者だけ操作できる */}
+                  {userId && (userId === m.user_id || isAdmin) && (
+                    <button
+                      onClick={() => toggleDone(m)}
+                      className="ml-auto rounded-full border px-2.5 py-[3px] text-[11.5px] font-bold"
+                      style={
+                        m.status === "done"
+                          ? { borderColor: "#cfe6d6", color: "#8a8070", background: "#f4faf6" }
+                          : { borderColor: "#2e9e5b", color: "#2e9e5b", background: "#fff" }
+                      }
+                    >
+                      {m.status === "done" ? "取り消す" : "叶いました✅"}
+                    </button>
+                  )}
                 </div>
 
 

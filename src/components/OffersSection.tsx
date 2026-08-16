@@ -16,10 +16,11 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
-import { DotsMenu } from "@/components/PostKit";
+import { DotsMenu, ShareButton } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { firePush } from "@/lib/push";
+import { createClient } from "@/lib/supabase";
 import { Avatar } from "@/components/Avatar";
 import { BodyApplyDialog } from "@/components/BodyApplyDialog";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -518,6 +519,33 @@ export function OffersSection({
     setOffers((prev) => prev.filter((o) => o.id !== id));
   };
 
+  // 管理者: 物資を「採用」→ status=confirmed + 事務局アカウントから投稿者へ自動TalK（サーバー側）
+  const adoptOffer = async (o: Offer) => {
+    const next = o.status === "confirmed" ? "open" : "confirmed";
+    const q =
+      next === "confirmed"
+        ? `「${(o.title || o.detail).slice(0, 30)}」を採用しますか？\n${o.profiles?.display_name ?? "投稿者"}さんへ事務局から自動でTalKが届きます。`
+        : "採用を取り消しますか？";
+    if (!window.confirm(q)) return;
+    setOffers((prev) => prev.map((x) => (x.id === o.id ? { ...x, status: next } : x)));
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const res = await fetch("/api/adopt-offer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({ offerId: o.id, status: next }),
+    });
+    if (!res.ok) {
+      setOffers((prev) => prev.map((x) => (x.id === o.id ? { ...x, status: o.status } : x)));
+      window.alert("採用の処理に失敗しました");
+    }
+  };
+
   // トップの「物資を登録する」CTAから物資フォームを直接開く
   useEffect(() => {
     if (openGoodsSignal > 0) open("goods");
@@ -628,12 +656,21 @@ export function OffersSection({
                       )}
                     </div>
                   </div>
-                  <span
-                    className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                    style={{ background: "#fdf0e0", color: "#c05e14", border: "1px solid #f0d0a8" }}
-                  >
-                    {o.kind === "goods" ? "物資を出します" : "持ち寄ります"}
-                  </span>
+                  {o.status === "confirmed" ? (
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+                      style={{ background: "#2e9e5b" }}
+                    >
+                      ✅ 採用
+                    </span>
+                  ) : (
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                      style={{ background: "#fdf0e0", color: "#c05e14", border: "1px solid #f0d0a8" }}
+                    >
+                      {o.kind === "goods" ? "物資を出します" : "持ち寄ります"}
+                    </span>
+                  )}
                   {userId && (
                     <DotsMenu
                       canEdit={userId === o.user_id || isAdmin}
@@ -769,6 +806,25 @@ export function OffersSection({
                       </span>
                     )}
                   </button>
+                  <ShareButton
+                    path={`/post/offer/${o.id}`}
+                    title="わらわ〜ボランティア 助けたい"
+                    text={body}
+                  />
+                  {/* 管理者だけ: 採用ボタン（採用→投稿者へ事務局から自動TalK） */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => adoptOffer(o)}
+                      className="ml-auto rounded-full border px-2.5 py-[3px] text-[11.5px] font-bold"
+                      style={
+                        o.status === "confirmed"
+                          ? { borderColor: "#cfe6d6", color: "#8a8070", background: "#f4faf6" }
+                          : { borderColor: "#2e9e5b", color: "#2e9e5b", background: "#fff" }
+                      }
+                    >
+                      {o.status === "confirmed" ? "採用を取り消す" : "採用する"}
+                    </button>
+                  )}
                 </div>
 
 

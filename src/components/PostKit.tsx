@@ -3,6 +3,60 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+/**
+ * シェアボタン（アイコン行の右端）。スマホは共有シート、PCはリンクをコピー。
+ * 共有先ではOGP（/post/…/layout.tsx）が本文と写真つきカードで開く。
+ */
+export function ShareButton({
+  path,
+  title,
+  text,
+}: {
+  path: string;
+  title?: string;
+  text?: string;
+}) {
+  const [toast, setToast] = useState<string | null>(null);
+  const share = async () => {
+    const url = `${window.location.origin}${path}`;
+    const excerpt = (text ?? "").replace(/\s+/g, " ").slice(0, 80);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: title ?? "わらわ〜ボランティア", text: excerpt, url });
+        return;
+      }
+    } catch {
+      return; // ユーザーが共有をやめた
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setToast("リンクをコピーしました");
+    } catch {
+      setToast(url);
+    }
+    setTimeout(() => setToast(null), 1800);
+  };
+  return (
+    <>
+      <button className="flex items-center gap-1" onClick={share} aria-label="シェア">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#d96a1a" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.5 3.5 10.8 13.2" />
+          <path d="M20.5 3.5 14.2 20.5l-3.4-7.3-7.3-3.4z" />
+        </svg>
+      </button>
+      {toast &&
+        createPortal(
+          <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[130] flex justify-center px-4">
+            <span className="rounded-full bg-[#3a3428]/90 px-4 py-2 text-[13px] font-bold text-white shadow-lg">
+              {toast}
+            </span>
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
+
 /** 投稿カード右上の「⋯」メニュー（OneSea PostKitから移植: 編集/削除/通報） */
 export function DotsMenu({
   canEdit,

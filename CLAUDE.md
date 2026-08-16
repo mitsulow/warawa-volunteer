@@ -2,7 +2,7 @@
 
 熊本地震支援サイト。本番 https://warawa-volunteer.vercel.app / repo mitsulow/warawa-volunteer。
 solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さやか@埼玉さん等）なので本番を壊さないこと。
-最終更新: 2026-08-15
+最終更新: 2026-08-16
 
 ## 0. デプロイの型（毎リクエストこれで完結・確認不要）
 
@@ -44,6 +44,11 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 寄付ダイアログ: ※なお…注釈は14px太字。寄付ボタン押下で事務局から自動TalK(/api/donate-talk・重複防止)
 - 現地入り立候補フォーム: ①②③形式の募集要項(8月下旬〜10月初旬)
 - 模擬データ（サンプル隊員①〜⑤）は**削除済み**・採番リセット済み（次の参加者はNo.2）
+- **2026-08-16追加**:
+  - 助けて(voice)の「叶いました✅」: board_messages.status('open'/'done')+done_at。本人or管理者がアイコン行右端のボタンで切替(RLS既存のupdate self or admin)。フィード内で緑バッジ表示、投稿ページにも表示
+  - 物資の「採用する」(管理者のみ・アイコン行右端): `/api/adopt-offer`(admins確認→offers.status=confirmed→事務局アカウントから投稿者へ自動TalK+push。取消/再採用はTalK送らない)。バッジ「✅ 採用」は全員に見える
+  - シェアボタン(紙飛行機・3フィード+投稿ページ): navigator.share→無ければリンクコピー。共有先OGPは `src/app/post/[type]/[id]/layout.tsx` の generateMetadata(REST anon読み・本文100字+写真1枚目)。サイト全体OGPは `public/ogp.png`(1200x630・`scripts/make_ogp.py`で再生成可)
+  - DB操作の小道具: `python scripts/dbq.py "SQL"`（Management API・User-Agent付き）
 
 ## 4. 設計の絶対ルール
 
@@ -57,5 +62,6 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 ## 5. 未対応・保留
 
 - コトヅテ型フィードの本採用 or mond枠復帰（ユーザー判断待ち）
-- 提案済み未実装: 叶いました✅ / 物資の採用ボタン→自動TalK / シェアボタン+OGP画像 / 現地報告ハイライト
+- 提案済み未実装: 現地報告ハイライト（叶いました✅・採用→自動TalK・シェア+OGPは2026-08-16に実装済み）
+- 採用された物資を「現地へ届けたい物資候補」カルーセルで優先表示するか（未対応）
 - OneSea側のLINEブラウザ対策（別プロジェクト・デスクトップに引き継ぎ書）
