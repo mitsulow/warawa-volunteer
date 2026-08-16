@@ -102,7 +102,9 @@ export function MenuButton({
               <div className="text-[10px] tracking-[1px] text-[#e0a06a]">
                 届けたいのは「大丈夫」、配りたいのは「笑顔」。
               </div>
-              <div className="text-[19px] font-extrabold" style={{ color: "#d96a1a" }}>
+              <div className="flex items-center gap-2 text-[19px] font-extrabold" style={{ color: "#d96a1a" }}>
+                {/* OneSeaのドロワーと同じく、見出しの先頭にキャラアイコン */}
+                <img src="/waraeru-v2.png" alt="" className="h-[26px] w-[26px] object-contain" />
                 わらわ〜ボランティア
               </div>
             </div>
