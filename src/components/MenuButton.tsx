@@ -53,7 +53,7 @@ export function MenuButton({
   const MENU: Array<{ href: string; icon: string; label: string }> = [
     { href: "/?tab=offers", icon: "/icons/icon-heart.webp", label: "助けたい" },
     { href: "/?tab=voice", icon: "/icons/icon-tasukete.webp", label: "助けて" },
-    { href: "/?tab=board", icon: "/icons/icon-keijiban.webp", label: "掲示板" },
+    { href: "/?tab=board", icon: "/icons/icon-kokuban.webp", label: "掲示板" },
     { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
     ...(userId
       ? [{ href: `/u/${userId}`, icon: "/icons/icon-meishi.webp", label: "マイページ" }]
