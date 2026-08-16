@@ -44,6 +44,10 @@ export default function OfficePage() {
   const [banned, setBanned] = useState<Profile[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  // 用件ごとのタブ + 未対応/対応済みのセグメント（OneSea事務局方式）
+  type Tab = "apps" | "donations" | "reports" | "bugs" | "send" | "manage";
+  const [tab, setTab] = useState<Tab>("apps");
+  const [seg, setSeg] = useState<"open" | "done">("open");
   const [popups, setPopups] = useState<Popup[]>([]);
   const [pBody, setPBody] = useState("");
   const [pLink, setPLink] = useState("");
@@ -191,14 +195,64 @@ export default function OfficePage() {
       </header>
 
       <div className="space-y-5 px-4 pt-4">
-        <Link
-          href="/talk/broadcast"
-          className="flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-extrabold text-white no-underline shadow-md"
-          style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
-        >
-          📢 全員へお知らせを配信する
-        </Link>
+        {/* タブ（用件ごと・未対応の件数つき） */}
+        <div className="hide-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
+          {(
+            [
+              ["apps", `🏃 現地入り${open.length ? ` (${open.length})` : ""}`],
+              ["reports", `⚑ 通報${reports.filter((r) => r.status === "open").length ? ` (${reports.filter((r) => r.status === "open").length})` : ""}`],
+              ["bugs", `🐛 バグ${bugs.filter((b) => b.status === "open").length ? ` (${bugs.filter((b) => b.status === "open").length})` : ""}`],
+              ["donations", `💰 寄付${donations.length ? ` (${donations.length})` : ""}`],
+              ["send", "📢 配信"],
+              ["manage", "🛠 管理"],
+            ] as Array<[Tab, string]>
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => {
+                setTab(v);
+                setSeg("open");
+              }}
+              className="flex-shrink-0 rounded-full border px-3 py-1.5 text-[11.5px] font-extrabold"
+              style={tab === v ? { background: "#d96a1a", borderColor: "#d96a1a", color: "#fff" } : { background: "#fff", borderColor: "#e0d6c6", color: "#6a6255" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
+        {/* 未対応 / 対応済み のセグメント（現地入り・通報・バグ） */}
+        {(tab === "apps" || tab === "reports" || tab === "bugs") && (
+          <div className="flex gap-1.5">
+            {(
+              [
+                ["open", tab === "apps" ? `未対応 ${open.length}` : tab === "reports" ? `未対応 ${reports.filter((r) => r.status === "open").length}` : `未対応 ${bugs.filter((b) => b.status === "open").length}`],
+                ["done", tab === "apps" ? `対応済み(現地入りメンバー) ${confirmed.length}` : tab === "reports" ? `対応済み ${reports.filter((r) => r.status === "done").length}` : `対応済み ${bugs.filter((b) => b.status === "done").length}`],
+              ] as Array<["open" | "done", string]>
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setSeg(v)}
+                className="rounded-full px-3 py-1 text-[11px] font-bold"
+                style={seg === v ? { background: "#fdeedd", color: "#c05e14", border: "1px solid #f0d0a8" } : { background: "#fff", color: "#a09888", border: "1px solid #ede5d8" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {tab === "send" && (
+          <Link
+            href="/talk/broadcast"
+            className="flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-extrabold text-white no-underline shadow-md"
+            style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
+          >
+            📢 全員へお知らせを配信する（TalKに届く）
+          </Link>
+        )}
+
+        {tab === "apps" && seg === "open" && (
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
             🏃 現地入り申請 {open.length > 0 && `（未対応 ${open.length}件）`}
@@ -211,7 +265,9 @@ export default function OfficePage() {
             <div className="space-y-2.5">{open.map(card)}</div>
           )}
         </section>
+        )}
 
+        {tab === "manage" && (
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">🚫 書き込み禁止中のユーザー（{banned.length}人）</h2>
           <p className="mb-2 text-[11.5px] text-[#a09888]">禁止にするには、そのユーザーのマイページ（アイコンをタップ）で「🚫 書き込み禁止にする」を押します。閲覧はできますが、投稿・コメント・TalK・いいね等が全部できなくなります。</p>
@@ -242,16 +298,18 @@ export default function OfficePage() {
             </div>
           )}
         </section>
+        )}
 
+        {tab === "bugs" && (
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
             🐛 バグ報告 {bugs.filter((b) => b.status === "open").length > 0 && `（未対応 ${bugs.filter((b) => b.status === "open").length}件）`}
           </h2>
-          {bugs.length === 0 ? (
+          {bugs.filter((b) => b.status === seg).length === 0 ? (
             <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-5 text-center text-sm text-[#a09888]">報告はありません</p>
           ) : (
             <div className="space-y-2">
-              {bugs.map((b) => (
+              {bugs.filter((b) => b.status === seg).map((b) => (
                 <div key={b.id} className="rounded-xl border bg-white p-3 text-[12.5px]" style={{ borderColor: b.status === "open" ? "#f0d0a8" : "#ede5d8", opacity: b.status === "open" ? 1 : 0.6 }}>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-[#3a3428]">{b.profiles?.display_name ?? "参加者"}</span>
@@ -278,7 +336,9 @@ export default function OfficePage() {
             </div>
           )}
         </section>
+        )}
 
+        {tab === "donations" && (
         <section>
           <h2 className="mb-2 flex items-center text-sm font-extrabold text-[#5a5448]">
             💰 寄付申込（{donations.length}件・
@@ -331,7 +391,9 @@ export default function OfficePage() {
             </div>
           )}
         </section>
+        )}
 
+        {tab === "apps" && seg === "done" && (
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
             🟠 現地入りメンバー（{confirmed.length}人）
@@ -342,18 +404,20 @@ export default function OfficePage() {
             <div className="space-y-2.5">{confirmed.map(card)}</div>
           )}
         </section>
+        )}
 
+        {tab === "reports" && (
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">
             ⚑ 通報受信箱 {reports.length > 0 && `（${reports.length}件）`}
           </h2>
-          {reports.length === 0 ? (
+          {reports.filter((r) => r.status === seg).length === 0 ? (
             <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-5 text-center text-sm text-[#a09888]">
               通報はありません
             </p>
           ) : (
             <div className="space-y-2.5">
-              {reports.map((r) => {
+              {reports.filter((r) => r.status === seg).map((r) => {
                 const [t, rawId] = r.item_key.split(":");
                 return (
                   <div key={r.id} className="rounded-xl border border-[#ede5d8] bg-white p-3 shadow-sm">
@@ -382,16 +446,29 @@ export default function OfficePage() {
                       >
                         投稿を見る
                       </Link>
-                      <button
-                        className="rounded-full px-3 py-1.5 text-[11px] font-bold text-white"
-                        style={{ background: "#d96a1a" }}
-                        onClick={async () => {
-                          await resolveReport(r.id);
-                          reload();
-                        }}
-                      >
-                        対応済みにする
-                      </button>
+                      {r.status === "open" ? (
+                        <button
+                          className="rounded-full px-3 py-1.5 text-[11px] font-bold text-white"
+                          style={{ background: "#2e7d4f" }}
+                          onClick={async () => {
+                            await resolveReport(r.id, true);
+                            reload();
+                          }}
+                        >
+                          対応済みにする
+                        </button>
+                      ) : (
+                        <button
+                          className="rounded-full border px-3 py-1.5 text-[11px] font-bold text-[#8a7a5a]"
+                          style={{ borderColor: "#e8dcc4" }}
+                          onClick={async () => {
+                            await resolveReport(r.id, false);
+                            reload();
+                          }}
+                        >
+                          未対応に戻す
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -399,7 +476,9 @@ export default function OfficePage() {
             </div>
           )}
         </section>
+        )}
 
+        {tab === "send" && (
         <section>
           <h2 className="mb-2 text-sm font-extrabold text-[#5a5448]">🚨 全面ポップアップ通知</h2>
           <p className="mb-2 text-[11.5px] text-[#8a8070]">
@@ -493,8 +572,9 @@ export default function OfficePage() {
             </div>
           )}
         </section>
+        )}
 
-        {session.userId && <AdminSection userId={session.userId} />}
+        {tab === "manage" && session.userId && <AdminSection userId={session.userId} />}
       </div>
 
       <BottomNav userId={session.userId} active="home" />

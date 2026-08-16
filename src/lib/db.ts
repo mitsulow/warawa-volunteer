@@ -1164,6 +1164,7 @@ export interface PostReport {
   item_key: string;
   excerpt: string | null;
   reason: string;
+  status: "open" | "done";
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null } | null;
 }
@@ -1173,15 +1174,16 @@ export async function fetchReports(): Promise<PostReport[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("post_reports")
-    .select("id, item_key, excerpt, reason, created_at, profiles(display_name, avatar_url)")
+    .select("id, item_key, excerpt, reason, status, created_at, profiles(display_name, avatar_url)")
     .order("created_at", { ascending: false })
     .limit(100);
   return (data as unknown as PostReport[]) ?? [];
 }
 
-export async function resolveReport(id: string) {
+/** 通報を対応済みに（消さずに残す。OneSea方式で未対応/対応済みを分けて見る） */
+export async function resolveReport(id: string, done = true) {
   const supabase = createClient();
-  return supabase.from("post_reports").delete().eq("id", id);
+  return supabase.from("post_reports").update({ status: done ? "done" : "open" }).eq("id", id);
 }
 
 /* ---------- 取り組みフィードのいいね（🌱ハート） ---------- */
