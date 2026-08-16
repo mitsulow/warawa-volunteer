@@ -39,25 +39,65 @@ export function KindChip({
   );
 }
 
-/** 絞り込み中の帯（フィード上部）: 「◯◯」だけを表示中 ／ すべて表示 */
-export function KindFilterBar({
-  kind,
-  onClear,
+/**
+ * ジャンル切替バー（フィード上部・薄い1段）: 物資 / 動けます / 寄付 / アイディア / すべて。
+ * 旧「「◯◯」だけを表示中」帯と同じ厚み(py-1.5)に収める。
+ */
+const FILTER_ORDER: Array<ChipKind | null> = ["goods", "body", "money", "other", null];
+const FILTER_SHORT: Record<string, string> = {
+  goods: "物資",
+  body: "動けます",
+  money: "寄付",
+  other: "アイディア",
+  all: "すべて",
+};
+
+export function KindFilterTabs({
+  value,
+  onChange,
+  counts,
 }: {
-  kind: ChipKind | null;
-  onClear: () => void;
+  value: ChipKind | null;
+  onChange: (k: ChipKind | null) => void;
+  counts?: Partial<Record<ChipKind | "all", number>>;
 }) {
-  if (!kind) return null;
-  const c = CHIP_STYLE[kind];
   return (
     <div
-      className="-mx-2 mb-0 flex items-center justify-between border-b px-3 py-1.5 text-[12.5px] font-bold"
-      style={{ background: c.bg, color: c.fg, borderColor: c.border }}
+      className="-mx-2 flex items-center gap-1 overflow-x-auto border-b px-2 py-1.5"
+      style={{ background: "#fffaf0", borderColor: "#f0e6d2", scrollbarWidth: "none" }}
+      role="tablist"
+      aria-label="ジャンルで絞り込む"
     >
-      <span>「{c.label}」だけを表示中</span>
-      <button onClick={onClear} className="rounded-full bg-white px-2.5 py-[3px] text-[11.5px]" style={{ color: c.fg, border: `1px solid ${c.border}` }}>
-        すべて表示
-      </button>
+      {FILTER_ORDER.map((k) => {
+        const key = k ?? "all";
+        const active = value === k;
+        const c = k ? CHIP_STYLE[k] : { bg: "#f0e9da", fg: "#5a5448", border: "#e0d6c6", label: "すべて" };
+        const n = counts?.[key as ChipKind | "all"];
+        return (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(k)}
+            className="flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 text-[12px] font-bold transition-colors"
+            style={
+              active
+                ? { background: c.fg, color: "#fff", border: `1px solid ${c.fg}` }
+                : { background: "#fff", color: c.fg, border: `1px solid ${c.border}` }
+            }
+          >
+            {FILTER_SHORT[key]}
+            {typeof n === "number" && n > 0 && (
+              <span
+                className="num rounded-full px-1.5 text-[10px] leading-4"
+                style={active ? { background: "rgba(255,255,255,.28)" } : { background: c.bg }}
+              >
+                {n}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

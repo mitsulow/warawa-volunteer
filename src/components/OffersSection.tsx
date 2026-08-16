@@ -16,7 +16,7 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
-import { CHIP_STYLE, DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
+import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { firePush } from "@/lib/push";
@@ -638,7 +638,8 @@ export function OffersSection({
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
-  const [kindFilter, setKindFilter] = useState<ChipKind | null>(null);
+  // 最初は「物資」だけ。「すべて」で寄付・動けます・アイディアも並ぶ
+  const [kindFilter, setKindFilter] = useState<ChipKind | null>("goods");
 
   const reload = () => fetchOffers().then(setOffers);
   useEffect(() => {
@@ -753,10 +754,20 @@ export function OffersSection({
       )}
 
       <div>
-        <KindFilterBar kind={kindFilter} onClear={() => setKindFilter(null)} />
+        <KindFilterTabs
+          value={kindFilter}
+          onChange={setKindFilter}
+          counts={{
+            goods: offers.filter((o) => o.kind === "goods").length,
+            body: offers.filter((o) => o.kind === "body").length,
+            money: offers.filter((o) => o.kind === "money").length,
+            other: offers.filter((o) => o.kind === "other").length,
+            all: offers.length,
+          }}
+        />
         {feed.length === 0 && (
-          <p className="rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
-            まだ投稿がありません
+          <p className="mt-2 rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
+            {kindFilter ? `「${CHIP_STYLE[kindFilter].label}」の投稿はまだありません` : "まだ投稿がありません"}
           </p>
         )}
         {feed.map((o) => {

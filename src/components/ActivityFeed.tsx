@@ -21,7 +21,7 @@ import { deleteBoardMessage, deleteOffer } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
-import { DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
+import { DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { SnsIcon } from "@/components/SnsIcon";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -273,7 +273,7 @@ export function ActivityFeed({
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div>
-        <KindFilterBar kind={kindFilter} onClear={() => setKindFilter(null)} />
+        <KindFilterTabs value={kindFilter} onChange={setKindFilter} />
         {visible.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
             まだ取り組みがありません。最初のひとことをどうぞ
