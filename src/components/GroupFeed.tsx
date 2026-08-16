@@ -8,6 +8,9 @@ import {
   fetchBoard,
   fetchBoardSince,
   fetchCommentCounts,
+  fetchMyVoiceSupports,
+  fetchVoiceSupportCounts,
+  type VoiceSupport,
   fetchFeedLikes,
   fetchLikersFor,
   type Liker,
@@ -19,6 +22,8 @@ import {
 import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { VoiceSupportBlock } from "@/components/VoiceSupportBlock";
+import { Lightbox } from "@/components/Lightbox";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostComposer } from "@/components/PostComposer";
@@ -74,6 +79,20 @@ export function GroupFeed({
   const [messages, setMessages] = useState<BoardMessage[]>([]);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
+  // 助けて: 応援者数と自分の申し出
+  const [supCounts, setSupCounts] = useState<Map<string, { pending: number; accepted: number }>>(new Map());
+  const [mySups, setMySups] = useState<Map<string, VoiceSupport>>(new Map());
+  const loadSupports = (list: BoardMessage[]) => {
+    if (scope !== "voice") return;
+    fetchVoiceSupportCounts(list.map((m) => m.id)).then(setSupCounts);
+    if (userId) fetchMyVoiceSupports(userId).then((rs) => setMySups(new Map(rs.map((r) => [r.message_id, r]))));
+  };
+  const reloadAll = async () => {
+    const rows = await fetchBoard(scope);
+    setMessages(rows);
+    if (rows.length) cursorRef.current = rows[rows.length - 1].created_at;
+    loadSupports(rows);
+  };
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [likers, setLikers] = useState<Record<string, Liker[]>>({});
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
@@ -171,6 +190,7 @@ export function GroupFeed({
       if (!alive) return;
       setMessages(rows);
       if (rows.length) cursorRef.current = rows[rows.length - 1].created_at;
+      loadSupports(rows);
       if (userId) markGroupRead(scope, userId);
     });
     const timer = setInterval(async () => {
@@ -354,9 +374,24 @@ export function GroupFeed({
                     className="-mx-3 mt-2"
                     images={images}
                     thumbs={thumbs}
+                    stamp={m.status === "done" ? "応援完了" : null}
                     onOpen={(i) => setLightbox({ urls: images, idx: i })}
                   />
                 )}
+                {m.status === "done" && images.length === 0 && (
+                  <div className="mt-2 rounded-lg py-1.5 text-center text-[13px] font-extrabold tracking-[2px]" style={{ background: "#fdf0e0", color: "#c05e14" }}>
+                    応援完了
+                  </div>
+                )}
+                <VoiceSupportBlock
+                  message={m}
+                  userId={userId}
+                  isAdmin={isAdmin}
+                  counts={supCounts.get(m.id)}
+                  mySupport={mySups.get(m.id) ?? null}
+                  requireJoin={requireJoin}
+                  onChanged={reloadAll}
+                />
                 {/* いいね+コメント（CotoZuteと同じ。「私は出せます」と返して、あとはTalKで） */}
                 <div className="mt-2 flex items-center gap-4">
                   <button className="flex items-center gap-1" onClick={() => like(`board:${m.id}`)} aria-label="いいね">
@@ -480,18 +515,7 @@ export function GroupFeed({
         />
       )}
 
-      {/* ライトボックス（タップでフル画質） */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-3"
-          onClick={() => setLightbox(null)}
-        >
-          <img src={lightbox.urls[lightbox.idx]} alt="" className="max-h-full max-w-full object-contain" />
-          <button className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white" aria-label="閉じる">
-            ✕
-          </button>
-        </div>
-      )}
+      {lightbox && <Lightbox urls={lightbox.urls} index={lightbox.idx} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

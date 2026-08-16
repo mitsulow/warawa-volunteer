@@ -10,6 +10,9 @@ import {
   fetchBoardMessageById,
   fetchCommentCounts,
   fetchGoodsRequestCounts,
+  fetchMyVoiceSupports,
+  fetchVoiceSupportCounts,
+  type VoiceSupport,
   fetchMyGoodsRequests,
   type GoodsRequest,
   fetchFeedLikes,
@@ -33,6 +36,8 @@ import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { GoodsSupportBlock } from "@/components/GoodsSupportBlock";
+import { VoiceSupportBlock } from "@/components/VoiceSupportBlock";
+import { Lightbox } from "@/components/Lightbox";
 import { JoinDialog } from "@/components/JoinDialog";
 
 /* eslint-disable @next/next/no-img-element */
@@ -87,10 +92,17 @@ export default function PostPage({
   const [commentCount, setCommentCount] = useState(0);
   const [showJoin, setShowJoin] = useState(false);
   const itemKeyRef = `${type}:${id}`;
+  const [lb, setLb] = useState<number | null>(null);
+  const [supCount, setSupCount] = useState<{ pending: number; accepted: number } | undefined>(undefined);
+  const [mySup, setMySup] = useState<VoiceSupport | null>(null);
   const [reqCount, setReqCount] = useState<{ pending: number; accepted: number } | undefined>(undefined);
   const [myReq, setMyReq] = useState<GoodsRequest | null>(null);
   const loadRequests = () => {
-    if (isBoard) return;
+    if (isBoard) {
+      fetchVoiceSupportCounts([id]).then((m) => setSupCount(m.get(id)));
+      if (session.userId) fetchMyVoiceSupports(session.userId).then((rs) => setMySup(rs.find((r) => r.message_id === id) ?? null));
+      return;
+    }
     fetchGoodsRequestCounts([id]).then((m) => setReqCount(m.get(id)));
     if (session.userId) fetchMyGoodsRequests(session.userId).then((rs) => setMyReq(rs.find((r) => r.offer_id === id) ?? null));
   };
@@ -337,7 +349,27 @@ export default function PostPage({
               </div>
             )}
             {images.length > 0 && (
-              <PhotoCarousel className="-mx-4 mt-2" images={images} stamp={!isBoard && offer!.kind === "goods" && offer!.done ? "応援完了" : null} />
+              <PhotoCarousel
+                className="-mx-4 mt-2"
+                images={images}
+                stamp={(!isBoard && offer!.kind === "goods" && offer!.done) || (isBoard && board!.scope === "voice" && board!.status === "done") ? "応援完了" : null}
+                onOpen={(i) => setLb(i)}
+              />
+            )}
+            {lb !== null && <Lightbox urls={images} index={lb} onClose={() => setLb(null)} />}
+            {isBoard && board!.scope === "voice" && (
+              <VoiceSupportBlock
+                message={board!}
+                userId={session.userId}
+                isAdmin={session.isAdmin}
+                counts={supCount}
+                mySupport={mySup}
+                requireJoin={() => setShowJoin(true)}
+                onChanged={() => {
+                  load();
+                  loadRequests();
+                }}
+              />
             )}
             {!isBoard && offer!.kind === "goods" && (
               <GoodsSupportBlock

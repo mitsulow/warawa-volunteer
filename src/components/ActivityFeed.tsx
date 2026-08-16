@@ -17,6 +17,7 @@ import {
 import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { Lightbox } from "@/components/Lightbox";
 import { deleteBoardMessage } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -103,7 +104,7 @@ export function ActivityFeed({
   const [openComments, setOpenComments] = useState<Set<string>>(new Set());
   const [imgIdx, setImgIdx] = useState<Map<string, number>>(new Map());
   const [lightbox, setLightbox] = useState<{ urls: string[]; idx: number } | null>(null);
-  const [poster, setPoster] = useState<string | null>(null);
+  const [poster, setPoster] = useState<number | null>(null);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
   // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
   const cursorRef = useRef<string | null>(null);
@@ -218,7 +219,7 @@ export function ActivityFeed({
           {POSTERS.map((p) => (
             <button
               key={p.src}
-              onClick={() => setPoster(p.src)}
+              onClick={() => setPoster(POSTERS.indexOf(p))}
               className="shrink-0 overflow-hidden rounded-xl border-2 bg-white text-left shadow-sm"
               style={{ borderColor: "#e8c890" }}
             >
@@ -431,43 +432,10 @@ export function ActivityFeed({
       )}
 
       {/* ポスター拡大: 文字が読めるよう画面幅いっぱい+縦スクロール */}
-      {poster && (
-        <div
-          className="fixed inset-0 z-[220] overflow-y-auto bg-black/92"
-          onClick={() => setPoster(null)}
-        >
-          <div className="mx-auto max-w-[640px] py-10">
-            <img src={poster} alt="" className="w-full" />
-          </div>
-          <button
-            className="fixed right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/25 text-[18px] text-white"
-            aria-label="閉じる"
-            onClick={() => setPoster(null)}
-          >
-            ✕
-          </button>
-        </div>
+      {poster !== null && (
+        <Lightbox urls={POSTERS.map((p) => p.src)} index={poster} onClose={() => setPoster(null)} />
       )}
-
-      {/* ライトボックス（タップでフル画質） */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-3"
-          onClick={() => setLightbox(null)}
-        >
-          <img
-            src={lightbox.urls[lightbox.idx]}
-            alt=""
-            className="max-h-full max-w-full object-contain"
-          />
-          <button
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {lightbox && <Lightbox urls={lightbox.urls} index={lightbox.idx} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

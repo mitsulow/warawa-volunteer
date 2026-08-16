@@ -23,6 +23,7 @@ import {
 import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { Lightbox } from "@/components/Lightbox";
 import { GoodsSupportBlock } from "@/components/GoodsSupportBlock";
 import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -1114,25 +1115,7 @@ export function OffersSection({
         />
       )}
 
-      {/* ライトボックス（タップでフル画質） */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-3"
-          onClick={() => setLightbox(null)}
-        >
-          <img
-            src={lightbox.urls[lightbox.idx]}
-            alt=""
-            className="max-h-full max-w-full object-contain"
-          />
-          <button
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {lightbox && <Lightbox urls={lightbox.urls} index={lightbox.idx} onClose={() => setLightbox(null)} />}
     </div>
   );
 }

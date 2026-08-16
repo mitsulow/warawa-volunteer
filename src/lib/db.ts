@@ -75,6 +75,9 @@ export interface BoardMessage {
   pref: string | null;
   city: string | null;
   scope: BoardScope;
+  /** 助けて: open=募集中 / done=応援完了 */
+  status: "open" | "done";
+  done_at: string | null;
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null; member_no: number | null } | null;
 }
@@ -328,6 +331,75 @@ export async function addOffer(
   });
 }
 
+/* ---------- 助けて: 私が応援します ---------- */
+
+export interface VoiceSupport {
+  id: string;
+  message_id: string;
+  user_id: string;
+  message: string | null;
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  profiles: { display_name: string; avatar_url: string | null } | null;
+}
+
+/** 助けての応援完了(open⇔done)。本人 or 管理者（RLS: board update self or admin） */
+export async function setBoardStatus(id: string, status: BoardMessage["status"]) {
+  const supabase = createClient();
+  return supabase
+    .from("board_messages")
+    .update({ status, done_at: status === "done" ? new Date().toISOString() : null })
+    .eq("id", id);
+}
+
+export async function fetchVoiceSupportCounts(ids: string[]): Promise<Map<string, { pending: number; accepted: number }>> {
+  const m = new Map<string, { pending: number; accepted: number }>();
+  if (!ids.length) return m;
+  const supabase = createClient();
+  const { data } = await supabase.rpc("voice_support_counts", { ids });
+  for (const r of (data ?? []) as Array<{ message_id: string; pending: number; accepted: number }>) {
+    m.set(r.message_id, { pending: r.pending, accepted: r.accepted });
+  }
+  return m;
+}
+
+export async function fetchMyVoiceSupports(userId: string): Promise<VoiceSupport[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("voice_supports")
+    .select("id, message_id, user_id, message, status, created_at, profiles(display_name, avatar_url)")
+    .eq("user_id", userId)
+    .limit(200);
+  return (data as unknown as VoiceSupport[]) ?? [];
+}
+
+export async function fetchVoiceSupportsFor(messageId: string): Promise<VoiceSupport[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("voice_supports")
+    .select("id, message_id, user_id, message, status, created_at, profiles(display_name, avatar_url)")
+    .eq("message_id", messageId)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return cdnify((data as unknown as VoiceSupport[]) ?? []);
+}
+
+export async function sendVoiceSupport(messageId: string, userId: string, message: string) {
+  await ensureProfile(userId);
+  const supabase = createClient();
+  return supabase.from("voice_supports").insert({ message_id: messageId, user_id: userId, message: message.trim() || null });
+}
+
+export async function cancelVoiceSupport(id: string) {
+  const supabase = createClient();
+  return supabase.from("voice_supports").delete().eq("id", id);
+}
+
+export async function respondVoiceSupport(id: string, status: "accepted" | "declined") {
+  const supabase = createClient();
+  return supabase.from("voice_supports").update({ status, responded_at: new Date().toISOString() }).eq("id", id);
+}
+
 /* ---------- 個人的に支援（受け取り希望・応援完了） ---------- */
 
 export interface GoodsRequest {
@@ -427,7 +499,7 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
 /* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
 
 const BOARD_SELECT =
-  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, status, done_at, created_at, profiles(display_name, avatar_url, member_no)";
 const BOARD_SELECT_FULL = BOARD_SELECT;
 
 export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
