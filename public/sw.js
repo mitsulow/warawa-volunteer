@@ -1,5 +1,5 @@
 // 最小限のService Worker（PWAインストール要件 + 簡易オフライン）
-const CACHE = "warawa-v2";
+const CACHE = "warawa-v3";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/"])));
@@ -25,7 +25,8 @@ self.addEventListener("push", (e) => {
     (async () => {
       await self.registration.showNotification(data.title || "わらわ〜ボランティア", {
         body: data.body || "",
-        icon: "/icon-192.png",
+        // 通知を開いた時の大アイコン（オレンジ丸+ワラエル。scripts/make_notify_icon.py）
+        icon: "/notify-icon-256.png",
         // Androidのステータスバー用モノクロ小アイコン（白+透明のワラエル。scripts/make_badge.py）
         badge: "/badge-96.png",
         tag: data.tag || "warawa",
