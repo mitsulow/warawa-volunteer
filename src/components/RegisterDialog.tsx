@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
-import { fetchMyPrivate, saveMyAge, saveMyEmail, upsertMyProfile, uploadPhoto } from "@/lib/db";
+import { fetchMyPrivate, fetchOffersByUser, saveMyAge, saveMyEmail, upsertMyProfile, uploadPhoto } from "@/lib/db";
 import { TERMS_VERSION } from "@/lib/terms";
 import { TermsBody } from "@/components/TermsBody";
 import { SnsIcon } from "@/components/SnsIcon";
@@ -64,11 +64,16 @@ export function RegisterDialog({
   const [hitokoto, setHitokoto] = useState(initial.bio ?? "");
   const [email, setEmail] = useState(initial.email);
   const [age, setAge] = useState("");
+  // 年齢欄は「現地入りに立候補した人」だけに出す（他の人にはフォーム自体を見せない）
+  const [showAge, setShowAge] = useState(false);
   useEffect(() => {
-    fetchMyPrivate(userId).then((p) => {
-      if (p.age) setAge(String(p.age));
+    if (isFirst) return;
+    fetchOffersByUser(userId).then((os) => {
+      const applied = os.some((o) => o.kind === "body");
+      setShowAge(applied);
+      if (applied) fetchMyPrivate(userId).then((p) => p.age && setAge(String(p.age)));
     });
-  }, [userId]);
+  }, [userId, isFirst]);
   const [sns, setSns] = useState<Record<string, string>>(initial.sns ?? {});
   const [snsOpen, setSnsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -119,7 +124,7 @@ export function RegisterDialog({
         : {}),
     });
     if (!e) await saveMyEmail(userId, email.trim());
-    if (!e) {
+    if (!e && showAge) {
       const n = Number(age);
       await saveMyAge(userId, age.trim() && Number.isFinite(n) && n >= 10 && n <= 120 ? n : null);
     }
@@ -231,22 +236,26 @@ export function RegisterDialog({
         />
         <p className="mt-1 text-[11px] text-[#a09888]">他の参加者には公開されません</p>
 
-        <label className="mt-3 block text-sm font-bold">
-          年齢 <span className="font-normal text-[#a09888]">（任意・現地入りを希望する方は必須。公開されません）</span>
-        </label>
-        <div className="mt-1 flex items-center gap-2">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={10}
-            max={120}
-            className="num w-24 rounded-xl border border-[#e0d6c6] px-3 py-2 text-center"
-            placeholder="例: 45"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-          />
-          <span className="text-sm text-[#5a5448]">歳</span>
-        </div>
+        {showAge && (
+          <>
+            <label className="mt-3 block text-sm font-bold">
+              年齢 <span className="font-normal text-[#a09888]">（現地入りの審査用・公開されません）</span>
+            </label>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={10}
+                max={120}
+                className="num w-24 rounded-xl border border-[#e0d6c6] px-3 py-2 text-center"
+                placeholder="例: 45"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+              />
+              <span className="text-sm text-[#5a5448]">歳</span>
+            </div>
+          </>
+        )}
 
         <button
           type="button"
