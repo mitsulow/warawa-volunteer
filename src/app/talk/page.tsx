@@ -91,7 +91,7 @@ export default function TalkListPage() {
     load();
     const timer = setInterval(() => {
       if (!document.hidden) load();
-    }, 15000);
+    }, 30000);
     return () => {
       alive = false;
       clearInterval(timer);

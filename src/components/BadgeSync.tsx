@@ -50,7 +50,7 @@ export function BadgeSync() {
 
     const timer = setInterval(() => {
       if (!document.hidden) sync();
-    }, 25000);
+    }, 60000);
     const onRefresh = () => sync();
     const onVisible = () => {
       if (!document.hidden) sync();

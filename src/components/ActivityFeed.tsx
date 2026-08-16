@@ -133,7 +133,7 @@ export function ActivityFeed({
       if (document.hidden || !cursorRef.current) return;
       await pullBoard();
       if (userId) markGroupRead("board", userId);
-    }, 15000);
+    }, 30000);
     return () => {
       alive = false;
       clearInterval(timer);

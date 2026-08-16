@@ -1061,41 +1061,21 @@ export async function fetchOfficeInbox(myId: string): Promise<ChatSummary[]> {
   });
 }
 
-/** ナビバッジ用: DM未読 + (管理者は事務局受信箱の未読) + 掲示板グループ未読 + お知らせ未読の合計 */
-export async function fetchUnreadTotal(myId: string): Promise<number> {
+/**
+ * ナビバッジ用の未読合計。DB側の RPC unread_total 1発（DM + 管理者なら事務局受信箱 + 掲示板 + お知らせ配信）。
+ * 複数コンポーネント(BottomNav/BadgeSync)から呼ばれるので 10秒メモ化して負荷を抑える。
+ */
+let _unreadCache: { uid: string; at: number; p: Promise<number> } | null = null;
+export async function fetchUnreadTotal(myId: string, force = false): Promise<number> {
+  const now = Date.now();
+  if (!force && _unreadCache && _unreadCache.uid === myId && now - _unreadCache.at < 10000) return _unreadCache.p;
   const supabase = createClient();
-  const [{ data: myChats }, groups, bc, admin] = await Promise.all([
-    supabase.from("chats").select("id, a, b").or(`a.eq.${myId},b.eq.${myId},a.eq.${OFFICE_BOT_ID},b.eq.${OFFICE_BOT_ID}`),
-    fetchGroupSummaries(myId).catch(() => null),
-    fetchBroadcastSummary(myId).catch(() => null),
-    fetchIsAdmin(myId).catch(() => false),
-  ]);
-  const rows = (myChats ?? []) as Array<{ id: string; a: string; b: string }>;
-  const mine = rows.filter((c) => c.a === myId || c.b === myId).map((c) => c.id);
-  const office = admin
-    ? rows.filter((c) => (c.a === OFFICE_BOT_ID || c.b === OFFICE_BOT_ID) && c.a !== myId && c.b !== myId).map((c) => c.id)
-    : [];
-  let dm = 0;
-  if (mine.length) {
-    const { count } = await supabase
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .in("chat_id", mine)
-      .is("read_at", null)
-      .neq("sender_id", myId);
-    dm += count ?? 0;
-  }
-  if (office.length) {
-    const { count } = await supabase
-      .from("messages")
-      .select("id", { count: "exact", head: true })
-      .in("chat_id", office)
-      .is("read_at", null)
-      .neq("sender_id", OFFICE_BOT_ID);
-    dm += count ?? 0;
-  }
-  const g = groups ? groups.board.unread : 0; // 助けてはTalK非同期のため掲示板のみ
-  return dm + g + (bc?.unread ?? 0);
+  const p = supabase
+    .rpc("unread_total", { uid: myId })
+    .then(({ data }: { data: number | null }) => (typeof data === "number" ? data : 0))
+    .catch(() => 0);
+  _unreadCache = { uid: myId, at: now, p };
+  return p;
 }
 
 /* ---------- 投稿の編集・削除・通報 ---------- */

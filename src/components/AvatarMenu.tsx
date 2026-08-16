@@ -32,7 +32,7 @@ export function AvatarMenu({
       if (alive) setNotifN(n);
     };
     probe();
-    const timer = setInterval(probe, 20000);
+    const timer = setInterval(probe, 60000);
     window.addEventListener("warawa:notifRefresh", probe);
     return () => {
       alive = false;

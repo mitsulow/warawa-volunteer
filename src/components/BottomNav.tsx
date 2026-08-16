@@ -37,7 +37,7 @@ export function BottomNav({
       if (alive) setUnread(n);
     };
     probe();
-    const timer = setInterval(probe, 20000);
+    const timer = setInterval(probe, 45000);
     const onRefresh = () => probe();
     window.addEventListener("warawa:unreadRefresh", onRefresh);
     return () => {

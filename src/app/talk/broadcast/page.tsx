@@ -36,7 +36,7 @@ export default function BroadcastPage() {
     if (session.userId) markBroadcastRead(session.userId);
     const timer = setInterval(() => {
       if (!document.hidden) load();
-    }, 15000);
+    }, 30000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.userId]);

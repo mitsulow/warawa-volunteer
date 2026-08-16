@@ -136,7 +136,7 @@ export default function GroupTalkPage({
       });
       if (myId) markGroupRead(scope, myId);
       setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
-    }, 8000);
+    }, 12000);
     return () => {
       alive = false;
       clearInterval(timer);

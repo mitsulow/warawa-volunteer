@@ -197,7 +197,7 @@ export function GroupFeed({
       if (document.hidden || !cursorRef.current) return;
       await pull();
       if (userId) markGroupRead(scope, userId);
-    }, 15000);
+    }, 30000);
     return () => {
       alive = false;
       clearInterval(timer);

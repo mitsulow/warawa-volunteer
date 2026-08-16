@@ -132,7 +132,7 @@ export default function TalkPage({
         });
         markDmRead(chatId, me);
         setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
-      }, 5000);
+      }, 7000);
       timers.push(timer);
     })();
     return () => {
