@@ -31,6 +31,7 @@ export function BodyApplyDialog({
 }) {
   const [name, setName] = useState(profile.display_name);
   const [phone, setPhone] = useState("");
+  const [age, setAge] = useState("");
   const [email, setEmail] = useState("");
   const [pref, setPref] = useState("北海道");
   const [city, setCity] = useState("");
@@ -51,6 +52,7 @@ export function BodyApplyDialog({
     fetchMyPrivate(userId).then((p) => {
       if (p.phone) setPhone(p.phone);
       if (p.email) setEmail(p.email);
+      if (p.age) setAge(String(p.age));
     });
     // メール未登録ならGoogle認証のメールを先に入れておく
     createClient()
@@ -63,6 +65,11 @@ export function BodyApplyDialog({
   const submit = async () => {
     if (!name.trim() || !phone.trim() || !email.trim() || !canDo.trim()) {
       setError("名前・携帯番号・メールアドレス・私にできる事は必須です");
+      return;
+    }
+    const ageN = Number(age);
+    if (!age.trim() || !Number.isFinite(ageN) || ageN < 10 || ageN > 120) {
+      setError("年齢を入力してください（審査に使います。公開されません）");
       return;
     }
     if (!overseas && !city) {
@@ -94,6 +101,7 @@ export function BodyApplyDialog({
       id: userId,
       phone: phone.trim(),
       email: email.trim(),
+      age: ageN,
       pref,
       city: overseas ? city.trim() || "海外" : city,
     });
@@ -163,6 +171,24 @@ export function BodyApplyDialog({
               onChange={(e) => setName(e.target.value)}
               maxLength={30}
             />
+
+            <label className="mt-3 block text-sm font-bold">
+              年齢 <span className="ml-1 rounded px-1.5 py-0.5 text-[11px] text-white" style={{ background: "#c0392b" }}>必須</span>
+              <span className="ml-1 font-normal text-[#a09888]">（審査用・公開されません）</span>
+            </label>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={10}
+                max={120}
+                className="num w-24 rounded-xl border border-[#e0d6c6] px-3 py-2 text-center"
+                placeholder="例: 45"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+              />
+              <span className="text-sm text-[#5a5448]">歳</span>
+            </div>
 
             <label className="mt-3 block text-sm font-bold">携帯番号</label>
             <input

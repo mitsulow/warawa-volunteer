@@ -225,6 +225,9 @@ export default function OfficePage() {
               🏠 {priv?.pref ?? ""}{priv?.city ? ` ${priv.city}` : ""}
             </span>
           )}
+          <span className="font-bold" style={{ color: priv?.age ? "#5a5448" : "#c0392b" }}>
+            🎂 {priv?.age ? `${priv.age}歳` : "年齢未登録"}
+          </span>
           {priv?.phone && (
             <a href={`tel:${priv.phone}`} className="font-bold" style={{ color: "#d96a1a" }}>
               📞 {priv.phone}

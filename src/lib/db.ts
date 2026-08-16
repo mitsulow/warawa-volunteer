@@ -202,17 +202,24 @@ export async function saveMyEmail(userId: string, email: string) {
 
 export async function fetchMyPrivate(
   userId: string
-): Promise<{ phone: string | null; email: string | null }> {
+): Promise<{ phone: string | null; email: string | null; age: number | null }> {
   const supabase = createClient();
   const { data } = await supabase
     .from("profile_private")
-    .select("phone, email")
+    .select("phone, email, age")
     .eq("id", userId)
     .maybeSingle();
   return {
     phone: (data?.phone as string | null) ?? null,
     email: (data?.email as string | null) ?? null,
+    age: (data?.age as number | null) ?? null,
   };
+}
+
+/** 年齢（本人+事務局のみ閲覧。現地入りの審査用） */
+export async function saveMyAge(userId: string, age: number | null) {
+  const supabase = createClient();
+  return supabase.from("profile_private").upsert({ id: userId, age });
 }
 
 export async function saveMyPrivate(userId: string, phone: string, email: string) {
@@ -238,6 +245,7 @@ export interface BodyApplication {
       email: string | null;
       pref: string | null;
       city: string | null;
+      age: number | null;
     } | null;
   } | null;
 }
@@ -248,7 +256,7 @@ export async function fetchBodyApplications(): Promise<BodyApplication[]> {
   const { data } = await supabase
     .from("offers")
     .select(
-      "id, user_id, detail, status, created_at, profiles(display_name, avatar_url, member_no, sns, profile_private(phone, email, pref, city))"
+      "id, user_id, detail, status, created_at, profiles(display_name, avatar_url, member_no, sns, profile_private(phone, email, pref, city, age))"
     )
     .eq("kind", "body")
     .order("created_at", { ascending: false })
