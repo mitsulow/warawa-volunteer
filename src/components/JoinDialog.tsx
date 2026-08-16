@@ -34,8 +34,9 @@ export function JoinDialog({ onClose }: { onClose: () => void }) {
         className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-sm text-gray-600 mb-4">
-          安心して支援し合えるように、Googleログインをお願いしています。閲覧だけの場合はログイン無しでできます。
+        <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+          安心して支援し合えるように、「Googleログイン」をお願いしております。
+          「Googleログイン」ではパスワードも必要なく、3秒ほどでログインできます。
         </p>
 
         {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
