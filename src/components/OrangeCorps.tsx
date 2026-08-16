@@ -56,7 +56,7 @@ export function OrangeCorps() {
               <VerifiedBadge size={13} />
             </div>
             <div className="num mt-0.5 truncate text-[10px] text-[#c07020]">
-              @ボランティアNo.{p.member_no ?? "?"}
+              @わらわ〜ボランティアNo.{p.member_no ?? "?"}
             </div>
           </Link>
         ))}

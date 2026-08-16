@@ -109,7 +109,7 @@ export function RegisterDialog({
         </h3>
         {isFirst && (
           <p className="mt-1 mb-3 text-sm text-[#8a8070]">
-            登録すると <b>ボランティアNo.</b> と認証マークが付きます。
+            登録すると <b>わらわ〜ボランティアNo.</b> と認証マークが付きます。
           </p>
         )}
 

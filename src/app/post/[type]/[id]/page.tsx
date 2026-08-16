@@ -181,7 +181,7 @@ export default function PostPage({
             </span>
             <div className="text-[11.5px] leading-tight text-[#8a8d91]">
               {relTime(item.created_at)}
-              {memberNo != null && <span className="num ml-1.5">@ボランティアNo.{memberNo}</span>}
+              {memberNo != null && <span className="num ml-1.5">@わらわ〜ボランティアNo.{memberNo}</span>}
             </div>
           </div>
           {session.userId && (

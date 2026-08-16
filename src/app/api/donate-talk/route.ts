@@ -38,12 +38,17 @@ export async function POST(req: Request) {
     chatId = created.id as string;
   }
 
-  // すでに寄付案内を送っていたら重複送信しない
+  const { units: rawUnits } = (await req.json().catch(() => ({}))) as { units?: number };
+  const units = Math.min(10000, Math.max(1, Math.floor(Number(rawUnits) || 1)));
+
+  // 連打対策: 直近10分以内に寄付案内を送っていたら重複送信しない
+  const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const { data: dup } = await admin
     .from("messages")
     .select("id")
     .eq("chat_id", chatId)
     .eq("sender_id", OFFICE_USER_ID)
+    .gt("created_at", since)
     .like("body", "%寄付のお申し込みありがとうございます%")
     .limit(1)
     .maybeSingle();
@@ -57,7 +62,7 @@ export async function POST(req: Request) {
   const name = prof?.display_name || "参加者";
 
   const body =
-    `${name}さん、寄付のお申し込みありがとうございます。以下の口座への振り込みをお願い致します。\n\n` +
+    `${name}さん、${units.toLocaleString()}口（${(units * 1000).toLocaleString()}円）の寄付のお申し込みありがとうございます。以下の口座への振り込みをお願い致します。\n\n` +
     `銀行名　GMOあおぞらネット銀行\n` +
     `支店名　法人第二営業部\n` +
     `口座　　普通 1007941\n` +

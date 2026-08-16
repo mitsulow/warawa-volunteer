@@ -16,7 +16,7 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
-import { DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
+import { CHIP_STYLE, DotsMenu, KindChip, KindFilterBar, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { uploadImagePair, type ImagePair } from "@/lib/images";
 import { firePush } from "@/lib/push";
@@ -109,7 +109,7 @@ function fmtTime(iso: string) {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-/** 💰 振込のご案内（表示のみ・フィードには並ばない） */
+/** 💰 寄付をする: 口数を聴いて「私はX口の寄付をする予定です。」をフィードに並べ、同時に事務局から口座案内TalKを送る */
 const YUCHO_STEPS = [
   "送金",
   "他行銀行へのご送金",
@@ -121,81 +121,200 @@ const YUCHO_STEPS = [
   "英字",
   "GMOあおぞらネット銀行",
 ];
+const UNIT_YEN = 1000;
+const MAX_UNITS = 10000;
+const QUICK_UNITS = [1, 3, 5, 10, 30, 50, 100];
 
-function BankDialog({ onClose }: { onClose: () => void }) {
+function DonateDialog({
+  userId,
+  onClose,
+  onDone,
+  requireJoin,
+}: {
+  userId: string | null;
+  onClose: () => void;
+  onDone: () => void;
+  requireJoin: () => void;
+}) {
   const [yuchoOpen, setYuchoOpen] = useState(false);
+  const [units, setUnits] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const clamp = (n: number) => Math.min(MAX_UNITS, Math.max(1, Math.floor(n) || 1));
+
+  const submit = async () => {
+    if (!userId) {
+      requireJoin();
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    const detail = `私は${units.toLocaleString()}口（${(units * UNIT_YEN).toLocaleString()}円）の寄付をする予定です。`;
+    const { error } = await addOffer(userId, "money", detail);
+    setBusy(false);
+    if (error) {
+      window.alert(`登録できませんでした: ${error.message}`);
+      return;
+    }
+    // 事務局アカウントから口座案内のTalKを自動送信（口数入り）
+    firePush("/api/donate-talk", { units });
+    setSent(true);
+    onDone();
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl"
+        className="max-h-[92dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="flex items-center gap-2 text-lg font-bold">
-          <img src="/icons/icon-yen.webp" alt="" className="h-7 w-7 object-contain" />
-          寄付をする
-        </h3>
-        <p className="mt-2 text-sm text-[#5a5448]">以下への振り込みをお願い致します。</p>
-        <div
-          className="mt-3 space-y-1.5 rounded-xl border p-4 text-[14.5px] leading-relaxed"
-          style={{ borderColor: "#e8c890", background: "#fffaf0" }}
-        >
-          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">銀行名</span> GMOあおぞらネット銀行</p>
-          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">支店名</span> 法人第二営業部</p>
-          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">口座　</span> 普通 1007941</p>
-          <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">名義　</span> ファミュニティリンク カ）</p>
-        </div>
-        <p className="mt-2 text-[14px] font-bold leading-relaxed text-[#5a5448]">
-          ※なお、小銭の両替手数料の関係から、1口（1,000円）以上からの寄付をお願いしております。ご協力お願い致します。
-        </p>
-        {/* ゆうちょ銀行から振り込む人向けの手順（折りたたみ） */}
-        <button
-          className="mt-2 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-[13px] font-bold"
-          style={{ borderColor: "#e8dcc4", background: "#fffaf0", color: "#5a5448" }}
-          onClick={() => setYuchoOpen(!yuchoOpen)}
-        >
-          <span>ゆうちょ銀行から振り込む方はこちらをタップ</span>
-          <span className="text-[#b0a898]">{yuchoOpen ? "△" : "▽"}</span>
-        </button>
-        {yuchoOpen && (
-          <div
-            className="mt-1 rounded-xl border px-3 py-2.5 text-[13px] leading-relaxed text-[#3a3428]"
-            style={{ borderColor: "#e8dcc4", background: "#fff" }}
-          >
-            <p className="mb-1 font-bold">《ゆうちょ銀行からの振込手順》</p>
-            <ol className="space-y-0.5">
-              {YUCHO_STEPS.map((step, i) => (
-                <li key={i} className="flex items-start gap-1.5">
-                  <span className="num w-4 shrink-0 text-right text-[11px] font-bold text-[#a09888]">{i + 1}</span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
+        {sent ? (
+          <div className="py-4 text-center">
+            <div className="text-4xl">🙏</div>
+            <p className="mt-2 text-[16px] font-extrabold text-[#3a3428]">ありがとうございます！</p>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-[#5a5448]">
+              「{units.toLocaleString()}口の寄付をする予定です」を助けたいフィードに並べました。
+              <br />
+              振込先は事務局からのTalKにも届いています。
+            </p>
+            <button
+              className="mt-4 w-full rounded-xl py-3 font-bold text-white"
+              style={{ background: "#d96a1a" }}
+              onClick={onClose}
+            >
+              閉じる
+            </button>
           </div>
+        ) : (
+          <>
+            <h3 className="flex items-center gap-2 text-lg font-bold">
+              <img src="/icons/icon-yen.webp" alt="" className="h-7 w-7 object-contain" />
+              寄付をする
+            </h3>
+
+            {/* 口数 */}
+            <p className="mt-3 text-[14px] font-bold text-[#3a3428]">何口の寄付を予定されていますか？</p>
+            <p className="text-[12px] text-[#8a8070]">1口 1,000円・最大 {MAX_UNITS.toLocaleString()}口</p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                className="h-11 w-11 rounded-xl border text-xl font-bold"
+                style={{ borderColor: "#e8dcc4", color: "#d96a1a" }}
+                onClick={() => setUnits((u) => clamp(u - 1))}
+                aria-label="1口減らす"
+              >
+                −
+              </button>
+              <div className="flex flex-1 items-center justify-center gap-1 rounded-xl border px-2" style={{ borderColor: "#e8dcc4" }}>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={MAX_UNITS}
+                  value={units}
+                  onChange={(e) => setUnits(clamp(Number(e.target.value)))}
+                  className="num h-11 w-20 bg-transparent text-center text-[22px] font-extrabold outline-none"
+                  style={{ color: "#c05e14" }}
+                />
+                <span className="text-[14px] font-bold text-[#5a5448]">口</span>
+              </div>
+              <button
+                className="h-11 w-11 rounded-xl border text-xl font-bold"
+                style={{ borderColor: "#e8dcc4", color: "#d96a1a" }}
+                onClick={() => setUnits((u) => clamp(u + 1))}
+                aria-label="1口増やす"
+              >
+                ＋
+              </button>
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {QUICK_UNITS.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setUnits(q)}
+                  className="num rounded-full border px-2.5 py-[3px] text-[12px] font-bold"
+                  style={
+                    units === q
+                      ? { background: "#d96a1a", color: "#fff", borderColor: "#d96a1a" }
+                      : { background: "#fff", color: "#8a7a5a", borderColor: "#e8dcc4" }
+                  }
+                >
+                  {q}口
+                </button>
+              ))}
+            </div>
+            <p className="num mt-2 text-right text-[15px] font-extrabold" style={{ color: "#c05e14" }}>
+              合計 {(units * UNIT_YEN).toLocaleString()}円
+            </p>
+
+            {/* 振込先 */}
+            <p className="mt-3 text-sm text-[#5a5448]">以下への振り込みをお願い致します。</p>
+            <div
+              className="mt-2 space-y-1.5 rounded-xl border p-4 text-[14.5px] leading-relaxed"
+              style={{ borderColor: "#e8c890", background: "#fffaf0" }}
+            >
+              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">銀行名</span> GMOあおぞらネット銀行</p>
+              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">支店名</span> 法人第二営業部</p>
+              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">口座　</span> 普通 1007941</p>
+              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">名義　</span> ファミュニティリンク カ）</p>
+            </div>
+            <p className="mt-2 text-[14px] font-bold leading-relaxed text-[#5a5448]">
+              ※なお、小銭の両替手数料の関係から、1口（1,000円）以上からの寄付をお願いしております。ご協力お願い致します。
+            </p>
+            {/* ゆうちょ銀行から振り込む人向けの手順（赤字テキスト→折りたたみ） */}
+            <button
+              className="mt-2 block text-left text-[13.5px] font-bold"
+              style={{ color: "#c0392b" }}
+              onClick={() => setYuchoOpen(!yuchoOpen)}
+            >
+              ※ゆうちょ銀行から振り込む場合はこちら{yuchoOpen ? "△" : "▽"}
+            </button>
+            {yuchoOpen && (
+              <div className="mt-1 pl-3 text-[13px] leading-relaxed text-[#3a3428]">
+                <p className="mb-1 font-bold">《ゆうちょ銀行からの振込手順》</p>
+                <ol className="space-y-0.5">
+                  {YUCHO_STEPS.map((step, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="num w-4 shrink-0 text-right text-[11px] font-bold text-[#a09888]">{i + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            <button
+              className="mt-2 w-full rounded-xl border py-2 text-[12.5px] font-bold"
+              style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(
+                    "GMOあおぞらネット銀行 法人第二営業部 普通 1007941 ファミュニティリンク カ）"
+                  );
+                  alert("口座情報をコピーしました");
+                } catch {}
+              }}
+            >
+              📋 口座情報をコピーする
+            </button>
+
+            <button
+              className="mt-4 w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
+              style={{ background: "#d96a1a" }}
+              disabled={busy}
+              onClick={submit}
+            >
+              {busy ? "登録中..." : userId ? `${units.toLocaleString()}口の寄付をする` : "参加して寄付を申し込む"}
+            </button>
+            <p className="mt-1.5 text-center text-[11px] text-[#a09888]">
+              押すと「私は{units.toLocaleString()}口の寄付をする予定です。」が助けたいフィードに並び、事務局から振込先のTalKが届きます
+            </p>
+            <button className="mt-2 w-full py-2 text-[12.5px] font-bold text-[#a09888]" onClick={onClose}>
+              閉じる
+            </button>
+          </>
         )}
-        <button
-          className="mt-2 w-full rounded-xl border py-2 text-[12.5px] font-bold"
-          style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(
-                "GMOあおぞらネット銀行 法人第二営業部 普通 1007941 ファミュニティリンク カ）"
-              );
-              alert("口座情報をコピーしました");
-            } catch {}
-          }}
-        >
-          📋 口座情報をコピーする
-        </button>
-        <button
-          className="mt-4 w-full rounded-xl py-3 font-bold text-white"
-          style={{ background: "#d96a1a" }}
-          onClick={onClose}
-        >
-          閉じる
-        </button>
       </div>
     </div>
   );
@@ -492,7 +611,6 @@ export function OffersSection({
   const router = useRouter();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [dialog, setDialog] = useState<OfferKind | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
   // CotoZuteと同じ記事挙動（いいね/コメント/…メニュー/折りたたみ/写真拡大）
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
@@ -565,51 +683,42 @@ export function OffersSection({
   }, [openGoodsSignal]);
 
   const open = (kind: OfferKind) => {
+    // 寄付は未ログインでも振込先を見られる（申し込みボタンで参加を促す）
     if (kind !== "money" && !userId) {
       requireJoin();
       return;
     }
-    if (kind === "money" && userId) {
-      // 事務局アカウントから寄付案内のTalKを自動送信（重複はサーバー側で防止）
-      firePush("/api/donate-talk", {});
-    }
     setDialog(kind);
   };
 
-  // フィードに並ぶのは物資とその他だけ（体=事務局申請のみ・お金=案内のみ）
-  const feed = offers.filter(
-    (o) => (o.kind === "goods" || o.kind === "other") && (!kindFilter || o.kind === kindFilter)
-  );
+  // フィードには4種すべて並ぶ（寄付=口数メッセージ / 現地へ行く=できる事 / 物資 / その他）
+  const feed = offers.filter((o) => !kindFilter || o.kind === kindFilter);
 
   return (
     <div>
-      {/* 折り畳みと4ボタンを1つの箱に一体化 */}
-      <div className="mb-3 overflow-hidden rounded-xl border border-[#ede5d8] bg-white shadow-sm">
-        <button
-          className="flex w-full items-center justify-between px-3.5 py-1.5"
-          style={{ background: "#fdeedd" }}
-          onClick={() => setPickerOpen(!pickerOpen)}
-        >
-          <span className="text-[13.5px] font-bold text-[#5a5448]">何ができるかを選ぶ</span>
-          <span className="text-[#b0a898]">{pickerOpen ? "△" : "▽"}</span>
-        </button>
-        {pickerOpen && (
-          <div className="grid grid-cols-4 gap-2 border-t border-[#f0e9dc] bg-[#fffaf0] p-2">
-            {(Object.keys(KINDS) as OfferKind[]).map((k) => (
-              <button
-                key={k}
-                className="rounded-xl border border-[#ede5d8] bg-white py-1.5 shadow-sm transition-transform active:scale-95"
-                onClick={() => open(k)}
-              >
-                <img src={KINDS[k].icon} alt="" className="mx-auto h-7 w-7 object-contain" />
-                <div className="mt-1 text-[12px] font-bold text-[#3a3428]">{KINDS[k].label}</div>
-              </button>
-            ))}
-          </div>
-        )}
+      {/* 4つの選択肢は最初から見せる（折りたたみ廃止） */}
+      <div className="mb-3 grid grid-cols-4 gap-2 rounded-xl border border-[#ede5d8] bg-[#fffaf0] p-2 shadow-sm">
+        {(Object.keys(KINDS) as OfferKind[]).map((k) => (
+          <button
+            key={k}
+            className="rounded-xl border bg-white py-2 shadow-sm transition-transform active:scale-95"
+            style={{ borderColor: CHIP_STYLE[k].border }}
+            onClick={() => open(k)}
+          >
+            <img src={KINDS[k].icon} alt="" className="mx-auto h-8 w-8 object-contain" />
+            <div className="mt-1 text-[12px] font-bold" style={{ color: CHIP_STYLE[k].fg }}>{KINDS[k].label}</div>
+          </button>
+        ))}
       </div>
 
-      {dialog === "money" && <BankDialog onClose={() => setDialog(null)} />}
+      {dialog === "money" && (
+        <DonateDialog
+          userId={userId}
+          onClose={() => setDialog(null)}
+          onDone={reload}
+          requireJoin={requireJoin}
+        />
+      )}
       {dialog === "body" && userId && profile && (
         <BodyApplyDialog
           userId={userId}
@@ -667,7 +776,7 @@ export function OffersSection({
                     <div className="text-[11.5px] leading-tight text-[#8a8d91]">
                       {relTime(o.created_at)}
                       {memberNo != null && (
-                        <span className="num ml-1.5">@ボランティアNo.{memberNo}</span>
+                        <span className="num ml-1.5">@わらわ〜ボランティアNo.{memberNo}</span>
                       )}
                     </div>
                   </div>

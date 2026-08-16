@@ -159,7 +159,7 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
             <VerifiedBadge size={17} />
           </h1>
           {profile.member_no != null && (
-            <div className="num text-[12px] text-[#a09888]">@ボランティアNo.{profile.member_no}</div>
+            <div className="num text-[12px] text-[#a09888]">@わらわ〜ボランティアNo.{profile.member_no}</div>
           )}
 
           {/* 連絡を取る（他人のページ・OneSeaと同じピル+アイコン） */}

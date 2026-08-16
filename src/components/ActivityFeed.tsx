@@ -169,9 +169,8 @@ export function ActivityFeed({
       thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
       embed: (m.embed as OGPEmbed | null) ?? null,
     })),
-    // フィードに並ぶのは物資とその他だけ（体=事務局申請のみ・お金=案内のみ）
+    // 助けたいの意思表明は4種すべて（寄付/現地へ行く/物資/その他）
     ...offers
-      .filter((o) => o.kind === "goods" || o.kind === "other")
       .map((o) => ({
         key: `offer:${o.id}`,
         userId: o.user_id,
@@ -302,7 +301,7 @@ export function ActivityFeed({
                     <div className="text-[11.5px] leading-tight text-[#8a8d91]">
                       {relTime(it.createdAt)}
                       {it.memberNo != null && (
-                        <span className="num ml-1.5">@ボランティアNo.{it.memberNo}</span>
+                        <span className="num ml-1.5">@わらわ〜ボランティアNo.{it.memberNo}</span>
                       )}
                     </div>
                   </div>

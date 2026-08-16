@@ -2,7 +2,7 @@
 
 熊本地震支援サイト。本番 https://warawa-volunteer.vercel.app / repo mitsulow/warawa-volunteer。
 solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さやか@埼玉さん等）なので本番を壊さないこと。
-最終更新: 2026-08-15
+最終更新: 2026-08-16
 
 ## 0. デプロイの型（毎リクエストこれで完結・確認不要）
 
@@ -45,6 +45,18 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 現地入り立候補フォーム: ①②③形式の募集要項(8月下旬〜10月初旬)
 - 模擬データ（サンプル隊員①〜⑤）は**削除済み**・採番リセット済み（次の参加者はNo.2）
 
+### 2026-08-16 の変更（新しい順）
+- **寄付フロー刷新**: 4ボタン(寄付をする/現地へ行く/物資を送る/その他)は折りたたみ無しで常時表示。寄付=`DonateDialog`(OffersSection内)で口数(1口1,000円・±/クイック/最大1万口)→ offers(kind=money, detail「私はX口（X,000円）の寄付をする予定です。」)を作りフィードに並べる＋`/api/donate-talk`({units})で事務局から口座案内TalK(直近10分は重複送信しない)。未ログインでもダイアログは開ける(申込ボタンで参加)。ゆうちょ手順は赤字「※ゆうちょ銀行から振り込む場合はこちら▽」の折りたたみ(枠なし)
+- フィード(助けたい/掲示板)は offers **4種すべて**表示。チップ=PostKit `CHIP_STYLE`(寄付をする=金/物資を送る=橙/現地へ行く=青/持ち寄ります=緑)・タップでその種別だけ絞り込み(`KindFilterBar`)
+- 表記「@わらわ〜ボランティアNo.X」（旧「@ボランティアNo.X」）
+- **画面が開くのが遅い対策**: /talk/g/[scope] は generateStaticParams(board/voice)でSSG、/talk/[chatId] と /u/[id] は layout.tsx で `dynamic="force-static"`（クライアント描画のみなのでシェルを静的化・サーバー関数のコールドスタート回避）。/post/[type]/[id] はサーバー描画のまま
+- 物資を出す③の文言: 「返信メールに記載された住所へ、送料をお客さま負担にて発送して下さい。」
+- TalK吹き出し=LINE風（既読・時刻は吹き出しの外）。長押し(500ms)/右クリックで `BubbleMenu`(コピー/削除)。DMの削除は本人のみ(messagesにDELETE RLS「messages delete own」追加)。グループTalKは本人or管理者(掲示板からも消える)
+- 通知アイコン: ステータスバー小アイコン(badge)=`public/badge-96.png`(白+透明ワラエル・`scripts/make_badge.py`)、大アイコン(icon)=`public/notify-icon-256.png`(オレンジリング+クリーム丸+ワラエル・`scripts/make_notify_icon.py`)。sw.jsで指定・CACHEはv3
+- TalK/配信/コメントの入力欄は改行可（`MessageInput`: 自動伸縮textarea・スマホEnter=改行・PCはEnter=送信/Shift+Enter=改行）
+- 一度実装→同日revert: 叶いました✅・物資の採用→自動TalK・シェア+OGP（commit e9b2ec1。復活は `git revert e9b2ec1`。DBの board_messages.status/done_at 列は残置・無害）
+- DB操作の小道具: `python scripts/dbq.py "SQL"`（Management API・User-Agent付き）
+
 ## 4. 設計の絶対ルール
 
 - OneSea (C:\Users\waras\onesea) は**読み取り専用の参考**。コード流用は推奨・書き込み/コミット禁止
@@ -57,5 +69,5 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 ## 5. 未対応・保留
 
 - コトヅテ型フィードの本採用 or mond枠復帰（ユーザー判断待ち）
-- 提案済み未実装: 叶いました✅ / 物資の採用ボタン→自動TalK / シェアボタン+OGP画像 / 現地報告ハイライト
+- 提案済み未実装: 現地報告ハイライト / 叶いました✅・採用→自動TalK・シェア+OGP（実装済みをrevert中。`git revert e9b2ec1`で復活）
 - OneSea側のLINEブラウザ対策（別プロジェクト・デスクトップに引き継ぎ書）

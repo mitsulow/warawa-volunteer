@@ -99,7 +99,7 @@ export function AvatarMenu({
             </p>
             {profile.member_no != null && (
               <p className="num text-[10.5px] text-[#a09888]">
-                @ボランティアNo.{profile.member_no}
+                @わらわ〜ボランティアNo.{profile.member_no}
               </p>
             )}
           </div>

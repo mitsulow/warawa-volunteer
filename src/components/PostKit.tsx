@@ -4,9 +4,11 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 /** 記事の種別チップ。項目別に色分け（物資=オレンジ / 持ち寄り=緑）。タップでその種別だけの絞り込み */
-export type ChipKind = "goods" | "other";
+export type ChipKind = "money" | "body" | "goods" | "other";
 export const CHIP_STYLE: Record<ChipKind, { label: string; bg: string; fg: string; border: string }> = {
-  goods: { label: "物資を出します", bg: "#fdf0e0", fg: "#c05e14", border: "#f0d0a8" },
+  money: { label: "寄付をする", bg: "#fff6d6", fg: "#9a6b00", border: "#f0d98a" },
+  goods: { label: "物資を送る", bg: "#fdf0e0", fg: "#c05e14", border: "#f0d0a8" },
+  body: { label: "現地へ行く", bg: "#e6f0fb", fg: "#1f5fa8", border: "#bcd4f2" },
   other: { label: "持ち寄ります", bg: "#e6f4ea", fg: "#2e7d4f", border: "#b8dfc4" },
 };
 
