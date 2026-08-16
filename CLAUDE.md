@@ -18,9 +18,9 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 ## 1. 鍵とDB操作
 
 - Supabaseプロジェクト: `dmixilrcxiofanwfhxfq`（東京・わらわ〜専用）。**OneSeaの `hpgofjkxqguzgrptchqj` は絶対に触らない**
-- anon/service鍵・VAPID・DBパスワード: `~/.warawa-env` / Management APIトークン: `~/.rakuichi-env` の `SUPABASE_ACCESS_TOKEN`
+- anon/service鍵・VAPID・DBパスワード: `~/.warawa-env` / **R2の鍵**(バケットwarawa-images限定トークン・公開URL): `~/.warawa-r2.txt` / Management APIトークン: `~/.rakuichi-env` の `SUPABASE_ACCESS_TOKEN`
 - DB操作は Management API `/v1/projects/dmixilrcxiofanwfhxfq/database/query` に POST。**User-Agentヘッダ必須**（無いとCloudflare 403 code 1010）。**1リクエスト=1トランザクション**
-- Vercel env設定済み: VAPID_PRIVATE_KEY / SUPABASE_SERVICE_ROLE_KEY
+- Vercel env設定済み: VAPID_PRIVATE_KEY / SUPABASE_SERVICE_ROLE_KEY / R2_BUCKET / R2_PUBLIC_URL / R2_S3_ENDPOINT / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY（2026-08-16・R2稼働中）
 
 ## 2. 作業の地雷（今日も踏んだやつ）
 
