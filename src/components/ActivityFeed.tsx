@@ -391,6 +391,7 @@ export function ActivityFeed({
                   <CommentSection
                     itemKey={it.key}
                     userId={userId}
+                    isAdmin={isAdmin}
                     requireJoin={requireJoin}
                     onAdded={() =>
                       setCommentCounts((prev) => {

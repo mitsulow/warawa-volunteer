@@ -1245,6 +1245,12 @@ export async function fetchComments(itemKey: string): Promise<FeedComment[]> {
   return cdnify((data as unknown as FeedComment[]) ?? []);
 }
 
+/** コメント削除（RLS: 本人 or 管理者） */
+export async function deleteComment(id: string) {
+  const supabase = createClient();
+  return supabase.from("feed_comments").delete().eq("id", id);
+}
+
 export async function addComment(itemKey: string, userId: string, body: string) {
   await ensureProfile(userId);
   const supabase = createClient();

@@ -443,6 +443,7 @@ export function GroupFeed({
                   <CommentSection
                     itemKey={`board:${m.id}`}
                     userId={userId}
+                    isAdmin={isAdmin}
                     requireJoin={requireJoin}
                     onAdded={() =>
                       setCommentCounts((prev) => {

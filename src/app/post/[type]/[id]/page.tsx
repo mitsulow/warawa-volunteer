@@ -430,6 +430,7 @@ export default function PostPage({
             <CommentSection
               itemKey={itemKeyRef}
               userId={session.userId}
+                    isAdmin={session.isAdmin}
               requireJoin={() => setShowJoin(true)}
               onAdded={() => setCommentCount((n) => n + 1)}
             />

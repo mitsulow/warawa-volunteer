@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { addComment, fetchComments, type FeedComment } from "@/lib/db";
+import { addComment, deleteComment, fetchComments, type FeedComment } from "@/lib/db";
+import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 import { Linkify } from "@/components/Linkify";
 
 /* eslint-disable @next/next/no-img-element */
@@ -22,16 +23,78 @@ function relTime(iso: string): string {
  * アバターはマイページへのリンク。「何が欲しい」投稿に「私は出せます」と返し、
  * あとはマイページの「連絡を取る」からTalKで直接やり取りできる。
  */
+/** コメント1件（長押し/右クリック→コピー・削除(本人or管理者)） */
+function CommentRow({
+  c,
+  canDelete,
+  onDelete,
+}: {
+  c: FeedComment;
+  canDelete: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const lp = useLongPress((x, y) => setMenu({ x, y }));
+  return (
+    <div className="flex gap-2 py-1.5">
+      <Link href={`/u/${c.user_id}`} className="mt-0.5 h-[26px] w-[26px] flex-shrink-0 overflow-hidden rounded-full">
+        {c.profiles?.avatar_url ? (
+          <img src={c.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center" style={{ background: "linear-gradient(140deg,#fad8a8,#f0b060)" }}>
+            <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
+          </span>
+        )}
+      </Link>
+      <div
+        {...lp.handlers}
+        className={`min-w-0 flex-1 select-none rounded-xl bg-white px-2.5 py-1.5 ${menu ? "opacity-70" : ""}`}
+        style={{ WebkitTouchCallout: "none" } as React.CSSProperties}
+      >
+        <div className="flex items-baseline justify-between gap-2">
+          <Link href={`/u/${c.user_id}`} className="truncate text-[11.5px] font-bold text-[#1c1e21] no-underline">
+            {c.profiles?.display_name ?? "参加者"}
+          </Link>
+          <span className="num flex-shrink-0 text-[10px] text-[#b0b3b8]">{relTime(c.created_at)}</span>
+        </div>
+        <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#33363a]"><Linkify text={c.body} /></p>
+      </div>
+      {menu && (
+        <BubbleMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={[
+            {
+              label: "コピー",
+              onClick: async () => {
+                try {
+                  await navigator.clipboard.writeText(c.body);
+                } catch {}
+              },
+            },
+            ...(canDelete ? [{ label: "削除", danger: true, onClick: () => onDelete(c.id) }] : []),
+          ]}
+        />
+      )}
+    </div>
+  );
+}
+
 export function CommentSection({
   itemKey,
   userId,
+  isAdmin = false,
   requireJoin,
   onAdded,
+  onRemoved,
 }: {
   itemKey: string;
   userId: string | null;
+  isAdmin?: boolean;
   requireJoin: () => void;
   onAdded?: () => void;
+  onRemoved?: () => void;
 }) {
   const [list, setList] = useState<FeedComment[] | null>(null);
   const [body, setBody] = useState("");
@@ -40,6 +103,17 @@ export function CommentSection({
   useEffect(() => {
     fetchComments(itemKey).then(setList);
   }, [itemKey]);
+
+  const remove = async (id: string) => {
+    if (!window.confirm("このコメントを削除しますか？")) return;
+    const { error } = await deleteComment(id);
+    if (error) {
+      window.alert("削除できませんでした");
+      return;
+    }
+    setList((prev) => (prev ?? []).filter((c) => c.id !== id));
+    onRemoved?.();
+  };
 
   const submit = async () => {
     if (!userId) {
@@ -67,42 +141,7 @@ export function CommentSection({
         <p className="py-1.5 text-[12px] text-[#9aa0a6]">まだコメントはありません</p>
       ) : (
         list.map((c) => (
-          <div key={c.id} className="flex gap-2 py-1.5">
-            <Link
-              href={`/u/${c.user_id}`}
-              className="mt-0.5 h-[26px] w-[26px] flex-shrink-0 overflow-hidden rounded-full"
-            >
-              {c.profiles?.avatar_url ? (
-                <img
-                  src={c.profiles.avatar_url}
-                  alt=""
-                  referrerPolicy="no-referrer"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span
-                  className="flex h-full w-full items-center justify-center"
-                  style={{ background: "linear-gradient(140deg,#fad8a8,#f0b060)" }}
-                >
-                  <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
-                </span>
-              )}
-            </Link>
-            <div className="min-w-0 flex-1 rounded-xl bg-white px-2.5 py-1.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <Link
-                  href={`/u/${c.user_id}`}
-                  className="truncate text-[11.5px] font-bold text-[#1c1e21] no-underline"
-                >
-                  {c.profiles?.display_name ?? "参加者"}
-                </Link>
-                <span className="num flex-shrink-0 text-[10px] text-[#b0b3b8]">
-                  {relTime(c.created_at)}
-                </span>
-              </div>
-              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#33363a]"><Linkify text={c.body} /></p>
-            </div>
-          </div>
+          <CommentRow key={c.id} c={c} canDelete={!!userId && (userId === c.user_id || isAdmin)} onDelete={remove} />
         ))
       )}
       {userId ? (

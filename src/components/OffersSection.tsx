@@ -1078,6 +1078,7 @@ export function OffersSection({
                   <CommentSection
                     itemKey={key}
                     userId={userId}
+                    isAdmin={isAdmin}
                     requireJoin={requireJoin}
                     onAdded={() =>
                       setCommentCounts((prev) => {
