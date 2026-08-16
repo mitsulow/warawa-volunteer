@@ -61,6 +61,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 通知アイコン: ステータスバー小アイコン(badge)=`public/badge-96.png`(白+透明ワラエル・`scripts/make_badge.py`)、大アイコン(icon)=`public/notify-icon-256.png`(オレンジリング+クリーム丸+ワラエル・`scripts/make_notify_icon.py`)。sw.jsで指定・CACHEはv3
 - TalK/配信/コメントの入力欄は改行可（`MessageInput`: 自動伸縮textarea・スマホEnter=改行・PCはEnter=送信/Shift+Enter=改行）
 - 一度実装→同日revert: 叶いました✅・物資の採用→自動TalK・シェア+OGP（commit e9b2ec1。復活は `git revert e9b2ec1`。DBの board_messages.status/done_at 列は残置・無害）
+- E2E: `python scripts/_e2e_donate.py`（使い捨てユーザーで本番 /api/donate-talk を叩き、TalK/donations を確認して掃除。Management APIでservice roleを取得）
 - DB操作の小道具: `python scripts/dbq.py "SQL"`（Management API・User-Agent付き）
 
 ## 4. 設計の絶対ルール
