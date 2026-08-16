@@ -276,6 +276,18 @@ export function RegisterDialog({
             やめる
           </button>
         )}
+        {isFirst && (
+          <button
+            className="mt-2 w-full py-1.5 text-[12px] text-[#a09888] underline"
+            onClick={async () => {
+              // 登録せず閲覧だけ: ログアウトしてトップへ（閲覧はログイン不要）
+              await createClient().auth.signOut();
+              window.location.href = "/";
+            }}
+          >
+            ログインはせず閲覧専用で見る
+          </button>
+        )}
       </div>
     </div>
   );
