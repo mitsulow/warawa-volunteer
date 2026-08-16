@@ -13,9 +13,32 @@ const OFFICE_USER_ID = "ef90d04d-99c8-4a8a-967a-5a46f15eedcc";
 export async function POST(req: Request) {
   const user = await userFromRequest(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (user.id === OFFICE_USER_ID) return NextResponse.json({ ok: true, skipped: "self" });
 
   const admin = adminClient();
+
+  const { units: rawUnits, listed } = (await req.json().catch(() => ({}))) as {
+    units?: number;
+    listed?: boolean;
+  };
+  const units = Math.min(10000, Math.max(1, Math.floor(Number(rawUnits) || 1)));
+
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  const name = prof?.display_name || "参加者";
+
+  // 寄付申込を保管（あとで事務局からメール連絡するため。Google認証のメールアドレスを一緒に保存。管理者だけ閲覧可）
+  // ※事務局本人(みつろう)の申込も記録し、TalKも自分宛て(自分とのチャット)に届く＝動作確認用
+  await admin.from("donations").insert({
+    user_id: user.id,
+    units,
+    amount: units * 1000,
+    listed: !!listed,
+    email: user.email ?? null,
+    display_name: name,
+  });
 
   // チャットを取得（無ければ作成）
   const [a, b] = [user.id, OFFICE_USER_ID].sort();
@@ -37,29 +60,6 @@ export async function POST(req: Request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     chatId = created.id as string;
   }
-
-  const { units: rawUnits, listed } = (await req.json().catch(() => ({}))) as {
-    units?: number;
-    listed?: boolean;
-  };
-  const units = Math.min(10000, Math.max(1, Math.floor(Number(rawUnits) || 1)));
-
-  const { data: prof } = await admin
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-  const name = prof?.display_name || "参加者";
-
-  // 寄付申込を保管（あとで事務局からメール連絡するため。Google認証のメールアドレスを一緒に保存。管理者だけ閲覧可）
-  await admin.from("donations").insert({
-    user_id: user.id,
-    units,
-    amount: units * 1000,
-    listed: !!listed,
-    email: user.email ?? null,
-    display_name: name,
-  });
 
   // 連打対策: 直近10分以内に寄付案内を送っていたら重複送信しない
   const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
