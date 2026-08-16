@@ -186,10 +186,10 @@ export default function TalkPage({
           戻る
         </Link>
         {partner && (
-          <>
+          <Link href={`/u/${partner.id}`} className="flex min-w-0 items-center gap-2 text-white no-underline active:opacity-80" aria-label="相手のマイページ">
             <Avatar name={partner.display_name} url={partner.avatar_url} size={32} />
-            <span className="font-bold">{partner.display_name || "参加者"}</span>
-          </>
+            <span className="truncate font-bold">{partner.display_name || "参加者"}</span>
+          </Link>
         )}
         {actAs && (
           <span className="ml-auto shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[10.5px] font-bold">
