@@ -109,21 +109,11 @@ function fmtTime(iso: string) {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-/** 💰 寄付をする: 口数を聴いて「私はX口の寄付をする予定です。」をフィードに並べ、同時に事務局から口座案内TalKを送る */
-const YUCHO_STEPS = [
-  "送金",
-  "他行銀行へのご送金",
-  "画面指示に従う",
-  "金融機関の選択",
-  "次を表示",
-  "その他",
-  "金融機関の選択",
-  "英字",
-  "GMOあおぞらネット銀行",
-];
+/** 💰 寄付をする: 予定口数(1口1,000円)と掲示板掲載の可否を聴く。口座番号は事務局からのTalKで届く */
 const UNIT_YEN = 1000;
 const MAX_UNITS = 10000;
-const QUICK_UNITS = [1, 3, 5, 10, 30, 50, 100];
+const POPULAR_UNITS = [1, 3, 5, 10, 20, 30, 50, 100];
+const BANK_TEXT = "GMOあおぞらネット銀行 法人第二営業部 普通 1007941 ファミュニティリンク カ）";
 
 function DonateDialog({
   userId,
@@ -136,24 +126,29 @@ function DonateDialog({
   onDone: () => void;
   requireJoin: () => void;
 }) {
-  const [yuchoOpen, setYuchoOpen] = useState(false);
-  const [units, setUnits] = useState(1);
+  const [pick, setPick] = useState<string>("1"); // "1".."100" or "custom"
+  const [custom, setCustom] = useState<string>("");
+  const [publish, setPublish] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-  const clamp = (n: number) => Math.min(MAX_UNITS, Math.max(1, Math.floor(n) || 1));
+  const [toast, setToast] = useState<string | null>(null);
 
-  const [listed, setListed] = useState(true);
+  const units = (() => {
+    const n = pick === "custom" ? Number(custom) : Number(pick);
+    return Math.min(MAX_UNITS, Math.max(1, Math.floor(n) || 1));
+  })();
+  const amount = units * UNIT_YEN;
+  const ready = publish !== null && (pick !== "custom" || (Number(custom) >= 1 && Number(custom) <= MAX_UNITS));
 
-  /** ① 掲示板(フィード)に並べて寄付 / ② 並べずに寄付。どちらも事務局から口座案内TalKは届く */
-  const submit = async (publish: boolean) => {
+  const submit = async () => {
     if (!userId) {
       requireJoin();
       return;
     }
-    if (busy) return;
+    if (busy || publish === null) return;
     setBusy(true);
     if (publish) {
-      const detail = `私は${units.toLocaleString()}口（${(units * UNIT_YEN).toLocaleString()}円）の寄付をする予定です。`;
+      const detail = `私は${units.toLocaleString()}口（${amount.toLocaleString()}円）の寄付をする予定です。`;
       const { error } = await addOffer(userId, "money", detail);
       if (error) {
         setBusy(false);
@@ -163,11 +158,23 @@ function DonateDialog({
       onDone();
     }
     setBusy(false);
-    // 事務局アカウントから口座案内のTalKを自動送信（口数入り）
+    // 事務局アカウントから「寄付予定X口X円・口座番号」のTalKを自動送信 + 寄付申込を保管
     firePush("/api/donate-talk", { units, listed: publish });
-    setListed(publish);
     setSent(true);
   };
+
+  const copyBank = async () => {
+    try {
+      await navigator.clipboard.writeText(BANK_TEXT);
+      setToast("口座情報をコピーしました");
+    } catch {
+      setToast(BANK_TEXT);
+    }
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  const label = "text-[13px] font-extrabold text-[#3a3428]";
+  const note = "text-[11.5px] leading-relaxed text-[#8a7a5a]";
 
   return (
     <div
@@ -183,18 +190,15 @@ function DonateDialog({
             <div className="text-4xl">🙏</div>
             <p className="mt-2 text-[16px] font-extrabold text-[#3a3428]">ありがとうございます！</p>
             <p className="mt-2 text-[13.5px] leading-relaxed text-[#5a5448]">
-              {listed ? (
+              寄付予定 {units.toLocaleString()}口（{amount.toLocaleString()}円）を受け付けました。
+              {publish && (
                 <>
-                  「{units.toLocaleString()}口の寄付をする予定です」を助けたいフィードに並べました。
                   <br />
-                </>
-              ) : (
-                <>
-                  {units.toLocaleString()}口（{(units * UNIT_YEN).toLocaleString()}円）の寄付のお申し込みを受け付けました。
-                  <br />
+                  「私は{units.toLocaleString()}口の寄付をする予定です。」を掲示板に並べました。
                 </>
               )}
-              振込先は事務局からのTalKに届いています。
+              <br />
+              口座番号は事務局からのTalKに届いています。
             </p>
             <button
               className="mt-4 w-full rounded-xl py-3 font-bold text-white"
@@ -211,140 +215,121 @@ function DonateDialog({
               寄付をする
             </h3>
 
-            {/* 口数 */}
-            <p className="mt-3 text-[14px] font-bold text-[#3a3428]">何口の寄付を予定されていますか？</p>
-            <p className="text-[12px] text-[#8a8070]">1口 1,000円・最大 {MAX_UNITS.toLocaleString()}口</p>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                className="h-11 w-11 rounded-xl border text-xl font-bold"
-                style={{ borderColor: "#e8dcc4", color: "#d96a1a" }}
-                onClick={() => setUnits((u) => clamp(u - 1))}
-                aria-label="1口減らす"
+            {/* ①②③ 説明 */}
+            <div className="mt-3 space-y-2.5">
+              <div>
+                <p className={label}>① ご予定されている寄付額をお知らせ下さい</p>
+                <p className={note}>※こちらで選択しても自動的に請求や引き落としなどはされません。</p>
+                <p className={note}>※あくまでも「寄付予定額」の確認です</p>
+                <p className={note}>※後ほどTalK宛に「口座番号」をお知らせします</p>
+              </div>
+              <p className={label}>② 両替手数料の関係上、1口1,000円以上からの寄付をお願いしております。</p>
+              <p className={label}>③ 掲示板へ載せて良いかをご選択ください</p>
+            </div>
+
+            {/* 予定している寄付金額 */}
+            <p className="mt-4 text-[13.5px] font-extrabold" style={{ color: "#c05e14" }}>
+              「予定している寄付金額」
+            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <select
+                value={pick}
+                onChange={(e) => setPick(e.target.value)}
+                className="num h-11 flex-1 rounded-xl border bg-white px-3 text-[15px] font-bold outline-none focus:border-[#d96a1a]"
+                style={{ borderColor: "#e8dcc4", color: "#3a3428" }}
               >
-                −
-              </button>
-              <div className="flex flex-1 items-center justify-center gap-1 rounded-xl border px-2" style={{ borderColor: "#e8dcc4" }}>
+                {POPULAR_UNITS.map((u) => (
+                  <option key={u} value={String(u)}>
+                    {u}口（{(u * UNIT_YEN).toLocaleString()}円）
+                  </option>
+                ))}
+                <option value="custom">その他の口数を入力（1〜{MAX_UNITS.toLocaleString()}口）</option>
+              </select>
+            </div>
+            {pick === "custom" && (
+              <div className="mt-2 flex items-center gap-2">
                 <input
                   type="number"
                   inputMode="numeric"
                   min={1}
                   max={MAX_UNITS}
-                  value={units}
-                  onChange={(e) => setUnits(clamp(Number(e.target.value)))}
-                  className="num h-11 w-20 bg-transparent text-center text-[22px] font-extrabold outline-none"
-                  style={{ color: "#c05e14" }}
+                  value={custom}
+                  onChange={(e) => setCustom(e.target.value)}
+                  placeholder="口数"
+                  autoFocus
+                  className="num h-11 w-28 rounded-xl border px-3 text-center text-[18px] font-extrabold outline-none focus:border-[#d96a1a]"
+                  style={{ borderColor: "#e8dcc4", color: "#c05e14" }}
                 />
                 <span className="text-[14px] font-bold text-[#5a5448]">口</span>
               </div>
-              <button
-                className="h-11 w-11 rounded-xl border text-xl font-bold"
-                style={{ borderColor: "#e8dcc4", color: "#d96a1a" }}
-                onClick={() => setUnits((u) => clamp(u + 1))}
-                aria-label="1口増やす"
-              >
-                ＋
-              </button>
-            </div>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {QUICK_UNITS.map((q) => (
+            )}
+            <p className="num mt-1.5 text-right text-[15px] font-extrabold" style={{ color: "#c05e14" }}>
+              寄付予定 {units.toLocaleString()}口 {amount.toLocaleString()}円
+            </p>
+
+            {/* 掲示板への記載 */}
+            <p className="mt-4 text-[13.5px] font-extrabold" style={{ color: "#c05e14" }}>
+              「掲示板への記載」
+            </p>
+            <div className="mt-1.5 space-y-1.5">
+              {[
+                { v: true, t: "寄付予定であることを掲示板に並べる", s: `「私は${units.toLocaleString()}口の寄付をする予定です。」が助けたいに並びます` },
+                { v: false, t: "掲示板には並べずに寄付をする", s: "掲示板には何も表示されません" },
+              ].map((o) => (
                 <button
-                  key={q}
-                  onClick={() => setUnits(q)}
-                  className="num rounded-full border px-2.5 py-[3px] text-[12px] font-bold"
+                  key={String(o.v)}
+                  onClick={() => setPublish(o.v)}
+                  className="flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left"
                   style={
-                    units === q
-                      ? { background: "#d96a1a", color: "#fff", borderColor: "#d96a1a" }
-                      : { background: "#fff", color: "#8a7a5a", borderColor: "#e8dcc4" }
+                    publish === o.v
+                      ? { borderColor: "#d96a1a", background: "#fdf0e0" }
+                      : { borderColor: "#e8dcc4", background: "#fff" }
                   }
                 >
-                  {q}口
+                  <span
+                    className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2"
+                    style={{ borderColor: publish === o.v ? "#d96a1a" : "#c8bfae" }}
+                  >
+                    {publish === o.v && <span className="h-[9px] w-[9px] rounded-full" style={{ background: "#d96a1a" }} />}
+                  </span>
+                  <span>
+                    <span className="block text-[13.5px] font-bold text-[#3a3428]">{o.t}</span>
+                    <span className="block text-[11px] text-[#8a7a5a]">{o.s}</span>
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="num mt-2 text-right text-[15px] font-extrabold" style={{ color: "#c05e14" }}>
-              合計 {(units * UNIT_YEN).toLocaleString()}円
-            </p>
 
-            {/* 振込先 */}
-            <p className="mt-3 text-sm text-[#5a5448]">以下への振り込みをお願い致します。</p>
-            <div
-              className="mt-2 space-y-1.5 rounded-xl border p-4 text-[14.5px] leading-relaxed"
-              style={{ borderColor: "#e8c890", background: "#fffaf0" }}
-            >
-              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">銀行名</span> GMOあおぞらネット銀行</p>
-              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">支店名</span> 法人第二営業部</p>
-              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">口座　</span> 普通 1007941</p>
-              <p><span className="mr-1 text-[11px] font-bold text-[#a09888]">名義　</span> ファミュニティリンク カ）</p>
-            </div>
-            <p className="mt-2 text-[14px] font-bold leading-relaxed text-[#5a5448]">
-              ※なお、小銭の両替手数料の関係から、1口（1,000円）以上からの寄付をお願いしております。ご協力お願い致します。
-            </p>
-            {/* ゆうちょ銀行から振り込む人向けの手順（赤字テキスト→折りたたみ） */}
+            {/* 口座情報コピー */}
             <button
-              className="mt-2 block text-left text-[13.5px] font-bold"
-              style={{ color: "#c0392b" }}
-              onClick={() => setYuchoOpen(!yuchoOpen)}
-            >
-              ※ゆうちょ銀行から振り込む場合はこちら{yuchoOpen ? "△" : "▽"}
-            </button>
-            {yuchoOpen && (
-              <div className="mt-1 pl-3 text-[13px] leading-relaxed text-[#3a3428]">
-                <p className="mb-1 font-bold">《ゆうちょ銀行からの振込手順》</p>
-                <ol className="space-y-0.5">
-                  {YUCHO_STEPS.map((step, i) => (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <span className="num w-4 shrink-0 text-right text-[11px] font-bold text-[#a09888]">{i + 1}</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-            <button
-              className="mt-2 w-full rounded-xl border py-2 text-[12.5px] font-bold"
+              className="mt-4 w-full rounded-xl border py-2 text-[12.5px] font-bold"
               style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(
-                    "GMOあおぞらネット銀行 法人第二営業部 普通 1007941 ファミュニティリンク カ）"
-                  );
-                  alert("口座情報をコピーしました");
-                } catch {}
-              }}
+              onClick={copyBank}
             >
               📋 口座情報をコピーする
             </button>
+            <p className="mt-1 text-center text-[10.5px] text-[#a09888]">{BANK_TEXT}</p>
 
-            {/* ①掲示板に並べる / ②並べない。どちらもTalKで振込先が届く */}
-            <p className="mt-4 text-[13px] font-bold text-[#3a3428]">
-              {units.toLocaleString()}口（{(units * UNIT_YEN).toLocaleString()}円）で申し込む
-            </p>
             <button
-              className="mt-1.5 w-full rounded-xl py-3 text-[14px] font-bold text-white disabled:opacity-50"
+              className="mt-4 w-full rounded-xl py-3 text-[14.5px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "#d96a1a" }}
-              disabled={busy}
-              onClick={() => submit(true)}
+              disabled={busy || !ready}
+              onClick={submit}
             >
-              {busy ? "処理中..." : "① 寄付予定であることを掲示板に並べる"}
+              {busy ? "送信中..." : userId ? "この内容で申し込む" : "参加して申し込む"}
             </button>
-            <p className="mt-1 text-center text-[11px] text-[#a09888]">
-              「私は{units.toLocaleString()}口の寄付をする予定です。」が助けたいフィードに並びます
-            </p>
-            <button
-              className="mt-2.5 w-full rounded-xl border-2 py-3 text-[14px] font-bold disabled:opacity-50"
-              style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
-              disabled={busy}
-              onClick={() => submit(false)}
-            >
-              {busy ? "処理中..." : "② 掲示板には並べずに寄付する"}
-            </button>
-            <p className="mt-1.5 text-center text-[11px] text-[#a09888]">
-              ①②どちらも、事務局から振込先のご案内がTalKに届きます{userId ? "" : "（参加が必要です）"}
-            </p>
+            {publish === null && (
+              <p className="mt-1 text-center text-[11px] text-[#c0392b]">③ 掲示板への記載を選んでください</p>
+            )}
             <button className="mt-2 w-full py-2 text-[12.5px] font-bold text-[#a09888]" onClick={onClose}>
               閉じる
             </button>
           </>
+        )}
+        {toast && (
+          <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[130] flex justify-center px-4">
+            <span className="rounded-full bg-[#3a3428]/90 px-4 py-2 text-[13px] font-bold text-white shadow-lg">{toast}</span>
+          </div>
         )}
       </div>
     </div>

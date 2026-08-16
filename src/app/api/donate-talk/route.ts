@@ -75,12 +75,14 @@ export async function POST(req: Request) {
   if (dup) return NextResponse.json({ ok: true, skipped: "already-sent" });
 
   const body =
-    `${name}さん、${units.toLocaleString()}口（${(units * 1000).toLocaleString()}円）の寄付のお申し込みありがとうございます。以下の口座への振り込みをお願い致します。\n\n` +
+    `${name}さん、寄付のお申し込みありがとうございます。\n` +
+    `寄付予定 ${units.toLocaleString()}口 ${(units * 1000).toLocaleString()}円です。\n` +
+    `以下の口座へお振込みをお願い致します。\n\n` +
     `銀行名　GMOあおぞらネット銀行\n` +
     `支店名　法人第二営業部\n` +
     `口座　　普通 1007941\n` +
     `名義　　ファミュニティリンク カ）\n\n` +
-    `なお、小銭の両替手数料の関係から、1口（1,000円）以上からの寄付をお願いしております。ご協力お願い致します。\n\n` +
+    `※両替手数料の関係上、1口（1,000円）以上からの寄付をお願いしております。\n\n` +
     `《ゆうちょ銀行からの振込手順》\n` +
     `送金 → 他行銀行へのご送金 → 画面指示に従う → 金融機関の選択 → 次を表示 → その他 → 金融機関の選択 → 英字 → GMOあおぞらネット銀行`;
 
