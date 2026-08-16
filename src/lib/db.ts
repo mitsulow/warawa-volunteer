@@ -665,6 +665,52 @@ export async function markDmRead(chatId: string, myId: string) {
   window.dispatchEvent(new Event("warawa:unreadRefresh"));
 }
 
+/* ---------- 友達申請（承認された者同士だけ1対1TalK。事務局ボット・管理者は例外） ---------- */
+
+export type FriendState =
+  | { status: "none" }
+  | { status: "pending_sent"; id: string }
+  | { status: "pending_received"; id: string }
+  | { status: "accepted"; id: string };
+
+export async function fetchFriendState(myId: string, otherId: string): Promise<FriendState> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("friendships")
+    .select("id, requester, addressee, status")
+    .or(`and(requester.eq.${myId},addressee.eq.${otherId}),and(requester.eq.${otherId},addressee.eq.${myId})`)
+    .limit(1)
+    .maybeSingle();
+  if (!data) return { status: "none" };
+  const r = data as { id: string; requester: string; addressee: string; status: string };
+  if (r.status === "accepted") return { status: "accepted", id: r.id };
+  return r.requester === myId ? { status: "pending_sent", id: r.id } : { status: "pending_received", id: r.id };
+}
+
+export async function sendFriendRequest(myId: string, otherId: string) {
+  await ensureProfile(myId);
+  const supabase = createClient();
+  return supabase.from("friendships").insert({ requester: myId, addressee: otherId });
+}
+
+export async function acceptFriendRequest(id: string) {
+  const supabase = createClient();
+  return supabase.from("friendships").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", id);
+}
+
+/** 申請の取り消し / 断る / 友達解除（行を消す） */
+export async function removeFriendship(id: string) {
+  const supabase = createClient();
+  return supabase.from("friendships").delete().eq("id", id);
+}
+
+/** TalKを始められるか（DBの can_talk と同じ判定: 事務局ボット・管理者が絡めばOK、それ以外は友達承認済み） */
+export async function canTalkWith(myId: string, otherId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data } = await supabase.rpc("can_talk", { u1: myId, u2: otherId });
+  return !!data;
+}
+
 /* ---------- Talk一覧 ---------- */
 
 interface ChatRow {

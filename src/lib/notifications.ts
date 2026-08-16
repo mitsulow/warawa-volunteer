@@ -22,6 +22,10 @@ export function notifText(n: NotificationRow): string {
   switch (n.kind) {
     case "comment":
       return `${who}さんがあなたの投稿にコメントしました`;
+    case "friend_request":
+      return `${who}さんから友達申請が届きました`;
+    case "friend_accept":
+      return `${who}さんが友達申請を承認しました`;
     default:
       return `${who}さんからお知らせがあります`;
   }

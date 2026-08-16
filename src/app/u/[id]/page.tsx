@@ -5,10 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
 import {
+  acceptFriendRequest,
+  canTalkWith,
+  fetchFriendState,
   fetchMyEmail,
   fetchOffersByUser,
   fetchProfile,
   getOrCreateChat,
+  removeFriendship,
+  sendFriendRequest,
+  type FriendState,
   uploadPhoto,
   upsertMyProfile,
   type Offer,
@@ -42,6 +48,20 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
   useEffect(load, [id]);
 
   const isMe = session.userId === id;
+  // 友達申請の状態と、TalKを始められるか（事務局・管理者は例外で誰とでも）
+  const [friend, setFriend] = useState<FriendState | null>(null);
+  const [canTalk, setCanTalk] = useState(false);
+  const [fBusy, setFBusy] = useState(false);
+  const refreshFriend = async () => {
+    if (!session.userId || isMe) return;
+    const [f, ok] = await Promise.all([fetchFriendState(session.userId, id), canTalkWith(session.userId, id)]);
+    setFriend(f);
+    setCanTalk(ok);
+  };
+  useEffect(() => {
+    refreshFriend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.userId, id]);
 
   const changeImage = async (kind: "cover" | "avatar", file: File | null) => {
     if (!isMe || !file || busy || !session.userId) return;
@@ -183,19 +203,87 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
             <div className="num text-[12px] text-[#a09888]">@わらわ〜ボランティアNo.{profile.member_no}</div>
           )}
 
-          {/* 連絡を取る（他人のページ・OneSeaと同じピル+アイコン） */}
+          {/* 連絡を取る: 友達申請→承認 で TalK が使える（事務局・管理者は誰とでも） */}
           {session.userId && !isMe && (
-            <button
-              onClick={async () => {
-                const chatId = await getOrCreateChat(session.userId!, profile.id);
-                if (chatId) router.push(`/talk/${chatId}`);
-              }}
-              className="mt-2 inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1.5 text-[11.5px] font-extrabold"
-              style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/icon-talk-green.webp" alt="" style={{ width: 14, height: 14 }} /> 連絡を取る
-            </button>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {canTalk ? (
+                <button
+                  onClick={async () => {
+                    const chatId = await getOrCreateChat(session.userId!, profile.id);
+                    if (chatId) router.push(`/talk/${chatId}`);
+                    else window.alert("TalKを始められませんでした（友達承認が必要です）");
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1.5 text-[11.5px] font-extrabold"
+                  style={{ borderColor: "#d96a1a", color: "#d96a1a" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/icon-talk-green.webp" alt="" style={{ width: 14, height: 14 }} /> TalKで連絡を取る
+                </button>
+              ) : friend?.status === "pending_received" ? (
+                <>
+                  <button
+                    disabled={fBusy}
+                    onClick={async () => {
+                      setFBusy(true);
+                      await acceptFriendRequest(friend.id);
+                      await refreshFriend();
+                      setFBusy(false);
+                    }}
+                    className="rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-50"
+                    style={{ background: "#d96a1a" }}
+                  >
+                    友達申請を承認する
+                  </button>
+                  <button
+                    disabled={fBusy}
+                    onClick={async () => {
+                      if (!window.confirm("この友達申請を断りますか？")) return;
+                      setFBusy(true);
+                      await removeFriendship(friend.id);
+                      await refreshFriend();
+                      setFBusy(false);
+                    }}
+                    className="rounded-full border bg-white px-3 py-1.5 text-[11.5px] font-bold text-[#a09888]"
+                    style={{ borderColor: "#e8dcc4" }}
+                  >
+                    断る
+                  </button>
+                </>
+              ) : friend?.status === "pending_sent" ? (
+                <button
+                  disabled={fBusy}
+                  onClick={async () => {
+                    if (!window.confirm("友達申請を取り消しますか？")) return;
+                    setFBusy(true);
+                    await removeFriendship(friend.id);
+                    await refreshFriend();
+                    setFBusy(false);
+                  }}
+                  className="rounded-full border bg-white px-3 py-1.5 text-[11.5px] font-bold text-[#8a7a5a]"
+                  style={{ borderColor: "#e8dcc4" }}
+                >
+                  友達申請中（承認待ち）・取り消す
+                </button>
+              ) : (
+                <button
+                  disabled={fBusy || friend === null}
+                  onClick={async () => {
+                    setFBusy(true);
+                    const { error } = await sendFriendRequest(session.userId!, profile.id);
+                    if (error) window.alert("申請できませんでした。もう一度お試しください");
+                    await refreshFriend();
+                    setFBusy(false);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-50"
+                  style={{ background: "#d96a1a" }}
+                >
+                  🤝 友達申請をする
+                </button>
+              )}
+              {!canTalk && friend?.status !== "pending_received" && (
+                <span className="text-[10.5px] text-[#a09888]">友達申請が承認されるとTalKが使えます</span>
+              )}
+            </div>
           )}
 
           {isMe && (
