@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
-import Link from "next/link";
-import { saveMyEmail, upsertMyProfile } from "@/lib/db";
+import { saveMyEmail, upsertMyProfile, uploadPhoto } from "@/lib/db";
 import { TERMS_VERSION } from "@/lib/terms";
 import { TermsBody } from "@/components/TermsBody";
 import { SnsIcon } from "@/components/SnsIcon";
@@ -48,6 +47,16 @@ export function RegisterDialog({
   onClose?: () => void;
 }) {
   const [name, setName] = useState(initial.display_name);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initial.avatar_url);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const changeAvatar = async (file: File | null) => {
+    if (!file || avatarBusy) return;
+    setAvatarBusy(true);
+    const url = await uploadPhoto(file, userId);
+    if (url) setAvatarUrl(url);
+    setAvatarBusy(false);
+  };
   const [hitokoto, setHitokoto] = useState(initial.bio ?? "");
   const [email, setEmail] = useState(initial.email);
   const [sns, setSns] = useState<Record<string, string>>(initial.sns ?? {});
@@ -71,7 +80,7 @@ export function RegisterDialog({
   }, []);
 
   const [agreed, setAgreed] = useState(!isFirst);
-  const [termsOpen, setTermsOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(true);
 
   const save = async () => {
     if (!name.trim()) {
@@ -92,7 +101,7 @@ export function RegisterDialog({
     for (const [k, v] of Object.entries(sns)) if (v.trim()) snsClean[k] = v.trim();
     const { error: e } = await upsertMyProfile(userId, {
       display_name: name.trim(),
-      avatar_url: initial.avatar_url,
+      avatar_url: avatarUrl,
       bio: hitokoto.trim() || null,
       sns: Object.keys(snsClean).length ? snsClean : null,
       ...(isFirst
@@ -118,17 +127,52 @@ export function RegisterDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-bold">
-          {isFirst ? "ようこそ！登録フォーム" : "プロフィールを編集"}
+          {isFirst ? "登録フォーム" : "プロフィールを編集"}
         </h3>
-        {isFirst && (
-          <p className="mt-1 mb-3 text-sm text-[#8a8070]">
-            登録すると <b>わらわ〜ボランティアNo.</b> と認証マークが付きます。
-          </p>
-        )}
 
-        <label className="mt-2 block text-sm font-bold">
+        {/* アイコン（Googleの写真が入る。マイページと同じ✏️で変更できる） */}
+        <div className="mt-3 flex justify-center">
+          <div className="relative inline-block">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-[84px] w-[84px] rounded-full border-4 border-[#f2ede4] object-cover shadow-md"
+              />
+            ) : (
+              <div
+                className="flex h-[84px] w-[84px] items-center justify-center rounded-full border-4 border-[#f2ede4] shadow-md"
+                style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/icon-leaf.webp" alt="" style={{ width: 22, height: 22 }} />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => avatarInput.current?.click()}
+              aria-label="アイコンを変える"
+              className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold text-white shadow-md"
+              style={{ background: "#d96a1a" }}
+            >
+              {avatarBusy ? "⏳" : <span className="text-[14px] leading-none">✏️</span>}
+              アイコンを変える
+            </button>
+            <input
+              ref={avatarInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => changeAvatar(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </div>
+
+        <label className="mt-4 block text-sm font-bold">
           お名前{" "}
-          <span className="font-normal text-[#a09888]">（ニックネームもOKです）</span>
+          <span className="font-normal text-[#a09888]">（ニックネームもOK）</span>
         </label>
         <input
           className="mt-1 w-full rounded-xl border border-[#e0d6c6] px-3 py-2"
@@ -214,9 +258,6 @@ export function RegisterDialog({
               <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="h-5 w-5 accent-[#d96a1a]" />
               <span className="text-[13.5px] font-extrabold text-[#3a3428]">上記の記載事項について了承しました。</span>
             </label>
-            <p className="mt-1 text-[10.5px] text-[#a09888]">
-              全文は <Link href="/terms" target="_blank" className="underline">こちら</Link> でいつでも読めます
-            </p>
           </div>
         )}
 
