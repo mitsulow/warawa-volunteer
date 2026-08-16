@@ -142,24 +142,31 @@ function DonateDialog({
   const [sent, setSent] = useState(false);
   const clamp = (n: number) => Math.min(MAX_UNITS, Math.max(1, Math.floor(n) || 1));
 
-  const submit = async () => {
+  const [listed, setListed] = useState(true);
+
+  /** ① 掲示板(フィード)に並べて寄付 / ② 並べずに寄付。どちらも事務局から口座案内TalKは届く */
+  const submit = async (publish: boolean) => {
     if (!userId) {
       requireJoin();
       return;
     }
     if (busy) return;
     setBusy(true);
-    const detail = `私は${units.toLocaleString()}口（${(units * UNIT_YEN).toLocaleString()}円）の寄付をする予定です。`;
-    const { error } = await addOffer(userId, "money", detail);
-    setBusy(false);
-    if (error) {
-      window.alert(`登録できませんでした: ${error.message}`);
-      return;
+    if (publish) {
+      const detail = `私は${units.toLocaleString()}口（${(units * UNIT_YEN).toLocaleString()}円）の寄付をする予定です。`;
+      const { error } = await addOffer(userId, "money", detail);
+      if (error) {
+        setBusy(false);
+        window.alert(`登録できませんでした: ${error.message}`);
+        return;
+      }
+      onDone();
     }
+    setBusy(false);
     // 事務局アカウントから口座案内のTalKを自動送信（口数入り）
     firePush("/api/donate-talk", { units });
+    setListed(publish);
     setSent(true);
-    onDone();
   };
 
   return (
@@ -176,9 +183,18 @@ function DonateDialog({
             <div className="text-4xl">🙏</div>
             <p className="mt-2 text-[16px] font-extrabold text-[#3a3428]">ありがとうございます！</p>
             <p className="mt-2 text-[13.5px] leading-relaxed text-[#5a5448]">
-              「{units.toLocaleString()}口の寄付をする予定です」を助けたいフィードに並べました。
-              <br />
-              振込先は事務局からのTalKにも届いています。
+              {listed ? (
+                <>
+                  「{units.toLocaleString()}口の寄付をする予定です」を助けたいフィードに並べました。
+                  <br />
+                </>
+              ) : (
+                <>
+                  {units.toLocaleString()}口（{(units * UNIT_YEN).toLocaleString()}円）の寄付のお申し込みを受け付けました。
+                  <br />
+                </>
+              )}
+              振込先は事務局からのTalKに届いています。
             </p>
             <button
               className="mt-4 w-full rounded-xl py-3 font-bold text-white"
@@ -299,16 +315,31 @@ function DonateDialog({
               📋 口座情報をコピーする
             </button>
 
+            {/* ①掲示板に並べる / ②並べない。どちらもTalKで振込先が届く */}
+            <p className="mt-4 text-[13px] font-bold text-[#3a3428]">
+              {units.toLocaleString()}口（{(units * UNIT_YEN).toLocaleString()}円）で申し込む
+            </p>
             <button
-              className="mt-4 w-full rounded-xl py-3 font-bold text-white disabled:opacity-50"
+              className="mt-1.5 w-full rounded-xl py-3 text-[14px] font-bold text-white disabled:opacity-50"
               style={{ background: "#d96a1a" }}
               disabled={busy}
-              onClick={submit}
+              onClick={() => submit(true)}
             >
-              {busy ? "登録中..." : userId ? `${units.toLocaleString()}口の寄付をする` : "参加して寄付を申し込む"}
+              {busy ? "処理中..." : "① 寄付予定であることを掲示板に並べる"}
+            </button>
+            <p className="mt-1 text-center text-[11px] text-[#a09888]">
+              「私は{units.toLocaleString()}口の寄付をする予定です。」が助けたいフィードに並びます
+            </p>
+            <button
+              className="mt-2.5 w-full rounded-xl border-2 py-3 text-[14px] font-bold disabled:opacity-50"
+              style={{ borderColor: "#d96a1a", color: "#d96a1a", background: "#fff" }}
+              disabled={busy}
+              onClick={() => submit(false)}
+            >
+              {busy ? "処理中..." : "② 掲示板には並べずに寄付する"}
             </button>
             <p className="mt-1.5 text-center text-[11px] text-[#a09888]">
-              押すと「私は{units.toLocaleString()}口の寄付をする予定です。」が助けたいフィードに並び、事務局から振込先のTalKが届きます
+              ①②どちらも、事務局から振込先のご案内がTalKに届きます{userId ? "" : "（参加が必要です）"}
             </p>
             <button className="mt-2 w-full py-2 text-[12.5px] font-bold text-[#a09888]" onClick={onClose}>
               閉じる
