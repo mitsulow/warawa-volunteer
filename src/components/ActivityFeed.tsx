@@ -15,6 +15,7 @@ import {
   type Liker,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
+import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { deleteBoardMessage } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
@@ -289,7 +290,7 @@ export function ActivityFeed({
                           setExpandedBody((p) => new Set(p).add(it.key));
                       }}
                     >
-                      {it.body}
+                      <Linkify text={it.body} />
                     </p>
                     {needsFold(it.body) && !bodyExpanded && (
                       <button

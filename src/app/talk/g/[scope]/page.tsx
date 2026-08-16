@@ -15,6 +15,7 @@ import {
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { MessageInput } from "@/components/MessageInput";
+import { Linkify } from "@/components/Linkify";
 import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 
 function fmtTime(iso: string) {
@@ -69,7 +70,7 @@ function Bubble({
                 {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
               </span>
             )}
-            {m.body && <span className="whitespace-pre-wrap break-words">{m.body}</span>}
+            {m.body && <span className="whitespace-pre-wrap break-words"><Linkify text={m.body} className={mine ? "break-all underline text-white" : "break-all underline"} /></span>}
             {m.image_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={m.image_url} alt="" className="mt-1 max-h-56 max-w-full rounded-lg object-contain" />

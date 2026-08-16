@@ -23,7 +23,7 @@ async function compress(file: File, maxW: number, quality: number): Promise<Blob
 
 /**
  * サムネ+本体の2枚方式（OneSea CotoZuteと同じ）。
- * フィードはサムネ(480px)で軽く、タップ時は本体(1600px)。
+ * フィードはサムネ(480px)で軽く、タップ時は本体(1280px)。
  */
 export async function uploadImagePair(
   userId: string,
@@ -33,7 +33,7 @@ export async function uploadImagePair(
     const supabase = createClient();
     const stamp = Date.now();
     const [fullBlob, thumbBlob] = await Promise.all([
-      compress(file, 1600, 0.82),
+      compress(file, 1280, 0.8),
       compress(file, 480, 0.78),
     ]);
     const upload = async (blob: Blob, name: string) => {

@@ -17,6 +17,7 @@ import {
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { MessageInput } from "@/components/MessageInput";
+import { Linkify } from "@/components/Linkify";
 import { OFFICE_BOT_ID } from "@/lib/config";
 import { BubbleMenu, useLongPress } from "@/components/BubbleMenu";
 
@@ -57,7 +58,7 @@ function Bubble({
         } ${menu ? "opacity-70" : ""}`}
         style={{ WebkitTouchCallout: "none" } as React.CSSProperties}
       >
-        {m.body}
+        <Linkify text={m.body} className={mine ? "break-all underline text-white" : "break-all underline"} />
       </div>
       {!mine && (
         <div className="shrink-0 text-[10px] leading-tight text-gray-400">{fmtTime(m.created_at)}</div>

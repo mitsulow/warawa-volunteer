@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { addComment, fetchComments, type FeedComment } from "@/lib/db";
+import { Linkify } from "@/components/Linkify";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -99,7 +100,7 @@ export function CommentSection({
                   {relTime(c.created_at)}
                 </span>
               </div>
-              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#33363a]">{c.body}</p>
+              <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#33363a]"><Linkify text={c.body} /></p>
             </div>
           </div>
         ))

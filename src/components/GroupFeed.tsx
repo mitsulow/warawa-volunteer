@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   deleteBoardMessage,
   fetchBoard,
@@ -16,6 +17,7 @@ import {
   type BoardScope,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
+import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -272,21 +274,24 @@ export function GroupFeed({
               <div className="relative overflow-hidden px-3 py-2.5">
                 <div className="relative">
                 <div className="flex items-center gap-2.5">
-                  {m.profiles?.avatar_url ? (
-                    <img
-                      src={m.profiles.avatar_url}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span
-                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white"
-                      style={{ background: "#c05e14" }}
-                    >
-                      現地
-                    </span>
-                  )}
+                  {/* アイコンはマイページへ（助けてもGoogle認証必須になったので投稿者が分かる） */}
+                  <Link href={`/u/${m.user_id}`} className="flex-shrink-0" aria-label="投稿者のマイページ">
+                    {m.profiles?.avatar_url ? (
+                      <img
+                        src={m.profiles.avatar_url}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="h-9 w-9 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-extrabold text-white"
+                        style={{ background: "#c05e14" }}
+                      >
+                        現地
+                      </span>
+                    )}
+                  </Link>
                   <span className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-tight" style={{ color: "#c05e14" }}>
                     {m.pref ?? ""}{m.city && m.city !== "市は不明" ? ` ${m.city}` : ""}からの投稿
                   </span>
@@ -313,7 +318,7 @@ export function GroupFeed({
                           setExpandedBody((p) => new Set(p).add(`board:${m.id}`));
                       }}
                     >
-                      {m.body}
+                      <Linkify text={m.body} />
                     </p>
                     {needsFold(m.body) && !expandedBody.has(`board:${m.id}`) && (
                       <button
@@ -449,7 +454,7 @@ export function GroupFeed({
               </div>
               {m.body && (
                 <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#4a4438]">
-                  {m.body}
+                  <Linkify text={m.body} />
                 </p>
               )}
               {m.embed && (

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase";
 import { firePush } from "@/lib/push";
 import { TERMS_VERSION } from "@/lib/terms";
-import { OFFICE_BOT_ID } from "@/lib/config";
+import { OFFICE_BOT_ID, SUPABASE_URL } from "@/lib/config";
 
 export interface Profile {
   id: string;
@@ -79,6 +79,29 @@ export interface DmMessage {
   created_at: string;
 }
 
+/* ---------- 画像URLをVercel CDN経由(/img/…)に置き換える（Supabase転送量の節約・next.config.tsのrewrite） ---------- */
+const STORAGE_PREFIX = `${SUPABASE_URL}/storage/v1/object/public/photos/`;
+export function cdnUrl(u: string | null | undefined): string | null {
+  if (!u) return u ?? null;
+  return u.startsWith(STORAGE_PREFIX) ? "/img/" + u.slice(STORAGE_PREFIX.length) : u;
+}
+/** 逆変換: /img/… を保存用の Storage の絶対URLに戻す（DBには常に絶対URLを保存する） */
+export function storageUrl(u: string): string {
+  return u.startsWith("/img/") ? STORAGE_PREFIX + u.slice(5) : u;
+}
+/** 取得した行の中の Storage URL を全部 /img/ に置換（文字列・配列・入れ子オブジェクトを再帰） */
+export function cdnify<T>(x: T): T {
+  if (x == null) return x;
+  if (typeof x === "string") return cdnUrl(x) as unknown as T;
+  if (Array.isArray(x)) return x.map((v) => cdnify(v)) as unknown as T;
+  if (typeof x === "object") {
+    const o: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(x as Record<string, unknown>)) o[k] = cdnify(v);
+    return o as T;
+  }
+  return x;
+}
+
 /* ---------- profile ---------- */
 
 export async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -88,7 +111,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
     .select(PROFILE_SELECT)
     .eq("id", userId)
     .maybeSingle();
-  return (data as Profile | null) ?? null;
+  return cdnify((data as Profile | null) ?? null);
 }
 
 export async function fetchMyProfile(userId: string): Promise<Profile | null> {
@@ -136,7 +159,7 @@ export async function fetchMembers(): Promise<Profile[]> {
     .select(PROFILE_SELECT)
     .order("member_no", { ascending: true })
     .limit(500);
-  return (data as Profile[]) ?? [];
+  return cdnify((data as Profile[]) ?? []);
 }
 
 /** 連絡用メール（profile_private: 本人+管理者のみ閲覧可） */
@@ -256,7 +279,7 @@ export async function fetchOffers(): Promise<Offer[]> {
     .select(OFFER_SELECT)
     .order("created_at", { ascending: false })
     .limit(200);
-  return (data as unknown as Offer[]) ?? [];
+  return cdnify((data as unknown as Offer[]) ?? []);
 }
 
 export async function fetchOffersByUser(userId: string): Promise<Offer[]> {
@@ -267,7 +290,7 @@ export async function fetchOffersByUser(userId: string): Promise<Offer[]> {
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(100);
-  return (data as unknown as Offer[]) ?? [];
+  return cdnify((data as unknown as Offer[]) ?? []);
 }
 
 export async function addOffer(
@@ -332,7 +355,7 @@ export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
     .eq("scope", scope)
     .order("created_at", { ascending: true })
     .limit(200);
-  return (data as unknown as BoardMessage[]) ?? [];
+  return cdnify((data as unknown as BoardMessage[]) ?? []);
 }
 
 /** cursor(=最後に受け取ったcreated_at)より後の新着だけを取る（増分取得の鉄則） */
@@ -348,7 +371,7 @@ export async function fetchBoardSince(
     .gt("created_at", sinceIso)
     .order("created_at", { ascending: true })
     .limit(200);
-  return (data as unknown as BoardMessage[]) ?? [];
+  return cdnify((data as unknown as BoardMessage[]) ?? []);
 }
 
 export async function sendBoardMessage(
@@ -880,7 +903,7 @@ export async function fetchBoardMessageById(id: string): Promise<BoardMessage | 
     .select(BOARD_SELECT_FULL)
     .eq("id", id)
     .maybeSingle();
-  return (data as unknown as BoardMessage | null) ?? null;
+  return cdnify((data as unknown as BoardMessage | null) ?? null);
 }
 
 export async function updateBoardMessage(
@@ -892,8 +915,8 @@ export async function updateBoardMessage(
   const supabase = createClient();
   const patch: Record<string, unknown> = { body };
   if (imageUrls) {
-    patch.image_urls = imageUrls.length ? imageUrls : null;
-    patch.thumb_urls = thumbUrls?.length ? thumbUrls : null;
+    patch.image_urls = imageUrls.length ? imageUrls.map(storageUrl) : null;
+    patch.thumb_urls = thumbUrls?.length ? thumbUrls.map(storageUrl) : null;
     patch.image_url = null;
   }
   return supabase.from("board_messages").update(patch).eq("id", id);
@@ -911,7 +934,7 @@ export async function fetchOfferById(id: string): Promise<Offer | null> {
     .select(OFFER_SELECT)
     .eq("id", id)
     .maybeSingle();
-  return (data as unknown as Offer | null) ?? null;
+  return cdnify((data as unknown as Offer | null) ?? null);
 }
 
 export async function updateOfferDetail(
@@ -923,8 +946,8 @@ export async function updateOfferDetail(
   const supabase = createClient();
   const patch: Record<string, unknown> = { detail };
   if (imageUrls) {
-    patch.image_urls = imageUrls.length ? imageUrls : null;
-    patch.thumb_urls = thumbUrls?.length ? thumbUrls : null;
+    patch.image_urls = imageUrls.length ? imageUrls.map(storageUrl) : null;
+    patch.thumb_urls = thumbUrls?.length ? thumbUrls.map(storageUrl) : null;
     patch.image_url = null;
   }
   return supabase.from("offers").update(patch).eq("id", id);
@@ -1035,7 +1058,7 @@ export async function fetchComments(itemKey: string): Promise<FeedComment[]> {
     .eq("item_key", itemKey)
     .order("created_at", { ascending: true })
     .limit(100);
-  return (data as unknown as FeedComment[]) ?? [];
+  return cdnify((data as unknown as FeedComment[]) ?? []);
 }
 
 export async function addComment(itemKey: string, userId: string, body: string) {

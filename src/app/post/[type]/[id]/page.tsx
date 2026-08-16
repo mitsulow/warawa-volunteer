@@ -27,6 +27,7 @@ import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { CommentSection } from "@/components/CommentSection";
+import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { JoinDialog } from "@/components/JoinDialog";
 
@@ -312,7 +313,7 @@ export default function PostPage({
           <>
             {body.trim() && (
               <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#1c1e21]">
-                {body}
+                <Linkify text={body} />
               </p>
             )}
             {isBoard && board!.embed && (

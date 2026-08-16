@@ -17,6 +17,7 @@ import {
   type OfferKind,
 } from "@/lib/db";
 import { CommentSection } from "@/components/CommentSection";
+import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { CHIP_STYLE, DotsMenu, KindChip, KindFilterTabs, type ChipKind } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -861,7 +862,7 @@ export function OffersSection({
                           setExpandedBody((p) => new Set(p).add(key));
                       }}
                     >
-                      {body}
+                      <Linkify text={body} />
                     </p>
                     {needsFold(body) && !bodyExpanded && (
                       <button
