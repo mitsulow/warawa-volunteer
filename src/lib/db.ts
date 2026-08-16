@@ -184,14 +184,22 @@ export async function upsertMyProfile(
   return supabase.from("profiles").upsert({ id: userId, ...patch });
 }
 
+/** 参加者一覧（1000件ずつページング・最大2万人） */
 export async function fetchMembers(): Promise<Profile[]> {
   const supabase = createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select(PROFILE_SELECT)
-    .order("member_no", { ascending: true })
-    .limit(500);
-  return cdnify((data as Profile[]) ?? []);
+  const out: Profile[] = [];
+  const PAGE = 1000;
+  for (let from = 0; from < 20000; from += PAGE) {
+    const { data } = await supabase
+      .from("profiles")
+      .select(PROFILE_SELECT)
+      .order("member_no", { ascending: true })
+      .range(from, from + PAGE - 1);
+    const rows = (data as Profile[]) ?? [];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return cdnify(out);
 }
 
 /** 連絡用メール（profile_private: 本人+管理者のみ閲覧可） */
@@ -303,14 +311,22 @@ export async function deleteDonations(ids: string[]) {
   return supabase.from("donations").delete().in("id", ids);
 }
 
+/** 寄付申込を全件（1000件ずつページングして最大2万件まで） */
 export async function fetchDonations(): Promise<Donation[]> {
   const supabase = createClient();
-  const { data } = await supabase
-    .from("donations")
-    .select("id, user_id, units, amount, listed, email, display_name, created_at")
-    .order("created_at", { ascending: false })
-    .limit(500);
-  return (data as Donation[]) ?? [];
+  const out: Donation[] = [];
+  const PAGE = 1000;
+  for (let from = 0; from < 20000; from += PAGE) {
+    const { data } = await supabase
+      .from("donations")
+      .select("id, user_id, units, amount, listed, email, display_name, created_at")
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE - 1);
+    const rows = (data as Donation[]) ?? [];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return out;
 }
 
 /* ---------- バグ報告（事務局のみ閲覧） ---------- */
