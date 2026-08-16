@@ -24,7 +24,6 @@ import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { SnsIcon } from "@/components/SnsIcon";
 import { RegisterDialog } from "@/components/RegisterDialog";
 import { BottomNav } from "@/components/BottomNav";
-import { MenuButton } from "@/components/MenuButton";
 import { AvatarCropper } from "@/components/AvatarCropper";
 
 /** マイページ（OneSeaのマイページから移植・簡素化版: カバー + 重なるアバター + 認証マーク + 出せる物資 + SNS） */
@@ -95,8 +94,6 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#f2ede4" }}>
-      {/* ヘッダーが無いページなので☰は左上に浮かせる（OneSeaのfloating方式） */}
-      <MenuButton />
       {/* カバー画像 */}
       <div className="relative h-44 w-full overflow-hidden">
         {profile.cover_url ? (
@@ -108,12 +105,12 @@ export default function UserPage({ params }: { params: Promise<{ id: string }> }
             style={{ background: "linear-gradient(160deg,#d96a1a 0%,#a84e0e 60%,#7a3a0c 100%)" }}
           />
         )}
-        <Link
-          href="/"
-          className="absolute left-14 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white no-underline backdrop-blur-sm"
+        <button
+          onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
+          className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm"
         >
-          ← ホーム
-        </Link>
+          戻る
+        </button>
         {isMe && (
           <>
             <button
