@@ -804,8 +804,8 @@ export function OffersSection({
   }, [openGoodsSignal]);
 
   const open = (kind: OfferKind) => {
-    // 寄付は未ログインでも振込先を見られる（申し込みボタンで参加を促す）
-    if (kind !== "money" && !userId) {
+    // 4ボタンとも Google ログイン必須（未ログインは参加ダイアログへ）
+    if (!userId) {
       requireJoin();
       return;
     }
