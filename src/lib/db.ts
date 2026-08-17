@@ -380,14 +380,24 @@ export async function resolveBugReport(id: string) {
 const OFFER_SELECT =
   "id, user_id, kind, title, detail, image_url, image_urls, thumb_urls, embed, status, route, slots, quantity, category, done, created_at, profiles(display_name, avatar_url, member_no, sns)";
 
+/** 助けたい一覧。寄付(money)は件数が多い(300件超)ので最新MONEY_FEED_LIMIT件だけ、他の種別は最新400件。
+ *  以前は全種別まとめて200件だったため、寄付に押し出されて「動けます」が26件しか出ないバグがあった(2026-08-17) */
+export const MONEY_FEED_LIMIT = 60;
 export async function fetchOffers(): Promise<Offer[]> {
   const supabase = createClient();
-  const { data } = await supabase
-    .from("offers")
-    .select(OFFER_SELECT)
-    .order("created_at", { ascending: false })
-    .limit(200);
-  return cdnify((data as unknown as Offer[]) ?? []);
+  const [{ data: a }, { data: b }] = await Promise.all([
+    supabase.from("offers").select(OFFER_SELECT).neq("kind", "money").order("created_at", { ascending: false }).limit(400),
+    supabase.from("offers").select(OFFER_SELECT).eq("kind", "money").order("created_at", { ascending: false }).limit(MONEY_FEED_LIMIT),
+  ]);
+  const rows = [...((a as unknown as Offer[]) ?? []), ...((b as unknown as Offer[]) ?? [])].sort((x, y) => y.created_at.localeCompare(x.created_at));
+  return cdnify(rows);
+}
+
+/** 寄付(money)投稿の総件数（一覧は最新分だけなので件数バッジ用に別取り） */
+export async function fetchMoneyOfferCount(): Promise<number> {
+  const supabase = createClient();
+  const { count } = await supabase.from("offers").select("id", { count: "exact", head: true }).eq("kind", "money");
+  return count ?? 0;
 }
 
 export async function fetchOffersByUser(userId: string): Promise<Offer[]> {

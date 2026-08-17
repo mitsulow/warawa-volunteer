@@ -15,6 +15,8 @@ import {
   fetchFeedLikes,
   fetchLikersFor,
   fetchOffers,
+  fetchMoneyOfferCount,
+  MONEY_FEED_LIMIT,
   toggleFeedLike,
   type Liker,
   type Offer,
@@ -759,10 +761,12 @@ export function OffersSection({
   // 最初は「物資」だけ。「すべて」で寄付・動けます・アイディアも並ぶ
   const [kindFilter, setKindFilter] = useState<ChipKind | null>("goods");
 
+  const [moneyCount, setMoneyCount] = useState<number | null>(null);
   const reload = () =>
     fetchOffers().then((o) => {
       setOffers(o);
       loadRequests(o);
+      fetchMoneyOfferCount().then(setMoneyCount).catch(() => {});
     });
   useEffect(() => {
     reload();
@@ -886,15 +890,18 @@ export function OffersSection({
           counts={{
             goods: offers.filter((o) => o.kind === "goods").length,
             body: offers.filter((o) => o.kind === "body").length,
-            money: offers.filter((o) => o.kind === "money").length,
+            money: moneyCount ?? offers.filter((o) => o.kind === "money").length,
             other: offers.filter((o) => o.kind === "other").length,
-            all: offers.length,
+            all: offers.length - offers.filter((o) => o.kind === "money").length + (moneyCount ?? offers.filter((o) => o.kind === "money").length),
           }}
         />
         {feed.length === 0 && (
           <p className="mt-2 rounded-xl border border-dashed border-[#e0d6c6] bg-white py-8 text-center text-sm text-[#a09888]">
             {kindFilter ? `「${CHIP_STYLE[kindFilter].label}」の投稿はまだありません` : "まだ投稿がありません"}
           </p>
+        )}
+        {kindFilter === "money" && moneyCount !== null && moneyCount > MONEY_FEED_LIMIT && (
+          <p className="mt-1 text-center text-[11px] text-[#a09888]">寄付の投稿 {moneyCount}件のうち最新{MONEY_FEED_LIMIT}件を表示しています</p>
         )}
         {feed.map((o) => {
           const key = `offer:${o.id}`;
