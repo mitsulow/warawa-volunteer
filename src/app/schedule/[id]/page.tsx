@@ -60,7 +60,8 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
     for (const a of answers) for (const [k, v] of Object.entries(a.answers ?? {})) if (c[Number(k)] && (v === "o" || v === "d" || v === "x")) c[Number(k)][v]++;
     return c;
   }, [answers, sched]);
-  const others = useMemo(() => answers.filter((a) => a.user_id !== session.userId), [answers, session.userId]);
+  // 自分の回答は左端の「あなた」列に出すので他の列からは外す（締切後は編集列が無いので全員そのまま）
+  const others = useMemo(() => (sched?.closed ? answers : answers.filter((a) => a.user_id !== session.userId)), [answers, session.userId, sched?.closed]);
   const best = useMemo(() => {
     let bi = -1, bs = -1;
     Object.entries(counts).forEach(([i, c]) => {
