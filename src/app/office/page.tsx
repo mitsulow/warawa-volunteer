@@ -34,6 +34,7 @@ import { SnsIcon, snsHref } from "@/components/SnsIcon";
 import { BottomNav } from "@/components/BottomNav";
 import { useLongPress } from "@/components/BubbleMenu";
 import { createSchedule, fetchSchedules, type Schedule } from "@/lib/schedule";
+import { GroupAdminSection } from "@/components/GroupAdminSection";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -384,6 +385,8 @@ export default function OfficePage() {
             </div>
           </section>
         )}
+
+        {tab === "apps" && session.userId && <GroupAdminSection userId={session.userId} scheds={scheds} />}
 
         {tab === "apps" && seg === "open" && (
         <section>

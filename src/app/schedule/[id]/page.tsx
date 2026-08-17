@@ -28,6 +28,12 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
   const [saved, setSaved] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [sending, setSending] = useState(false);
+  // グループTalKから開いた時は ?back=/talk/group/<id> で戻り先を受け取る（サイト内パスのみ）
+  const [backHref, setBackHref] = useState("/");
+  useEffect(() => {
+    const b = new URLSearchParams(window.location.search).get("back");
+    if (b && b.startsWith("/") && !b.startsWith("//")) setBackHref(b);
+  }, []);
 
   const load = async () => {
     const [s, a] = await Promise.all([fetchSchedule(id), fetchAnswers(id)]);
@@ -93,7 +99,7 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <div className="relative flex items-center justify-center">
-          <Link href="/" className="absolute left-0 rounded-full border px-3 py-1 text-[12.5px] font-bold no-underline" style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }}>戻る</Link>
+          <Link href={backHref} className="absolute left-0 rounded-full border px-3 py-1 text-[12.5px] font-bold no-underline" style={{ color: "#d96a1a", borderColor: "#f0d0a8", background: "#fff" }}>戻る</Link>
           <span className="text-[14px] font-bold text-[#1c1e21]">📅 日程調整</span>
         </div>
       </header>

@@ -13,6 +13,7 @@ import {
 } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { BottomNav } from "@/components/BottomNav";
+import { fetchMyGroups, type GroupSummary } from "@/lib/groups";
 
 function fmtTime(iso: string | null) {
   if (!iso) return "";
@@ -69,23 +70,26 @@ export default function TalkListPage() {
     { lastBody: string | null; lastAt: string | null; unread: number }
   > | null>(null);
   const [bc, setBc] = useState<{ lastBody: string | null; lastAt: string | null; unread: number } | null>(null);
+  const [myGroups, setMyGroups] = useState<GroupSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!session.userId) return;
     let alive = true;
     const load = async () => {
-      const [c, g, b, ib] = await Promise.all([
+      const [c, g, b, ib, mg] = await Promise.all([
         fetchChatList(session.userId!),
         fetchGroupSummaries(session.userId!),
         fetchBroadcastSummary(session.userId!).catch(() => null),
         session.isAdmin ? fetchOfficeInbox(session.userId!).catch(() => []) : Promise.resolve([]),
+        fetchMyGroups(session.userId!).catch(() => []),
       ]);
       if (!alive) return;
       setChats(c);
       setInbox(ib);
       setGroups(g);
       setBc(b);
+      setMyGroups(mg);
       setLoaded(true);
     };
     load();
@@ -185,6 +189,37 @@ export default function TalkListPage() {
               </Link>
             );
           })}
+
+          {/* グループTalK（LINEグループ相当・招待されたものだけ）。未読はアイコン右上の赤丸 */}
+          {myGroups.map((g) => (
+            <Link key={g.id} href={`/talk/group/${g.id}`} className="flex items-center gap-3 bg-white px-4 py-3 no-underline active:bg-gray-50">
+              <span className="relative shrink-0">
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-xl"
+                  style={{ background: "linear-gradient(135deg,#e6f0ff,#c8dcf5)", border: "1.5px solid #9dbbe0" }}
+                >
+                  {g.kind === "schedule" ? "📅" : "👥"}
+                </span>
+                {g.unread > 0 && (
+                  <span
+                    className="num absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full border-2 border-white bg-[#e05040] px-1 text-[10px] font-bold text-white"
+                    style={{ lineHeight: 1 }}
+                  >
+                    {g.unread > 99 ? "99+" : g.unread}
+                  </span>
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`truncate text-sm text-[#3a3428] ${g.unread > 0 ? "font-extrabold" : "font-bold"}`}>
+                  {g.name} <span className="num text-[11px] font-normal text-[#a09888]">({g.memberCount})</span>
+                </p>
+                <p className={`truncate text-xs ${g.unread > 0 ? "font-bold text-[#3a3428]" : "text-[#a09888]"}`}>{g.lastBody ?? "（まだメッセージがありません）"}</p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-[10px] text-[#b8b0a0]">{fmtTime(g.lastAt)}</p>
+              </div>
+            </Link>
+          ))}
 
           {/* 1対1トーク（未読数はアイコンの右上に赤丸） */}
           {chats.map((c) => (
