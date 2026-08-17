@@ -16,7 +16,9 @@ const MARK: Record<Mark, { label: string; color: string; bg: string }> = {
   x: { label: "×", color: "#c0392b", bg: "#fdecea" },
 };
 
-/** 調整さん風: 候補日時 × 参加者 の ○△× 表。ログインした人は自分の行を編集できる */
+const nextMark = (m: Mark | undefined): Mark => (m === "o" ? "d" : m === "d" ? "x" : "o");
+
+/** 調整さん風: 縦=候補日時 × 横=参加者 の ○△× 表。自分の列をタップして回答（○→△→×）。○が多い行ほど緑が濃く、最有力に👑 */
 export default function SchedulePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const session = useSession();
@@ -58,6 +60,7 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
     for (const a of answers) for (const [k, v] of Object.entries(a.answers ?? {})) if (c[Number(k)] && (v === "o" || v === "d" || v === "x")) c[Number(k)][v]++;
     return c;
   }, [answers, sched]);
+  const others = useMemo(() => answers.filter((a) => a.user_id !== session.userId), [answers, session.userId]);
   const best = useMemo(() => {
     let bi = -1, bs = -1;
     Object.entries(counts).forEach(([i, c]) => {
@@ -116,35 +119,120 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
           </div>
         )}
 
-        {/* 自分の回答 */}
+        {/* 一枚の表: 縦=候補日時 / 横=参加者。○が多い行ほど緑が濃く、最有力に👑。自分の列(左端・オレンジ)はタップで ○→△→× と切り替え */}
         {session.userId && !sched.closed && (
-          <div className="mt-3 rounded-2xl border border-[#ede5d8] bg-white p-3 shadow-sm">
-            <p className="text-[13px] font-extrabold text-[#3a3428]">あなたの都合を選んでください</p>
-            <p className="text-[11px] text-[#a09888]">○=参加できる／△=調整すれば可／×=不可</p>
-            <div className="mt-2 divide-y divide-[#f0ece0]">
-              {sched.slots.map((slot, i) => (
-                <div key={i} className="flex items-center gap-2 py-2">
-                  <span className="min-w-0 flex-1 text-[14px] font-bold text-[#3a3428]">{slot}</span>
-                  {(["o", "d", "x"] as Mark[]).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setMine((p) => ({ ...p, [i]: m }))}
-                      className="h-9 w-9 rounded-full border text-[15px] font-extrabold"
-                      style={mine[i] === m ? { background: MARK[m].color, color: "#fff", borderColor: MARK[m].color } : { background: "#fff", color: MARK[m].color, borderColor: "#e8dcc4" }}
-                      aria-label={MARK[m].label}
-                    >
-                      {MARK[m].label}
-                    </button>
+          <p className="mt-3 text-[12px] font-bold text-[#c05e14]">
+            👉 オレンジの「あなた」の列をタップして ○△× を付けてください（タップするたびに ○→△→× と変わります）
+          </p>
+        )}
+        <div className="mt-2 overflow-x-auto rounded-2xl border border-[#ede5d8] bg-white shadow-sm">
+          <table className="border-separate border-spacing-0 text-[12.5px]" style={{ minWidth: "100%" }}>
+            <thead>
+              <tr className="bg-[#fdeedd] text-[#5a5448]">
+                <th className="sticky left-0 z-20 whitespace-nowrap bg-[#fdeedd] px-2 py-2 text-left text-[11.5px]">候補日時</th>
+                <th className="whitespace-nowrap px-1.5 py-2 text-center text-[11px]" style={{ color: MARK.o.color }}>○の人数</th>
+                {session.userId && !sched.closed && (
+                  <th className="px-1 py-1 text-center" style={{ background: "#fff1e0" }}>
+                    <span className="inline-flex flex-col items-center">
+                      <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full text-[12px] font-extrabold text-white" style={{ background: "#d96a1a" }}>私</span>
+                      <span className="mt-0.5 text-[9.5px] font-extrabold" style={{ color: "#c05e14" }}>あなた</span>
+                    </span>
+                  </th>
+                )}
+                {others.map((a) => (
+                  <th key={a.id} className="px-1 py-1 text-center font-normal">
+                    <Link href={`/u/${a.user_id}`} className="inline-flex flex-col items-center no-underline">
+                      <Avatar name={a.profiles?.display_name ?? "参加者"} url={a.profiles?.avatar_url} size={26} />
+                      <span className="mt-0.5 max-w-[52px] truncate text-[9.5px] text-[#5a5448]">{a.profiles?.display_name ?? "参加者"}</span>
+                    </Link>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sched.slots.map((slot, i) => {
+                const c = counts[i] ?? { o: 0, d: 0, x: 0 };
+                const total = answers.length || 1;
+                const ratio = c.o / total;
+                // ○が多いほど濃い緑（0→白, 全員○→しっかり緑）
+                const rowBg = c.o > 0 ? `rgba(46,125,79,${(0.06 + ratio * 0.22).toFixed(3)})` : "#fff";
+                const isBest = i === best && answers.length > 0 && c.o > 0;
+                const myMark = mine[i];
+                return (
+                  <tr key={i}>
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-t border-[#f0ece0] px-2 py-2 font-bold text-[#3a3428]" style={{ background: rowBg === "#fff" ? "#fff" : `linear-gradient(${rowBg},${rowBg}), #fff` }}>
+                      {isBest && <span className="mr-1">👑</span>}
+                      {slot}
+                      {isBest && <span className="ml-1 rounded-full px-1.5 text-[9.5px] font-bold text-white" style={{ background: "#2e7d4f" }}>最有力</span>}
+                    </td>
+                    <td className="border-t border-[#f0ece0] px-1.5 py-2 text-center" style={{ background: rowBg }}>
+                      <span className="num inline-block min-w-[34px] rounded-full px-1.5 text-[12px] font-extrabold" style={{ background: c.o > 0 ? "#2e7d4f" : "#e8e0d0", color: c.o > 0 ? "#fff" : "#a09888" }}>
+                        {c.o}人
+                      </span>
+                      {(c.d > 0 || c.x > 0) && (
+                        <span className="num mt-0.5 block text-[9.5px] text-[#8a8070]">
+                          △{c.d} ×{c.x}
+                        </span>
+                      )}
+                    </td>
+                    {session.userId && !sched.closed && (
+                      <td className="border-t border-[#f0ece0] px-1 py-1 text-center" style={{ background: "#fff1e0" }}>
+                        <button
+                          type="button"
+                          onClick={() => setMine((p) => ({ ...p, [i]: nextMark(p[i]) }))}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 text-[16px] font-extrabold"
+                          style={myMark ? { background: MARK[myMark].color, color: "#fff", borderColor: MARK[myMark].color } : { background: "#fff", color: "#c8b8a0", borderColor: "#e8c9a0", borderStyle: "dashed" }}
+                          aria-label={myMark ? MARK[myMark].label : "未回答"}
+                        >
+                          {myMark ? MARK[myMark].label : "?"}
+                        </button>
+                      </td>
+                    )}
+                    {others.map((a) => {
+                      const m = a.answers?.[String(i)];
+                      return (
+                        <td key={a.id} className="border-t border-[#f0ece0] px-0.5 py-1 text-center" style={{ background: m ? MARK[m].bg : rowBg }}>
+                          {m ? (
+                            <span className="inline-block h-7 w-7 rounded-full text-[14px] font-extrabold leading-7" style={{ background: m === "o" ? MARK.o.color : "transparent", color: m === "o" ? "#fff" : MARK[m].color }}>{MARK[m].label}</span>
+                          ) : (
+                            <span className="text-[#d0c8b8]">–</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+              {(others.some((a) => a.comment) || comment) && (
+                <tr>
+                  <td className="sticky left-0 z-10 border-t border-[#f0ece0] bg-white px-2 py-2 text-[11px] font-bold text-[#8a8070]">ひとこと</td>
+                  <td className="border-t border-[#f0ece0]" />
+                  {session.userId && !sched.closed && <td className="max-w-[90px] border-t border-[#f0ece0] px-1 py-2 align-top text-[10.5px] leading-snug text-[#5a5448]" style={{ background: "#fff1e0" }}>{comment}</td>}
+                  {others.map((a) => (
+                    <td key={a.id} className="max-w-[90px] border-t border-[#f0ece0] px-1 py-2 align-top text-[10.5px] leading-snug text-[#5a5448]">{a.comment ?? ""}</td>
                   ))}
-                </div>
-              ))}
-            </div>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#a09888]">
+          <span>回答 {answers.length} 人</span>
+          <span><span className="inline-block h-3 w-3 rounded-full align-middle" style={{ background: MARK.o.color }} /> ○ 参加できる</span>
+          <span><span className="inline-block align-middle font-extrabold" style={{ color: MARK.d.color }}>△</span> 調整すれば可</span>
+          <span><span className="inline-block align-middle font-extrabold" style={{ color: MARK.x.color }}>×</span> 不可</span>
+          <span>横にスクロールできます</span>
+        </div>
+
+        {/* 自分の回答の保存（ひとこと＋ボタン） */}
+        {session.userId && !sched.closed && (
+          <div className="mt-3 rounded-2xl border border-[#f0d0a8] bg-[#fffaf0] p-3 shadow-sm">
             <input
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={200}
               placeholder="ひとこと（任意）例：18日は19時以降なら可"
-              className="mt-2 w-full rounded-xl border px-3 py-2 text-[13px] outline-none focus:border-[#d96a1a]"
+              className="w-full rounded-xl border bg-white px-3 py-2 text-[13px] outline-none focus:border-[#d96a1a]"
               style={{ borderColor: "#e8dcc4" }}
             />
             <button
@@ -153,67 +241,10 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
               className="mt-2 w-full rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "#d96a1a" }}
             >
-              {saving ? "保存中…" : saved ? "✅ 保存しました" : "この内容で回答する"}
+              {saving ? "保存中…" : saved ? "✅ 保存しました" : Object.keys(mine).length === 0 ? "表の「あなた」の列をタップして○△×を付けてください" : `この内容で回答する（${Object.keys(mine).length}/${sched.slots.length}件）`}
             </button>
           </div>
         )}
-
-        {/* 集計表 */}
-        <div className="mt-4 overflow-x-auto rounded-2xl border border-[#ede5d8] bg-white shadow-sm">
-          <table className="w-full text-[12.5px]">
-            <thead>
-              <tr className="bg-[#fdeedd] text-[#5a5448]">
-                <th className="sticky left-0 z-10 bg-[#fdeedd] px-2 py-2 text-left">候補</th>
-                <th className="px-1 py-2 text-center" style={{ color: MARK.o.color }}>○</th>
-                <th className="px-1 py-2 text-center" style={{ color: MARK.d.color }}>△</th>
-                <th className="px-1 py-2 text-center" style={{ color: MARK.x.color }}>×</th>
-                {answers.map((a) => (
-                  <th key={a.id} className="px-1 py-1 text-center font-normal">
-                    <Link href={`/u/${a.user_id}`} className="inline-flex flex-col items-center no-underline">
-                      <Avatar name={a.profiles?.display_name ?? "参加者"} url={a.profiles?.avatar_url} size={26} />
-                      <span className="mt-0.5 max-w-[56px] truncate text-[9.5px] text-[#5a5448]">{a.profiles?.display_name ?? "参加者"}</span>
-                    </Link>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sched.slots.map((slot, i) => (
-                <tr key={i} className="border-t border-[#f0ece0]" style={i === best && answers.length > 0 ? { background: "#f4faf6" } : undefined}>
-                  <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-2 py-2 font-bold text-[#3a3428]" style={i === best && answers.length > 0 ? { background: "#f4faf6" } : undefined}>
-                    {slot}
-                    {i === best && answers.length > 0 && <span className="ml-1 rounded-full px-1.5 text-[9.5px] font-bold text-white" style={{ background: "#2e7d4f" }}>最有力</span>}
-                  </td>
-                  <td className="num px-1 py-2 text-center font-bold" style={{ color: MARK.o.color }}>{counts[i]?.o ?? 0}</td>
-                  <td className="num px-1 py-2 text-center font-bold" style={{ color: MARK.d.color }}>{counts[i]?.d ?? 0}</td>
-                  <td className="num px-1 py-2 text-center font-bold" style={{ color: MARK.x.color }}>{counts[i]?.x ?? 0}</td>
-                  {answers.map((a) => {
-                    const m = a.answers?.[String(i)];
-                    return (
-                      <td key={a.id} className="px-1 py-2 text-center">
-                        {m ? (
-                          <span className="inline-block h-6 w-6 rounded-full text-[13px] font-extrabold leading-6" style={{ background: MARK[m].bg, color: MARK[m].color }}>{MARK[m].label}</span>
-                        ) : (
-                          <span className="text-[#d0c8b8]">–</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              {answers.some((a) => a.comment) && (
-                <tr className="border-t border-[#f0ece0]">
-                  <td className="sticky left-0 z-10 bg-white px-2 py-2 text-[11px] font-bold text-[#8a8070]">ひとこと</td>
-                  <td colSpan={3} />
-                  {answers.map((a) => (
-                    <td key={a.id} className="max-w-[90px] px-1 py-2 align-top text-[10.5px] leading-snug text-[#5a5448]">{a.comment ?? ""}</td>
-                  ))}
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-2 text-[11px] text-[#a09888]">回答 {answers.length} 人。表は横にスクロールできます。</p>
 
         {/* 事務局 */}
         {session.isAdmin && (
