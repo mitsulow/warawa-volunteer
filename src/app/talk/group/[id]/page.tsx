@@ -35,7 +35,7 @@ function fmtDay(iso: string) {
 }
 
 /** LINEグループ風の吹き出し。他人は左にアイコン+名前、自分は右。長押しでコピー/削除(自分 or 管理者) */
-function Bubble({ m, mine, canDelete, onDelete }: { m: GroupMessage; mine: boolean; canDelete: boolean; onDelete: (id: string) => void }) {
+function Bubble({ m, mine, canDelete, onDelete, readCount }: { m: GroupMessage; mine: boolean; canDelete: boolean; onDelete: (id: string) => void; readCount: number }) {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const lp = useLongPress((x, y) => setMenu({ x, y }));
   const copy = async () => {
@@ -58,7 +58,12 @@ function Bubble({ m, mine, canDelete, onDelete }: { m: GroupMessage; mine: boole
           <Avatar name={name} url={m.profiles?.avatar_url ?? null} size={32} />
         </Link>
       )}
-      {mine && <div className="shrink-0 text-right text-[10px] leading-tight text-gray-400">{fmtTime(m.created_at)}</div>}
+      {mine && (
+        <div className="shrink-0 text-right text-[10px] leading-tight text-gray-400">
+          {readCount > 0 && <div>既読 {readCount}</div>}
+          <div>{fmtTime(m.created_at)}</div>
+        </div>
+      )}
       <div className={`flex max-w-[75%] flex-col ${mine ? "items-end" : "items-start"}`}>
         {!mine && <span className="mb-0.5 ml-1 text-[10.5px] text-[#8a8070]">{name}</span>}
         <div
@@ -226,8 +231,10 @@ export default function GroupTalkPage({ params }: { params: Promise<{ id: string
       setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
       timer = setInterval(async () => {
         if (document.hidden || !cursorRef.current) return;
-        const fresh = await fetchGroupMessagesSince(id, cursorRef.current);
-        if (!alive || fresh.length === 0) return;
+        const [fresh, ms2] = await Promise.all([fetchGroupMessagesSince(id, cursorRef.current), fetchGroupMembers(id)]);
+        if (!alive) return;
+        setMembers(ms2);
+        if (fresh.length === 0) return;
         cursorRef.current = fresh[fresh.length - 1].created_at;
         setMessages((prev) => {
           const seen = new Set(prev.map((m) => m.id));
@@ -341,7 +348,13 @@ export default function GroupTalkPage({ params }: { params: Promise<{ id: string
                   <span className="rounded-full bg-[#ddd5c4] px-2.5 py-0.5 text-[10px] font-bold text-[#6a6050]">{day}</span>
                 </div>
               )}
-              <Bubble m={m} mine={m.sender_id === myId} canDelete={m.sender_id === myId || !!session.isAdmin} onDelete={remove} />
+              <Bubble
+                m={m}
+                mine={m.sender_id === myId}
+                canDelete={m.sender_id === myId || !!session.isAdmin}
+                onDelete={remove}
+                readCount={m.sender_id === myId ? members.filter((x) => x.user_id !== myId && x.last_read_at >= m.created_at).length : 0}
+              />
             </div>
           );
         })}
