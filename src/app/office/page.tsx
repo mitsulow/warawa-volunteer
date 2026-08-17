@@ -33,6 +33,7 @@ import { AdminSection } from "@/components/AdminSection";
 import { SnsIcon, snsHref } from "@/components/SnsIcon";
 import { BottomNav } from "@/components/BottomNav";
 import { useLongPress } from "@/components/BubbleMenu";
+import { createSchedule, fetchSchedules, type Schedule } from "@/lib/schedule";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -102,6 +103,12 @@ export default function OfficePage() {
   const session = useSession();
   const [apps, setApps] = useState<BodyApplication[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
+  // 📅 日程調整（調整さん風）
+  const [scheds, setScheds] = useState<Schedule[]>([]);
+  const [sTitle, setSTitle] = useState("現地入りメンバー Zoom面談 日程調整");
+  const [sDesc, setSDesc] = useState("事務局とZoomで15分ほど面談させてください。都合の良い日時に○△×を付けてください。");
+  const [sSlots, setSSlots] = useState("");
+  const [sBusy, setSBusy] = useState(false);
   // 寄付一覧: 長押しで選択モード → 複数選択して削除（テスト分の掃除）
   const [selMode, setSelMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -132,6 +139,7 @@ export default function OfficePage() {
   const reload = () => {
     fetchBodyApplications().then(setApps);
     fetchDonations().then(setDonations);
+    fetchSchedules().then(setScheds);
     fetchBugReports().then(setBugs);
     fetchBannedUsers().then(setBanned);
     fetchShadowedUsers().then(setShadowed);
@@ -327,6 +335,54 @@ export default function OfficePage() {
           >
             📢 全員へお知らせを配信する（TalKに届く）
           </Link>
+        )}
+
+        {tab === "apps" && (
+          <section className="rounded-2xl border border-[#f0d0a8] bg-[#fffaf0] p-3">
+            <h2 className="text-sm font-extrabold text-[#c05e14]">📅 日程調整（Zoom面談など・調整さん風）</h2>
+            <p className="mt-1 text-[11.5px] text-[#8a7a5a]">候補日時を1行に1つ書いて作成 → 開いたページの「現地入り立候補者へTalKで送る」で一斉に案内できます。○△×の集計表がそのページに出ます。</p>
+            {scheds.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                {scheds.map((sc) => (
+                  <Link key={sc.id} href={`/schedule/${sc.id}`} className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2 text-[12.5px] no-underline">
+                    <span className="min-w-0 flex-1 truncate font-bold text-[#3a3428]">{sc.title}</span>
+                    <span className="text-[10.5px] text-[#a09888]">{sc.slots.length}候補{sc.closed ? "・終了" : ""}</span>
+                    <span className="text-[11px] font-bold" style={{ color: "#d96a1a" }}>開く →</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+            <div className="mt-2 rounded-xl border border-[#ede5d8] bg-white p-3">
+              <input value={sTitle} onChange={(e) => setSTitle(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-[13px]" style={{ borderColor: "#e0d6c6" }} placeholder="タイトル" />
+              <textarea value={sDesc} onChange={(e) => setSDesc(e.target.value)} rows={2} className="mt-2 w-full rounded-lg border px-3 py-2 text-[13px]" style={{ borderColor: "#e0d6c6" }} placeholder="説明（任意）" />
+              <textarea
+                value={sSlots}
+                onChange={(e) => setSSlots(e.target.value)}
+                rows={5}
+                className="mt-2 w-full rounded-lg border px-3 py-2 text-[13px]"
+                style={{ borderColor: "#e0d6c6" }}
+                placeholder={"候補日時を1行に1つ\n例:\n8/18(火) 11:00〜\n8/18(火) 16:00〜\n8/18(火) 21:00〜"}
+              />
+              <button
+                disabled={sBusy || !sTitle.trim() || !sSlots.trim()}
+                onClick={async () => {
+                  if (!session.userId) return;
+                  const slots = sSlots.split("\n").map((x) => x.trim()).filter(Boolean);
+                  setSBusy(true);
+                  const { data, error } = await createSchedule(session.userId, sTitle.trim(), sDesc.trim(), slots);
+                  setSBusy(false);
+                  if (error || !data) { alert("作成できませんでした"); return; }
+                  setSSlots("");
+                  fetchSchedules().then(setScheds);
+                  window.location.href = `/schedule/${data.id}`;
+                }}
+                className="mt-2 w-full rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#d96a1a" }}
+              >
+                📅 日程調整を作成する
+              </button>
+            </div>
+          </section>
         )}
 
         {tab === "apps" && seg === "open" && (
