@@ -161,10 +161,20 @@ export default function SchedulePage({ params }: { params: Promise<{ id: string 
                 const myMark = mine[i];
                 return (
                   <tr key={i}>
-                    <td className="sticky left-0 z-10 whitespace-nowrap border-t border-[#f0ece0] px-2 py-2 font-bold text-[#3a3428]" style={{ background: rowBg === "#fff" ? "#fff" : `linear-gradient(${rowBg},${rowBg}), #fff` }}>
-                      {isBest && <span className="mr-1">👑</span>}
-                      {slot}
-                      {isBest && <span className="ml-1 rounded-full px-1.5 text-[9.5px] font-bold text-white" style={{ background: "#2e7d4f" }}>最有力</span>}
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-t border-[#f0ece0] px-1.5 py-1.5 font-bold leading-tight text-[#3a3428]" style={{ background: rowBg === "#fff" ? "#fff" : `linear-gradient(${rowBg},${rowBg}), #fff` }}>
+                      {/* 左ますは細く: 1行目=日付 / 2行目=時刻 / 最有力は3行目に */}
+                      {(() => {
+                        const sp = slot.match(/^(\S+)\s+(.+)$/);
+                        return sp ? (
+                          <>
+                            <span className="block text-[11px] text-[#6a6050]">{sp[1]}</span>
+                            <span className="block text-[13px]">{sp[2]}</span>
+                          </>
+                        ) : (
+                          <span className="block text-[12.5px]">{slot}</span>
+                        );
+                      })()}
+                      {isBest && <span className="mt-0.5 inline-block rounded-full px-1.5 text-[9.5px] font-bold text-white" style={{ background: "#2e7d4f" }}>👑最有力</span>}
                     </td>
                     <td className="border-t border-[#f0ece0] px-1.5 py-2 text-center" style={{ background: rowBg }}>
                       <span className="num inline-block min-w-[34px] rounded-full px-1.5 text-[12px] font-extrabold" style={{ background: c.o > 0 ? "#2e7d4f" : "#e8e0d0", color: c.o > 0 ? "#fff" : "#a09888" }}>
