@@ -68,6 +68,12 @@ const POSTERS = [
 
 /* ============ フィード ============ */
 
+/** 「寄付しました」系の短い報告か（写真・リンクなしで、寄付/振込/心ばかり…等の言い回しを含む） */
+const DONATION_RE = /(寄付|寄附|振込|振り込|送金|入金|支援金|募金|少額|心ばかり|微力|わずか|お役に立て)/;
+function isDonationOnly(body: string): boolean {
+  return DONATION_RE.test(body);
+}
+
 interface FeedItem {
   key: string;
   userId: string;
@@ -160,14 +166,15 @@ export function ActivityFeed({
     embed: (m.embed as OGPEmbed | null) ?? null,
     pinned: isPinned,
   });
-  // トップに固定（Facebook風）: 固定された投稿を先頭に、残りは新しい順
+  // 並び順アルゴリズム(2026-08-18): 📌固定 → 中身のある投稿(写真/リンク付き・寄付報告以外) → 「寄付しました」だけの投稿。各段の中は新しい順
   const pinnedIds = new Set(pinned.map((m) => m.id));
+  const rank = (it: FeedItem) => (it.images.length > 0 || it.embed ? 1 : isDonationOnly(it.body) ? 3 : 1);
   const items: FeedItem[] = [
     ...pinned.map((m) => toItem(m, true)),
     ...boards
       .filter((m) => !pinnedIds.has(m.id))
       .map((m) => toItem(m, false))
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      .sort((a, b) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt)),
   ];
   const visible = items;
 
