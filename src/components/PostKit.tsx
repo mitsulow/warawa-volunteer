@@ -108,11 +108,14 @@ export function DotsMenu({
   onEdit,
   onDelete,
   onReport,
+  extra = [],
 }: {
   canEdit: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onReport?: () => void;
+  /** 管理者向けなどの追加項目（例: トップに固定） */
+  extra?: Array<{ label: string; onClick: () => void }>;
 }) {
   const btn = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
@@ -169,6 +172,20 @@ export function DotsMenu({
               >
                 削除
               </button>
+              {extra.map((x) => (
+                <span key={x.label}>
+                  <div className="mx-3 h-px bg-[#f0f2f5]" />
+                  <button
+                    onClick={() => {
+                      setPos(null);
+                      x.onClick();
+                    }}
+                    className={`${item} text-[#1c1e21] active:bg-[#f0f2f5]`}
+                  >
+                    {x.label}
+                  </button>
+                </span>
+              ))}
               {onReport && (
                 <>
                   <div className="mx-3 h-px bg-[#f0f2f5]" />

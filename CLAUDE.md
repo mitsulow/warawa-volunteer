@@ -46,6 +46,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 模擬データ（サンプル隊員①〜⑤）は**削除済み**・採番リセット済み（次の参加者はNo.2）
 
 ### 2026-08-16 の変更（新しい順）
+- **掲示板の「トップに固定」(Facebook風・2026-08-18)**: board_messages.pinned_at。管理者は投稿の⋯メニュー「📌 トップに固定／解除」。ActivityFeed は `fetchPinnedBoard`(最大5件・固定が古い順)を先頭に出し「📌 トップに固定」ラベル。さやかさんの10年前アルバム(f7966ea4…)を固定中。同時に `fetchBoard` が昇順limit200＝古い200件しか取れない潜在バグを修正(降順200→反転)
 - **助けたい一覧の取得を種別で分割(2026-08-17)**: `fetchOffers()`=寄付以外を最新400件+寄付(money)は最新 `MONEY_FEED_LIMIT`(60)件を並列取得してマージ。件数バッジの寄付は `fetchMoneyOfferCount()`(head count)で実数。以前は全種別まとめて200件だったので寄付326件に押し出されて「動けます」が53件中26件しか出なかった
 - **調整くんUI(2026-08-17)**: 一枚の表に統合。縦=候補日時／横=参加者。「○の人数」バッジ+○率で行の緑を濃く+👑最有力。ログイン中は左端「あなた」列のマルをタップで○→△→×、下の「この内容で回答する(n/N件)」で保存。締切後は自分も他の列に含める
 - **👥グループTalK(LINEグループ相当・2026-08-17)**: `groups`(name/description/kind normal|schedule/schedule_id/created_by)+`group_members`(role owner|member/last_read_at)+`group_messages`(body/image_url/system)。RLS: 読みはメンバーor管理者、グループ作成/メンバー追加は管理者(オーナーも追加可)、退出は本人、送信はメンバー(BAN/シャドウ不可)、削除は本人or管理者(`scripts/groups.sql`・`is_group_member()`)。unread_total RPCにグループ未読を加算済み。lib `src/lib/groups.ts`／画面 `/talk/group/[id]`(LINE風: 他人は左にアイコン+名前・日付区切り・システム行・メンバー一覧シート・長押しコピー/削除・12sポーリング)／一覧 /talk に「招待されたグループ」行(未読はアイコン右上赤丸)／プッシュ `/api/push-group-talk`(送信者以外のメンバー・invite指定なら招待者だけ)。**kind='schedule' のグループは調整くん(PinnedSchedule)をトップに固定**(最有力3件+○△×回答ボタン→/schedule/[id]?back=/talk/group/<id>で戻れる)。事務局(/office 現地入りタブ)の `GroupAdminSection` で作成・「現地入り立候補者を全員招待」「管理者を招待」「わらわ〜番号で招待」。**本番グループ**: 『現地入り説明会Zoom日程調整グループ』 id `e5144cbf-ab09-4f5d-86b3-a9421475bbfc`(schedule 8adf3fc0…に紐付け)

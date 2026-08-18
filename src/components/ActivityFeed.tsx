@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   fetchBoard,
   fetchBoardSince,
+  fetchPinnedBoard,
+  setBoardPinned,
   fetchCommentCounts,
   fetchFeedLikes,
   fetchLikersFor,
@@ -77,6 +79,7 @@ interface FeedItem {
   images: string[]; // 本体
   thumbs: string[]; // サムネ
   embed: OGPEmbed | null;
+  pinned?: boolean;
 }
 
 /**
@@ -96,6 +99,7 @@ export function ActivityFeed({
 }) {
   const router = useRouter();
   const [boards, setBoards] = useState<BoardMessage[]>([]);
+  const [pinned, setPinned] = useState<BoardMessage[]>([]);
   const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [likers, setLikers] = useState<Record<string, Liker[]>>({});
@@ -129,6 +133,7 @@ export function ActivityFeed({
       if (rows.length) cursorRef.current = rows[rows.length - 1].created_at;
       if (userId) markGroupRead("board", userId);
     });
+    fetchPinnedBoard("board").then((rows) => alive && setPinned(rows));
     const timer = setInterval(async () => {
       if (document.hidden || !cursorRef.current) return;
       await pullBoard();
@@ -142,21 +147,41 @@ export function ActivityFeed({
   }, [userId]);
 
   // 掲示板 = つながりのための掲示板。助けたい/助けての投稿は混ぜない（それぞれのタブにだけ並ぶ）
-  const items: FeedItem[] = boards
-    .map((m) => ({
-      key: `board:${m.id}`,
-      userId: m.user_id,
-      name: m.profiles?.display_name ?? "参加者",
-      avatar: m.profiles?.avatar_url ?? null,
-      memberNo: m.profiles?.member_no ?? null,
-      createdAt: m.created_at,
-      body: m.body,
-      images: m.image_urls?.length ? m.image_urls : m.image_url ? [m.image_url] : [],
-      thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
-      embed: (m.embed as OGPEmbed | null) ?? null,
-    }))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const toItem = (m: BoardMessage, isPinned: boolean): FeedItem => ({
+    key: `board:${m.id}`,
+    userId: m.user_id,
+    name: m.profiles?.display_name ?? "参加者",
+    avatar: m.profiles?.avatar_url ?? null,
+    memberNo: m.profiles?.member_no ?? null,
+    createdAt: m.created_at,
+    body: m.body,
+    images: m.image_urls?.length ? m.image_urls : m.image_url ? [m.image_url] : [],
+    thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
+    embed: (m.embed as OGPEmbed | null) ?? null,
+    pinned: isPinned,
+  });
+  // トップに固定（Facebook風）: 固定された投稿を先頭に、残りは新しい順
+  const pinnedIds = new Set(pinned.map((m) => m.id));
+  const items: FeedItem[] = [
+    ...pinned.map((m) => toItem(m, true)),
+    ...boards
+      .filter((m) => !pinnedIds.has(m.id))
+      .map((m) => toItem(m, false))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+  ];
   const visible = items;
+
+  const togglePin = async (it: FeedItem) => {
+    const rawId = it.key.split(":")[1];
+    const on = !it.pinned;
+    if (!window.confirm(on ? "この投稿を掲示板のトップに固定しますか？" : "トップ固定を解除しますか？")) return;
+    const { error } = await setBoardPinned(rawId, on);
+    if (error) {
+      window.alert("変更できませんでした");
+      return;
+    }
+    fetchPinnedBoard("board").then(setPinned);
+  };
 
   useEffect(() => {
     const keys = items.map((i) => i.key).slice(0, 100);
@@ -168,7 +193,7 @@ export function ActivityFeed({
     fetchLikersFor(keys).then(setLikers);
     fetchCommentCounts(keys).then(setCommentCounts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boards.length, userId]);
+  }, [boards.length, pinned.length, userId]);
 
   const like = async (key: string) => {
     if (!userId) {
@@ -201,6 +226,7 @@ export function ActivityFeed({
     const rawId = it.key.split(":")[1];
     await deleteBoardMessage(rawId);
     setBoards((prev) => prev.filter((m) => m.id !== rawId));
+    setPinned((prev) => prev.filter((m) => m.id !== rawId));
   };
 
   return (
@@ -264,6 +290,11 @@ export function ActivityFeed({
             >
               <div className="relative overflow-hidden px-3 py-2.5">
                 <div className="relative">
+                {it.pinned && (
+                  <div className="mb-1.5 flex items-center gap-1 text-[11.5px] font-bold text-[#8a8d91]">
+                    <span>📌</span> トップに固定
+                  </div>
+                )}
                 {/* ヘッダー */}
                 <div className="flex items-center gap-2.5">
                   <Link href={`/u/${it.userId}`} className="flex-shrink-0">
@@ -290,6 +321,7 @@ export function ActivityFeed({
                       onEdit={() => router.push(`/post/board/${it.key.split(":")[1]}?edit=1`)}
                       onDelete={() => removeItem(it)}
                       onReport={() => setReport({ key: it.key, excerpt: it.body })}
+                      extra={isAdmin ? [{ label: it.pinned ? "📌 トップ固定を解除" : "📌 トップに固定", onClick: () => togglePin(it) }] : []}
                     />
                   )}
                 </div>

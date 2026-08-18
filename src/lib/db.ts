@@ -115,6 +115,8 @@ export interface BoardMessage {
   /** 助けて: open=募集中 / done=応援完了 */
   status: "open" | "done";
   done_at: string | null;
+  /** 掲示板の「トップに固定」（管理者・Facebook風）。null=通常 */
+  pinned_at?: string | null;
   created_at: string;
   profiles: { display_name: string; avatar_url: string | null; member_no: number | null } | null;
 }
@@ -606,18 +608,37 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
 /* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
 
 const BOARD_SELECT =
-  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, status, done_at, created_at, profiles(display_name, avatar_url, member_no)";
+  "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, status, done_at, pinned_at, created_at, profiles(display_name, avatar_url, member_no)";
 const BOARD_SELECT_FULL = BOARD_SELECT;
 
+/** 最新200件（古い順に返す）。以前は昇順limitで「古い200件」を取っていた＝200件を超えると新着が出ないバグ */
 export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("board_messages")
     .select(BOARD_SELECT)
     .eq("scope", scope)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(200);
+  return cdnify(((data as unknown as BoardMessage[]) ?? []).slice().reverse());
+}
+
+/** トップに固定された投稿（管理者が⋯→「トップに固定」）。古い固定から順 */
+export async function fetchPinnedBoard(scope: BoardScope): Promise<BoardMessage[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("board_messages")
+    .select(BOARD_SELECT)
+    .eq("scope", scope)
+    .not("pinned_at", "is", null)
+    .order("pinned_at", { ascending: true })
+    .limit(5);
   return cdnify((data as unknown as BoardMessage[]) ?? []);
+}
+
+export async function setBoardPinned(id: string, pinned: boolean) {
+  const supabase = createClient();
+  return supabase.from("board_messages").update({ pinned_at: pinned ? new Date().toISOString() : null }).eq("id", id);
 }
 
 /** cursor(=最後に受け取ったcreated_at)より後の新着だけを取る（増分取得の鉄則） */
