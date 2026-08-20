@@ -835,6 +835,7 @@ export async function fetchActivePopups(): Promise<Popup[]> {
     .from("popups")
     .select("id, body, image_url, link_url, place, active, created_at")
     .eq("active", true)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .order("created_at", { ascending: false })
     .limit(5);
   return (data as Popup[]) ?? [];
