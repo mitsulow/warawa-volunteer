@@ -1,5 +1,6 @@
 "use client";
 
+import { PostLinkCard, extractPostLinks } from "@/components/PostLinkCard";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
@@ -92,6 +93,9 @@ export default function BroadcastPage() {
             <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#3a3428]">
               {b.body}
             </p>
+            {extractPostLinks(b.body).map((l) => (
+              <PostLinkCard key={`${l.type}:${l.id}`} type={l.type} id={l.id} />
+            ))}
           </div>
         ))}
         <div ref={bottomRef} />
