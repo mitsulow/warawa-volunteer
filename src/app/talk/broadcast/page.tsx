@@ -1,6 +1,7 @@
 "use client";
 
 import { PostLinkCard, extractPostLinks } from "@/components/PostLinkCard";
+import { Linkify } from "@/components/Linkify";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/useSession";
@@ -91,7 +92,7 @@ export default function BroadcastPage() {
               <span className="ml-auto text-[10px] text-[#b8b0a0]">{fmtTime(b.created_at)}</span>
             </div>
             <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#3a3428]">
-              {b.body}
+              <Linkify text={b.body} className="break-all underline" />
             </p>
             {extractPostLinks(b.body).map((l) => (
               <PostLinkCard key={`${l.type}:${l.id}`} type={l.type} id={l.id} />
