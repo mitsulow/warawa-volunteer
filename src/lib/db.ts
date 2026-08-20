@@ -395,6 +395,13 @@ export async function fetchOffers(): Promise<Offer[]> {
   return cdnify(rows);
 }
 
+/** 事務局の物資リスト用: 物資(goods)を全件（新しい順・最大400） */
+export async function fetchGoodsOffers(): Promise<Offer[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("offers").select(OFFER_SELECT).eq("kind", "goods").order("created_at", { ascending: false }).limit(400);
+  return cdnify((data as unknown as Offer[]) ?? []);
+}
+
 /** 寄付(money)投稿の総件数（一覧は最新分だけなので件数バッジ用に別取り） */
 export async function fetchMoneyOfferCount(): Promise<number> {
   const supabase = createClient();

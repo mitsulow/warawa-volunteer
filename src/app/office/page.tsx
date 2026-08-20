@@ -307,6 +307,15 @@ export default function OfficePage() {
           ))}
         </div>
 
+        {/* 物資リスト（画像・数量つき・ジャンル別・コピー可） */}
+        <Link
+          href="/office/goods"
+          className="block rounded-xl border py-2.5 text-center text-[13px] font-extrabold no-underline"
+          style={{ background: "#fff", borderColor: "#e8c890", color: "#c05e14" }}
+        >
+          📦 物資をリスト化する（画像・数量つき）
+        </Link>
+
         {/* 未対応 / 対応済み のセグメント（現地入り・通報・バグ） */}
         {(tab === "apps" || tab === "reports" || tab === "bugs") && (
           <div className="flex gap-1.5">
