@@ -359,6 +359,11 @@ export default function PostPage({
                       ? "現在やり取り中"
                       : null
                 }
+                stampSub={
+                  !isBoard && offer!.kind === "goods" && offer!.done && (reqCount?.accepted ?? 0) > 0
+                    ? `${reqCount!.accepted}人に届きました`
+                    : null
+                }
                 onOpen={(i) => setLb(i)}
               />
             )}

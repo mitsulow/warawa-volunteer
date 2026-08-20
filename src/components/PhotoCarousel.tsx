@@ -17,9 +17,9 @@ const STAMP_SUB: Record<string, string> = {
   応援完了: "物資が必要な所へ届きました",
   現在やり取り中: "他の方が対応中です",
 };
-export function Stamp({ text }: { text: string }) {
+export function Stamp({ text, subText }: { text: string; subText?: string | null }) {
   const big = text === "応援完了";
-  const sub = STAMP_SUB[text];
+  const sub = subText ?? STAMP_SUB[text];
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center">
       <span
@@ -55,6 +55,7 @@ export function PhotoCarousel({
   onOpen,
   className = "",
   stamp,
+  stampSub,
 }: {
   images: string[];
   thumbs?: string[];
@@ -62,6 +63,7 @@ export function PhotoCarousel({
   className?: string;
   /** 「応援完了」などのスタンプを写真に重ねる（SOLD OUT相当・写真は少し灰色に） */
   stamp?: string | null;
+  stampSub?: string | null;
 }) {
   const [idx, setIdx] = useState(0);
   if (images.length === 0) return null;
@@ -74,14 +76,14 @@ export function PhotoCarousel({
         <button onClick={() => onOpen?.(0)} className="block w-full" aria-label="写真をフル画質で見る">
           <img src={src(0)} alt="" className="w-full object-cover" style={imgStyle} />
         </button>
-        {stamp && <Stamp text={stamp} />}
+        {stamp && <Stamp text={stamp} subText={stampSub} />}
       </div>
     );
   }
 
   return (
     <div className={`relative ${className}`}>
-      {stamp && <Stamp text={stamp} />}
+      {stamp && <Stamp text={stamp} subText={stampSub} />}
       <div
         className="hide-scrollbar flex snap-x snap-mandatory overflow-x-auto"
         onScroll={(e) => {

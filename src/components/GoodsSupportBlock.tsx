@@ -116,8 +116,8 @@ export function GoodsSupportBlock({
           </span>
         )}
         {direct && (
-          <span className={offer.done ? "text-[#a09888]" : "font-bold"} style={offer.done ? undefined : { color: "#2e7d4f" }}>
-            {offer.done ? "受付終了" : `送り先 あと${remaining}か所`}
+          <span className={offer.done ? "font-bold text-[#c05e14]" : "font-bold"} style={offer.done ? undefined : { color: "#2e7d4f" }}>
+            {offer.done ? (accepted > 0 ? `✅ ${accepted}人に届きました・受付終了` : "受付終了") : `送り先 あと${remaining}か所`}
             {pending > 0 && !offer.done ? `・希望${pending}人` : ""}
           </span>
         )}
