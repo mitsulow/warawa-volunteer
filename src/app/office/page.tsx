@@ -35,6 +35,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { useLongPress } from "@/components/BubbleMenu";
 import { createSchedule, fetchSchedules, type Schedule } from "@/lib/schedule";
 import { GroupAdminSection } from "@/components/GroupAdminSection";
+import { BodyMailSection } from "@/components/BodyMailSection";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -346,6 +347,8 @@ export default function OfficePage() {
             📢 全員へお知らせを配信する（TalKに届く）
           </Link>
         )}
+
+        {tab === "apps" && <BodyMailSection apps={apps} />}
 
         {tab === "apps" && (
           <section className="rounded-2xl border border-[#f0d0a8] bg-[#fffaf0] p-3">
