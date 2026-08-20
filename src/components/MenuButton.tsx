@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import { fetchIsAdmin } from "@/lib/db";
+import { fetchUnreadTotal, fetchIsAdmin } from "@/lib/db";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -41,9 +41,14 @@ export function MenuButton({
       .then(async ({ data }: { data: { session: { user: { id: string } } | null } }) => {
         const uid = data.session?.user?.id ?? null;
         setUserId(uid);
-        if (uid) setAdmin(await fetchIsAdmin(uid));
+        if (uid) {
+          setAdmin(await fetchIsAdmin(uid));
+          fetchUnreadTotal(uid).then(setTalkN).catch(() => {});
+        }
       });
   }, []);
+
+  const [talkN, setTalkN] = useState(0); // TalK未読（開いた時に表示）
 
   const logout = async () => {
     await createClient().auth.signOut();
@@ -125,6 +130,14 @@ export function MenuButton({
                 >
                   <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
                   {m.label}
+                  {m.href === "/talk" && talkN > 0 && (
+                    <span
+                      className="num ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
+                      style={{ lineHeight: 1 }}
+                    >
+                      {talkN > 99 ? "99+" : talkN}
+                    </span>
+                  )}
                 </a>
               );
             })}

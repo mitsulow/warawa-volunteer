@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import type { Profile } from "@/lib/db";
+import { fetchUnreadTotal, type Profile } from "@/lib/db";
 import { fetchNotifUnread } from "@/lib/notifications";
 
 /**
@@ -21,6 +21,7 @@ export function AvatarMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [notifN, setNotifN] = useState(0); // 🔔お知らせ未読
+  const [talkN, setTalkN] = useState(0); // TalK未読（下のTalKボタンと同じ合計）
   const ref = useRef<HTMLDivElement>(null);
 
   // お知らせ未読（20秒プローブ + 既読化イベントで即時更新・OneSea方式）
@@ -28,16 +29,24 @@ export function AvatarMenu({
     let alive = true;
     const probe = async () => {
       if (document.hidden) return;
-      const n = await fetchNotifUnread(userId).catch(() => 0);
-      if (alive) setNotifN(n);
+      const [n, t] = await Promise.all([
+        fetchNotifUnread(userId).catch(() => 0),
+        fetchUnreadTotal(userId).catch(() => 0),
+      ]);
+      if (alive) {
+        setNotifN(n);
+        setTalkN(t);
+      }
     };
     probe();
     const timer = setInterval(probe, 60000);
     window.addEventListener("warawa:notifRefresh", probe);
+    window.addEventListener("warawa:unreadRefresh", probe);
     return () => {
       alive = false;
       clearInterval(timer);
       window.removeEventListener("warawa:notifRefresh", probe);
+      window.removeEventListener("warawa:unreadRefresh", probe);
     };
   }, [userId]);
 
@@ -121,6 +130,14 @@ export function AvatarMenu({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icons/icon-talk-green.webp" alt="" className="h-5 w-5 object-contain" />
             TalK
+            {talkN > 0 && (
+              <span
+                className="num ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
+                style={{ lineHeight: 1 }}
+              >
+                {talkN > 99 ? "99+" : talkN}
+              </span>
+            )}
           </Link>
           <Link href={`/u/${userId}`} className={item} onClick={() => setOpen(false)}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
