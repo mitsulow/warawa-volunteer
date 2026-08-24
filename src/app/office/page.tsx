@@ -269,7 +269,7 @@ export default function OfficePage() {
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
       <header
-        className="sticky top-0 z-30 flex items-center gap-2.5 px-4 py-3 text-white"
+        className="pt-safe-head sticky top-0 z-30 flex items-center gap-2.5 px-4 py-3 text-white"
         style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
         <Link href="/" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">

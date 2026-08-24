@@ -317,7 +317,7 @@ export default function GroupTalkPage({ params }: { params: Promise<{ id: string
 
   return (
     <main className="flex h-dvh flex-col" style={{ background: "#f3efe6" }}>
-      <header className="sticky top-0 z-30 flex items-center gap-2 bg-[#d96a1a] px-3 py-3 text-white">
+      <header className="pt-safe-head sticky top-0 z-30 flex items-center gap-2 bg-[#d96a1a] px-3 py-3 text-white">
         <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
           戻る
         </Link>
@@ -365,7 +365,7 @@ export default function GroupTalkPage({ params }: { params: Promise<{ id: string
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 border-t border-gray-200 bg-white p-3">
+      <div className="pb-safe-foot flex gap-2 border-t border-gray-200 bg-white p-3">
         <MessageInput className="border-gray-300" placeholder="みんなにメッセージ" value={body} onChange={setBody} onSend={send} />
         <button className="rounded-xl bg-[#d96a1a] px-4 font-bold text-white disabled:opacity-50" disabled={busy} onClick={send}>
           送信

@@ -185,7 +185,7 @@ export default function TalkPage({
 
   return (
     <main className="flex flex-col h-dvh">
-      <header className="flex items-center gap-3 px-4 py-3 bg-[#d96a1a] text-white sticky top-0">
+      <header className="flex items-center gap-3 px-4 py-3 bg-[#d96a1a] text-white sticky top-0 pt-safe-head">
         <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
           戻る
         </Link>
@@ -209,7 +209,7 @@ export default function TalkPage({
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 p-3 bg-white border-t border-gray-200">
+      <div className="pb-safe-foot flex gap-2 p-3 bg-white border-t border-gray-200">
         <MessageInput
           className="border-gray-300"
           placeholder="メッセージを書く"

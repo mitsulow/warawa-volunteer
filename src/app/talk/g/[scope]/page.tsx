@@ -191,7 +191,7 @@ export default function GroupTalkPage({
   return (
     <main className="flex h-dvh flex-col" style={{ background: "#faf6ee" }}>
       <header
-        className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
+        className="pt-safe-head sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
         style={{ background: "#d96a1a" }}
       >
         <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
@@ -223,7 +223,7 @@ export default function GroupTalkPage({
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 border-t border-[#ede5d8] bg-white p-3">
+      <div className="pb-safe-foot flex gap-2 border-t border-[#ede5d8] bg-white p-3">
         <button
           className="rounded-xl border border-[#e0d6c6] px-3 text-xl"
           onClick={() => fileRef.current?.click()}

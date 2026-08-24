@@ -58,3 +58,14 @@ a {
     opacity: 0;
   }
 }
+
+/* PWA(ホーム画面追加)でヘッダー/入力欄がiPhoneのステータスバー・ホームバーに潜らないように */
+.pt-safe {
+  padding-top: env(safe-area-inset-top) !important;
+}
+.pt-safe-head {
+  padding-top: calc(env(safe-area-inset-top) + 12px) !important;
+}
+.pb-safe-foot {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 12px) !important;
+}

@@ -109,7 +109,7 @@ export default function Home() {
   return (
     <main className="overflow-x-clip pb-24" style={{ background: "#faf6ee" }}>
       {/* ヘッダー: スローガン + センター寄せタイトル + 右上に丸アイコン（ゲスト=●参加 / ログイン=アバター） */}
-      <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
+      <header className="pt-safe sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
         <div className="relative px-14 py-1.5">
           <div className="select-none text-center" style={{ color: "#d96a1a" }}>
             <p

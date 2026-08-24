@@ -104,7 +104,7 @@ export default function TalkListPage() {
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#faf6ee" }}>
-      <header className="sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
+      <header className="pt-safe-head sticky top-0 z-30 border-b border-[#ede5d8] bg-white/95 px-4 py-3 backdrop-blur-sm">
         <div className="relative flex items-center justify-center">
           <Link
             href="/"

@@ -59,7 +59,7 @@ export default function BroadcastPage() {
   return (
     <main className="flex h-dvh flex-col" style={{ background: "#faf6ee" }}>
       <header
-        className="sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
+        className="pt-safe-head sticky top-0 flex items-center gap-3 px-4 py-3 text-white"
         style={{ background: "linear-gradient(120deg,#d96a1a,#a84e0e)" }}
       >
         <Link href="/talk" className="shrink-0 rounded-full border border-white/60 bg-white/15 px-3 py-1 text-[12.5px] font-bold text-white no-underline" aria-label="戻る">
@@ -103,7 +103,7 @@ export default function BroadcastPage() {
       </div>
 
       {session.isAdmin && (
-        <div className="flex gap-2 border-t border-[#ede5d8] bg-white p-3">
+        <div className="pb-safe-foot flex gap-2 border-t border-[#ede5d8] bg-white p-3">
           <MessageInput
             className="border-[#e0d6c6]"
             placeholder="全員へのお知らせを書く（例: 明日◯◯で炊き出しをやります）"
