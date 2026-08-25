@@ -46,6 +46,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 模擬データ（サンプル隊員①〜⑤）は**削除済み**・採番リセット済み（次の参加者はNo.2）
 
 ### 2026-08-16 の変更（新しい順）
+- **現地入り募集停止(2026-08-25)**: メンバー決定につき BodyApplyDialog 冒頭の BODY_RECRUIT_CLOSED=true で「募集は終了しました」パネルを表示（フォームは温存・再開は false に戻すだけ）
 - **iPhoneセーフエリア対策(2026-08-25)**: viewportFit=cover のため PWA でヘッダーがステータスバー裏に潜り「戻る」が押せないバグ(岩切絵美さん報告・スクショ=デスクトップ「戻るボタン押せないバグ.jpg」)。globals.css に .pt-safe(env のみ・home/voice 用)/.pt-safe-head(env+12px・py-3ヘッダー用)/.pb-safe-foot(env+12px・TalK入力欄用) を追加し、sticky top-0 ヘッダー15ページ+TalK系入力欄4か所に適用。新しい突き当たりヘッダーを作る時は必ずどれかを付ける
 - **📧現地入りメンバーへ一斉メール(2026-08-20)**: /office 現地入りタブ先頭の `BodyMailSection`。①BCC用メアドコピー(申請フォームのprofile_private.email・小文字化で重複除去) ②案内文テンプレコピー(Zoom説明会+iPhone/Androidの「ホーム画面に追加→通知オン」詳細手順・差出人は事務局の西田あかねさん)。送信は西田さんが自分のメールソフトで(BCC必須)。auth.usersのGoogleメールとフォーム記入メールは17人分違う→フォーム記入の方を使用
 - **TalK記事カード(2026-08-20)**: `PostLinkCard`+`extractPostLinks`。TalK本文(DM/グループ/配信)にサイト内記事URL(/post/board/xx・/post/offer/xx)があるとLINE風シェアカード(🆘助けて=赤/💬掲示板=橙/🍀助けたい=緑・著者+抜粋3行+サムネ・タップで記事)を吹き出し内に表示(最大3枚)。URL文字列はそのまま残す。緊急シェアは事務局ボットTalKに記事URLを書くだけでカード化

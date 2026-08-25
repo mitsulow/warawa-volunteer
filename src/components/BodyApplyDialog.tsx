@@ -18,6 +18,9 @@ import { PREF_ORDER_STANDARD, fetchMunicipalities } from "@/lib/prefs";
  * 本人確認のSNS(URL貼るだけ)・私にできる事・動ける期間/アピール → 「事務局に申請する」。
  * 連絡先と住まいは profile_private（本人+事務局のみ閲覧可）に保存。
  */
+/** 現地入りメンバー決定につき募集停止（再開する時は false に戻す・2026-08-25） */
+const BODY_RECRUIT_CLOSED = true;
+
 export function BodyApplyDialog({
   userId,
   profile,
@@ -125,7 +128,24 @@ export function BodyApplyDialog({
         className="max-h-[88vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {sent ? (
+        {BODY_RECRUIT_CLOSED ? (
+          <div className="text-center">
+            <div className="text-3xl">🟠</div>
+            <h3 className="mt-2 text-lg font-bold">現地入りメンバーの募集は終了しました</h3>
+            <p className="mt-2 text-sm leading-relaxed text-[#8a8070]">
+              たくさんのご応募、本当にありがとうございました。
+              現地入りメンバーが決定したため、募集を締め切らせていただきました。
+              引き続き、寄付・物資・アイディアでの応援をお待ちしています。
+            </p>
+            <button
+              className="mt-4 w-full rounded-xl py-3 font-bold text-white"
+              style={{ background: "#d96a1a" }}
+              onClick={onClose}
+            >
+              閉じる
+            </button>
+          </div>
+        ) : sent ? (
           <div className="text-center">
             <div className="text-3xl">🟠</div>
             <h3 className="mt-2 text-lg font-bold">申請を事務局に送りました</h3>
