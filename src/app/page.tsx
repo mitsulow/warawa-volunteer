@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
 import { useSession } from "@/lib/useSession";
-import { fetchOffers, type Offer } from "@/lib/db";
+import { fetchOffers, isOrangeMember, type Offer } from "@/lib/db";
 import { JoinDialog } from "@/components/JoinDialog";
 import { RegisterDialog } from "@/components/RegisterDialog";
 import { FeaturedGoods } from "@/components/FeaturedGoods";
@@ -17,7 +17,8 @@ import { AvatarMenu } from "@/components/AvatarMenu";
 import { BottomNav } from "@/components/BottomNav";
 import { MenuButton } from "@/components/MenuButton";
 
-type Tab = "voice" | "offers" | "board";
+type Tab = "report" | "voice" | "offers" | "board";
+const TAB_IDS: Tab[] = ["report", "voice", "offers", "board"];
 
 export default function Home() {
   const session = useSession();
@@ -27,33 +28,44 @@ export default function Home() {
     avatar: string | null;
     email: string;
   } | null>(null);
-  const [tab, setTabState] = useState<Tab>("offers");
+  // 現地活動開始(2026-09-01)に伴い初期タブは「現地報告」。キーをtab4に変えて全員一度リセット
+  const [tab, setTabState] = useState<Tab>("report");
   // タブ位置を記憶: リロードしても選んでいたタブから始まる
   useEffect(() => {
     try {
       // ☰メニューからの ?tab= 指定が最優先
       const q = new URLSearchParams(window.location.search).get("tab") as Tab | null;
-      if (q === "board" || q === "offers" || q === "voice") {
+      if (q && TAB_IDS.includes(q)) {
         setTabState(q);
-        localStorage.setItem("warawa-tab3", q);
+        localStorage.setItem("warawa-tab4", q);
         window.history.replaceState(null, "", "/");
         return;
       }
-      const t = localStorage.getItem("warawa-tab3") as Tab | null;
-      if (t === "board" || t === "offers" || t === "voice") setTabState(t);
+      const t = localStorage.getItem("warawa-tab4") as Tab | null;
+      if (t && TAB_IDS.includes(t)) setTabState(t);
     } catch {}
   }, []);
   const setTab = (t: Tab) => {
     setTabState(t);
     try {
-      localStorage.setItem("warawa-tab3", t);
+      localStorage.setItem("warawa-tab4", t);
     } catch {}
   };
   const [offers, setOffers] = useState<Offer[]>([]);
+  // 現地報告に投稿できるか（オレンジ軍団 or 管理者）
+  const [isOrange, setIsOrange] = useState(false);
 
   useEffect(() => {
     fetchOffers().then(setOffers);
   }, [tab]);
+
+  useEffect(() => {
+    if (!session.userId) {
+      setIsOrange(false);
+      return;
+    }
+    isOrangeMember(session.userId).then(setIsOrange).catch(() => {});
+  }, [session.userId]);
 
   // Googleログイン直後でプロフィール未作成 → 登録フォームを出す。
   // プロフィールはあるがアバターが空（事前登録など）→ Googleの写真を自動で入れる
@@ -94,12 +106,14 @@ export default function Home() {
   const requireJoin = () => setShowJoin(true);
 
   const TABS: Array<[Tab, string, string]> = [
+    ["report", "現地報告", "現地活動のようす"],
     ["offers", "助けたい", "私にできること"],
     ["voice", "助けて", "現地からの声"],
     ["board", "掲示板", "これまでの取り組み"],
   ];
   // 選択中タブの「ひとこと説明」: タブから吹き出しの尻尾でつながる帯として表示
   const TAB_LEAD: Record<Tab, string> = {
+    report: "現地で活動するメンバーからの写真と報告",
     offers: "「わたし」に出来る事を持ち寄る",
     voice: "現地で今欲しい物、やって欲しい事の掲示板",
     board: "現地の様子・これまでの取り組みを共有する掲示板",
@@ -194,7 +208,7 @@ export default function Home() {
           <span
             className="absolute top-0 h-0 w-0"
             style={{
-              left: `calc(${(tabIndex * 2 + 1) * (100 / 6)}% - 8px)`,
+              left: `calc(${(tabIndex * 2 + 1) * (100 / (TABS.length * 2))}% - 8px)`,
               borderLeft: "8px solid transparent",
               borderRight: "8px solid transparent",
               borderTop: "8px solid #d96a1a",
@@ -205,6 +219,17 @@ export default function Home() {
             {TAB_LEAD[tab]}
           </p>
         </div>
+
+        {tab === "report" && (
+          <ActivityFeed
+            scope="report"
+            canPost={session.isAdmin || isOrange}
+            userId={session.userId}
+            myAvatar={session.profile?.avatar_url ?? null}
+            isAdmin={session.isAdmin}
+            requireJoin={requireJoin}
+          />
+        )}
 
         {tab === "voice" && (
           <div>

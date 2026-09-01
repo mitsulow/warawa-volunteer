@@ -97,6 +97,7 @@ function Bubble({
 const META: Record<BoardScope, { name: string; emoji: string; backTo: string }> = {
   voice: { name: "現地からの声", emoji: "📣", backTo: "/voice" },
   board: { name: "みんなの掲示板", emoji: "💬", backTo: "/" },
+  report: { name: "現地報告", emoji: "🟠", backTo: "/?tab=report" },
 };
 
 /** グループトーク表示（掲示板と同じデータのTalK風UI。OneSeaのgroup_messages同期方式） */

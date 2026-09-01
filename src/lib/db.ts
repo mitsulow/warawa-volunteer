@@ -99,7 +99,7 @@ export interface Offer {
 }
 export type GoodsRoute = Offer["route"];
 
-export type BoardScope = "board" | "voice";
+export type BoardScope = "board" | "voice" | "report";
 
 export interface BoardMessage {
   id: string;
@@ -612,7 +612,24 @@ export async function fetchOrangeCorps(): Promise<Profile[]> {
   return out;
 }
 
-/* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声。Talkと同期） ---------- */
+/** 現地入りメンバー(オレンジ軍団)本人か = body offer が confirmed（現地報告の投稿権限判定用） */
+export async function isOrangeMember(userId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { count } = await supabase
+    .from("offers")
+    .select("id", { count: "exact", head: true })
+    .eq("kind", "body")
+    .eq("status", "confirmed")
+    .eq("user_id", userId);
+  return (count ?? 0) > 0;
+}
+
+/* ---------- グループ掲示板（board=みんなの掲示板 / voice=現地からの声 / report=現地報告。Talkと同期） ---------- */
+
+/** 掲示板タブには現地報告も混ぜて表示する（report専用タブにも同じ投稿が並ぶ） */
+function scopesFor(scope: BoardScope): BoardScope[] {
+  return scope === "board" ? ["board", "report"] : [scope];
+}
 
 const BOARD_SELECT =
   "id, user_id, body, image_url, image_urls, thumb_urls, embed, pref, city, scope, status, done_at, pinned_at, created_at, profiles(display_name, avatar_url, member_no)";
@@ -624,7 +641,7 @@ export async function fetchBoard(scope: BoardScope): Promise<BoardMessage[]> {
   const { data } = await supabase
     .from("board_messages")
     .select(BOARD_SELECT)
-    .eq("scope", scope)
+    .in("scope", scopesFor(scope))
     .order("created_at", { ascending: false })
     .limit(200);
   return cdnify(((data as unknown as BoardMessage[]) ?? []).slice().reverse());
@@ -636,7 +653,7 @@ export async function fetchPinnedBoard(scope: BoardScope): Promise<BoardMessage[
   const { data } = await supabase
     .from("board_messages")
     .select(BOARD_SELECT)
-    .eq("scope", scope)
+    .in("scope", scopesFor(scope))
     .not("pinned_at", "is", null)
     .order("pinned_at", { ascending: true })
     .limit(5);
@@ -657,7 +674,7 @@ export async function fetchBoardSince(
   const { data } = await supabase
     .from("board_messages")
     .select(BOARD_SELECT)
-    .eq("scope", scope)
+    .in("scope", scopesFor(scope))
     .gt("created_at", sinceIso)
     .order("created_at", { ascending: true })
     .limit(200);

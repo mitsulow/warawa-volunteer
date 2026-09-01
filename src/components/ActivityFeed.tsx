@@ -86,22 +86,28 @@ interface FeedItem {
   thumbs: string[]; // サムネ
   embed: OGPEmbed | null;
   pinned?: boolean;
+  isReport?: boolean;
 }
 
 /**
  * 取り組みフィード（OneSea CotoZuteページと同じ挙動・見た目）。
- * 掲示板の投稿と「助けたい」の意思表明を1本の時系列にライブ参照で混ぜる。
+ * scope="board": みんなの掲示板（現地報告も混ざって表示・🟠ラベル付き）
+ * scope="report": 現地報告専用タブ（投稿はオレンジ軍団+管理者のみ=canPost）
  */
 export function ActivityFeed({
   userId,
   myAvatar = null,
   isAdmin = false,
   requireJoin,
+  scope = "board",
+  canPost = true,
 }: {
   userId: string | null;
   myAvatar?: string | null;
   isAdmin?: boolean;
   requireJoin: () => void;
+  scope?: "board" | "report";
+  canPost?: boolean;
 }) {
   const router = useRouter();
   const [boards, setBoards] = useState<BoardMessage[]>([]);
@@ -121,7 +127,7 @@ export function ActivityFeed({
   const cursorRef = useRef<string | null>(null);
 
   const pullBoard = async () => {
-    const fresh = await fetchBoardSince("board", cursorRef.current ?? "1970-01-01");
+    const fresh = await fetchBoardSince(scope, cursorRef.current ?? "1970-01-01");
     if (fresh.length) {
       cursorRef.current = fresh[fresh.length - 1].created_at;
       setBoards((prev) => {
@@ -133,17 +139,17 @@ export function ActivityFeed({
 
   useEffect(() => {
     let alive = true;
-    fetchBoard("board").then((rows) => {
+    fetchBoard(scope).then((rows) => {
       if (!alive) return;
       setBoards(rows);
       if (rows.length) cursorRef.current = rows[rows.length - 1].created_at;
-      if (userId) markGroupRead("board", userId);
+      if (userId && scope === "board") markGroupRead("board", userId);
     });
-    fetchPinnedBoard("board").then((rows) => alive && setPinned(rows));
+    fetchPinnedBoard(scope).then((rows) => alive && setPinned(rows));
     const timer = setInterval(async () => {
       if (document.hidden || !cursorRef.current) return;
       await pullBoard();
-      if (userId) markGroupRead("board", userId);
+      if (userId && scope === "board") markGroupRead("board", userId);
     }, 30000);
     return () => {
       alive = false;
@@ -155,6 +161,7 @@ export function ActivityFeed({
   // 掲示板 = つながりのための掲示板。助けたい/助けての投稿は混ぜない（それぞれのタブにだけ並ぶ）
   const toItem = (m: BoardMessage, isPinned: boolean): FeedItem => ({
     key: `board:${m.id}`,
+    isReport: m.scope === "report",
     userId: m.user_id,
     name: m.profiles?.display_name ?? "参加者",
     avatar: m.profiles?.avatar_url ?? null,
@@ -168,7 +175,8 @@ export function ActivityFeed({
   });
   // 並び順アルゴリズム(2026-08-18): 📌固定 → 中身のある投稿(写真/リンク付き・寄付報告以外) → 「寄付しました」だけの投稿。各段の中は新しい順
   const pinnedIds = new Set(pinned.map((m) => m.id));
-  const rank = (it: FeedItem) => (it.images.length > 0 || it.embed ? 1 : isDonationOnly(it.body) ? 3 : 1);
+  const rank = (it: FeedItem) =>
+    scope === "report" || it.images.length > 0 || it.embed ? 1 : isDonationOnly(it.body) ? 3 : 1;
   const items: FeedItem[] = [
     ...pinned.map((m) => toItem(m, true)),
     ...boards
@@ -187,7 +195,7 @@ export function ActivityFeed({
       window.alert("変更できませんでした");
       return;
     }
-    fetchPinnedBoard("board").then(setPinned);
+    fetchPinnedBoard(scope).then(setPinned);
   };
 
   useEffect(() => {
@@ -238,16 +246,23 @@ export function ActivityFeed({
 
   return (
     <div>
-      <PostComposer
-        scope="board"
-        prompt="書き込む"
-        userId={userId}
-        myAvatar={myAvatar}
-        requireJoin={requireJoin}
-        onPosted={pullBoard}
-      />
+      {canPost ? (
+        <PostComposer
+          scope={scope}
+          prompt={scope === "report" ? "現地の様子を報告する" : "書き込む"}
+          userId={userId}
+          myAvatar={myAvatar}
+          requireJoin={requireJoin}
+          onPosted={pullBoard}
+        />
+      ) : (
+        <p className="mb-3 rounded-xl px-3 py-2 text-center text-[12px] font-bold text-[#8a7a5a]" style={{ background: "#fdeedd" }}>
+          🟠 ここに投稿できるのは現地入りメンバーと事務局です。応援はいいね・コメントでどうぞ！
+        </p>
+      )}
 
       {/* 現地レポート・紹介ポスター: 1枚ずつ左右スワイプ（スナップ・次の1枚がチラ見え）・タップで拡大 */}
+      {scope === "board" && (
       <div className="mb-3">
         <div
           className="hide-scrollbar -mx-2 flex snap-x snap-mandatory gap-2 overflow-x-auto px-2 pb-1"
@@ -279,12 +294,15 @@ export function ActivityFeed({
           ))}
         </div>
       </div>
+      )}
 
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div>
         {visible.length === 0 && (
           <p className="py-12 text-center text-[13px] text-[#8a8d91]">
-            まだ取り組みがありません。最初のひとことをどうぞ
+            {scope === "report"
+              ? "現地からの報告をお待ちください"
+              : "まだ取り組みがありません。最初のひとことをどうぞ"}
           </p>
         )}
         {visible.slice(0, 80).map((it) => {
@@ -300,6 +318,13 @@ export function ActivityFeed({
                 {it.pinned && (
                   <div className="mb-1.5 flex items-center gap-1 text-[11.5px] font-bold text-[#8a8d91]">
                     <span>📌</span> トップに固定
+                  </div>
+                )}
+                {scope === "board" && it.isReport && (
+                  <div className="mb-1.5">
+                    <span className="rounded-full px-2 py-0.5 text-[10.5px] font-bold text-white" style={{ background: "#d96a1a" }}>
+                      🟠 現地報告
+                    </span>
                   </div>
                 )}
                 {/* ヘッダー */}

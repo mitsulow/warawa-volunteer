@@ -23,13 +23,13 @@ export function MenuButton({
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [admin, setAdmin] = useState(false);
-  const [homeTab, setHomeTab] = useState("offers");
+  const [homeTab, setHomeTab] = useState("report");
   const path = typeof window !== "undefined" ? window.location.pathname : "";
 
   // ホームで開いているタブをハイライトに反映
   useEffect(() => {
     try {
-      const t = localStorage.getItem("warawa-tab3");
+      const t = localStorage.getItem("warawa-tab4");
       if (t) setHomeTab(t);
     } catch {}
   }, [open]);
@@ -56,6 +56,7 @@ export function MenuButton({
   };
 
   const MENU: Array<{ href: string; icon: string; label: string }> = [
+    { href: "/?tab=report", icon: "/icons/icon-camera.webp", label: "現地報告" },
     { href: "/?tab=offers", icon: "/icons/icon-heart.webp", label: "助けたい" },
     { href: "/?tab=voice", icon: "/icons/icon-tasukete.webp", label: "助けて" },
     { href: "/?tab=board", icon: "/icons/icon-kokuban.webp", label: "掲示板" },
