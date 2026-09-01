@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { cdnUrl } from "@/lib/db";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -20,6 +21,44 @@ export function Lightbox({ urls, index, onClose }: { urls: string[]; index: numb
   const pinch = useRef<{ d: number; z: number } | null>(null);
   const drag = useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null);
   const lastTap = useRef(0);
+  const [saving, setSaving] = useState(false);
+
+  // Instagram等へ引用したい人向け: 表示中の写真(webp)をJPEGに変換してダウンロード。
+  // R2(pub-….r2.dev)はCORSヘッダが無くcanvasが汚染されるので、同一オリジンの /r2img/ プロキシ経由で取得する
+  const saveJpeg = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const src = urls[idx];
+      const r2 = src.match(/^https:\/\/pub-[a-z0-9]+\.r2\.dev\/(.+)$/);
+      const fetchUrl = r2 ? `/r2img/${r2[1]}` : cdnUrl(src) ?? src;
+      const res = await fetch(fetchUrl);
+      if (!res.ok) throw new Error(`fetch ${res.status}`);
+      const bmp = await createImageBitmap(await res.blob());
+      const canvas = document.createElement("canvas");
+      canvas.width = bmp.width;
+      canvas.height = bmp.height;
+      const g = canvas.getContext("2d")!;
+      g.fillStyle = "#fff"; // webpの透過部分は白背景に
+      g.fillRect(0, 0, canvas.width, canvas.height);
+      g.drawImage(bmp, 0, 0);
+      bmp.close();
+      const jpeg = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.92));
+      if (!jpeg) throw new Error("toBlob");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(jpeg);
+      a.download = `warawa-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+    } catch (e) {
+      console.error("saveJpeg failed", e);
+      alert("JPEG保存に失敗しました。通信状態をご確認のうえ、もう一度お試しください🙏");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // 最初の位置へスクロール
   useEffect(() => {
@@ -91,9 +130,19 @@ export function Lightbox({ urls, index, onClose }: { urls: string[]; index: numb
         <span className="num rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-bold text-white">
           {idx + 1}/{urls.length}
         </span>
-        <button onClick={onClose} className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white" aria-label="閉じる">
-          ✕
-        </button>
+        <span className="flex items-center gap-2">
+          <button
+            onClick={saveJpeg}
+            disabled={saving}
+            className="pointer-events-auto flex h-9 items-center gap-1 rounded-full bg-white/20 px-3 text-[12px] font-bold text-white disabled:opacity-60"
+            aria-label="この写真をJPEGで保存"
+          >
+            {saving ? "変換中…" : "📥 JPEG保存"}
+          </button>
+          <button onClick={onClose} className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white" aria-label="閉じる">
+            ✕
+          </button>
+        </span>
       </div>
       <div
         ref={scroller}
