@@ -58,7 +58,9 @@ function jstDay(iso: string): string {
   });
 }
 
-/** 現地報告タブ最上部のヒーロー・スライドショー（自動送り+左右スワイプ・タップで拡大） */
+/** 現地報告タブ最上部のヒーロー・スライドショー。
+ * ネイティブ横スクロール+スナップ（Lightbox/ポスターと同方式）なので写真が指に付いてくる。
+ * 3.5秒の自動送りはスムーズスクロールで、指を触れたら6秒お休み。タップで拡大 */
 function ReportHero({
   shots,
   onOpen,
@@ -67,82 +69,71 @@ function ReportHero({
   onOpen: (idx: number) => void;
 }) {
   const [i, setI] = useState(0);
-  const touch = useRef<{ x: number; y: number } | null>(null);
-  const swallowClick = useRef(false);
+  const scroller = useRef<HTMLDivElement>(null);
   const lastManual = useRef(0);
   useEffect(() => {
     if (shots.length < 2) return;
     const t = setInterval(() => {
-      if (document.hidden) return;
-      if (Date.now() - lastManual.current < 6000) return; // スワイプ直後は自動送りを一時停止
-      setI((p) => (p + 1) % shots.length);
+      const el = scroller.current;
+      if (!el || document.hidden) return;
+      if (Date.now() - lastManual.current < 6000) return; // 指で触った直後は自動送りを一時停止
+      const w = el.clientWidth;
+      if (!w) return;
+      const next = (Math.round(el.scrollLeft / w) + 1) % shots.length;
+      el.scrollTo({ left: next * w, behavior: "smooth" });
     }, 3500);
     return () => clearInterval(t);
   }, [shots.length]);
   if (shots.length === 0) return null;
   const cur = shots[Math.min(i, shots.length - 1)];
-  const go = (d: number) => {
-    lastManual.current = Date.now();
-    setI((p) => (p + d + shots.length) % shots.length);
-  };
   return (
-    <button
-      onClick={() => {
-        if (swallowClick.current) {
-          swallowClick.current = false;
-          return;
-        }
-        onOpen(i);
-      }}
-      onPointerDown={(e) => {
-        touch.current = { x: e.clientX, y: e.clientY };
-      }}
-      onPointerUp={(e) => {
-        const t = touch.current;
-        touch.current = null;
-        if (!t) return;
-        const dx = e.clientX - t.x;
-        const dy = e.clientY - t.y;
-        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-          swallowClick.current = true;
-          go(dx < 0 ? 1 : -1); // 左へスワイプ=次・右へ=前
-        }
-      }}
-      onPointerCancel={() => {
-        touch.current = null;
-      }}
-      className="relative -mx-2 mb-3 block w-[calc(100%+16px)] overflow-hidden"
-      style={{ height: 240, background: "#3a3428", touchAction: "pan-y" }}
-      aria-label="現地の写真を拡大"
-    >
-      {shots.map((s, k) => (
-        <img
-          key={`${s.url}-${k}`}
-          src={s.thumb || s.url}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
-          style={{ opacity: k === i ? 1 : 0 }}
-        />
-      ))}
-      {/* 下部グラデ + キャプション */}
+    <div className="relative -mx-2 mb-3 w-[calc(100%+16px)] overflow-hidden" style={{ height: 240, background: "#3a3428" }}>
+      <div
+        ref={scroller}
+        className="hide-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto"
+        style={{ touchAction: "pan-x pan-y" }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const k = Math.round(el.scrollLeft / el.clientWidth);
+          if (k !== i) setI(Math.min(shots.length - 1, Math.max(0, k)));
+        }}
+        onTouchStart={() => {
+          lastManual.current = Date.now();
+        }}
+        onPointerDown={() => {
+          lastManual.current = Date.now();
+        }}
+      >
+        {shots.map((s, k) => (
+          <button
+            key={`${s.url}-${k}`}
+            onClick={() => onOpen(k)}
+            className="h-full w-full flex-shrink-0 snap-center"
+            aria-label="現地の写真を拡大"
+          >
+            <img src={s.thumb || s.url} alt="" draggable={false} className="h-full w-full select-none object-cover" />
+          </button>
+        ))}
+      </div>
+      {/* 下部グラデ + キャプション（スクロールを邪魔しないよう pointer-events なし） */}
       <span
-        className="absolute inset-x-0 bottom-0 px-3 pb-2 pt-8 text-left"
+        className="pointer-events-none absolute inset-x-0 bottom-0 px-3 pb-2 pt-8 text-left"
         style={{ background: "linear-gradient(transparent, rgba(0,0,0,.55))" }}
       >
         <span className="block text-[12px] font-bold text-white drop-shadow">
           🟠 {cur.date} {cur.name}
         </span>
       </span>
-      <span className="absolute bottom-2 right-3 flex gap-1">
+      <span className="pointer-events-none absolute bottom-2 right-3 flex gap-1">
         {shots.map((_, k) => (
           <span
             key={k}
             className="rounded-full"
-            style={{ width: k === i ? 7 : 5, height: k === i ? 7 : 5, background: k === i ? "#fff" : "rgba(255,255,255,.5)" }}
+            style={{ width: k === i ? 7 : 5, height: k === i ? 7 : 5, background: k === i ? "#fff" : "rgba(255,255,255,.5)", transition: "width .15s,height .15s" }}
           />
         ))}
       </span>
-    </button>
+    </div>
   );
 }
 
