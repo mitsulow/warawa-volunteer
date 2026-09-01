@@ -46,6 +46,8 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 模擬データ（サンプル隊員①〜⑤）は**削除済み**・採番リセット済み（次の参加者はNo.2）
 
 ### 2026-08-16 の変更（新しい順）
+- **🟠現地報告タブ(2026-09-01・現地活動開始日)**: scope='report' を board_messages に追加（`scripts/report_scope.sql`・restrictiveで投稿はオレンジ軍団+管理者のみ）。タブは4つになり「現地報告」が一番左・初期タブ（記憶キー warawa-tab4 に変更）。現地報告タブ=ヒーロー・スライドショー(最新写真10枚・3.5s自動送り)+📅日付別アルバム見出し+通常カード。掲示板タブは board+report 混在表示(🟠現地報告ラベル)＝報告は両方に載る。report投稿カードだけ「🧡寄付してよかった」(feed_likes を item_key `cheer:<id>` で流用・トリガ無し確認済み)と「📣シェア」(navigator.share/Xインテント・文言「私の寄付で、この活動を支援できました！」)。あざーす仁さん3件+marina tanakaさん1件(9/1)を report へ移行済み。canPost判定は `isOrangeMember()`(body offer confirmed)
+- **【重要】Management APIトークン失効(2026-09-01発覚)**: `~/.rakuichi-env` の SUPABASE_ACCESS_TOKEN が401。dbq.py は使えない。代替 `scripts/dbpg.py`(pg8000 で pooler aws-0-ap-northeast-1 セッションモード5432 直接続・パスは ~/.warawa-env の SUPABASE_DB_PASS)でDDL/DML可能。**毎晩バックアップは8/28〜8/31失敗していた（401）→ backup.py を dbpg 直接続に書き換えて復旧・9/1分取得済み**。restart等プロジェクト操作系だけは新トークンが必要（supabase.com/dashboard/account/tokens で発行し ~/.rakuichi-env を書き換え）
 - **LightboxにJPEG保存ボタン(2026-09-01)**: Instagram等へ引用したい人向け(事務局・吉岡さん要望)。上部バーの「📥 JPEG保存」でwebp→jpeg(q0.92・透過は白)をcanvas変換してDL。R2画像はCORS未対応(バケット限定トークンではCORS設定も不可・確認済み)のため同一オリジンプロキシ `/r2img/[...path]`(=/imgのR2版・CDN1年キャッシュ)経由で取得
 - **現地入り募集停止(2026-08-25)**: メンバー決定につき BodyApplyDialog 冒頭の BODY_RECRUIT_CLOSED=true で「募集は終了しました」パネルを表示（フォームは温存・再開は false に戻すだけ）
 - **iPhoneセーフエリア対策(2026-08-25)**: viewportFit=cover のため PWA でヘッダーがステータスバー裏に潜り「戻る」が押せないバグ(岩切絵美さん報告・スクショ=デスクトップ「戻るボタン押せないバグ.jpg」)。globals.css に .pt-safe(env のみ・home/voice 用)/.pt-safe-head(env+12px・py-3ヘッダー用)/.pb-safe-foot(env+12px・TalK入力欄用) を追加し、sticky top-0 ヘッダー15ページ+TalK系入力欄4か所に適用。新しい突き当たりヘッダーを作る時は必ずどれかを付ける

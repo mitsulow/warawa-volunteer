@@ -11,33 +11,24 @@ import json
 import os
 import shutil
 import sys
-import urllib.request
 
-PROJECT = "dmixilrcxiofanwfhxfq"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from dbpg import connect  # noqa: E402  (Management APIトークン失効のためPostgres直接続に切替 2026-09-01)
+
 DEST_ROOT = os.path.join(os.path.expanduser("~"), "OneDrive", "デスクトップ", "わらわ〜バックアップ")
 KEEP_DAYS = 30
 CHUNK = 2000
 
-
-def token() -> str:
-    for line in open(os.path.expanduser("~/.rakuichi-env"), encoding="utf-8"):
-        if line.startswith("SUPABASE_ACCESS_TOKEN="):
-            return line.split("=", 1)[1].strip()
-    raise SystemExit("no token")
-
-
-TOKEN = token()
+_CON = None
 
 
 def sql(q: str):
-    req = urllib.request.Request(
-        f"https://api.supabase.com/v1/projects/{PROJECT}/database/query",
-        data=json.dumps({"query": q}).encode(),
-        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json", "User-Agent": "warawa-backup/1.0"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return json.loads(r.read().decode())
+    global _CON
+    if _CON is None:
+        _CON = connect()
+    rows = _CON.run(q)
+    cols = [c["name"] for c in (_CON.columns or [])]
+    return [dict(zip(cols, r)) for r in (rows or [])]
 
 
 def main():

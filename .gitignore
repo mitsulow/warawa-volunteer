@@ -9,3 +9,5 @@ next-env.d.ts
 .vercel
 .env*
 scripts/backup_run.log
+
+scripts/__pycache__/

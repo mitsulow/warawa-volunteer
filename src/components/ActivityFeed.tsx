@@ -48,6 +48,72 @@ function IcoBubble() {
   );
 }
 
+/** JSTの日付見出し（現地報告の日付別アルバム用）: 「9月1日(月)」 */
+function jstDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("ja-JP", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+    timeZone: "Asia/Tokyo",
+  });
+}
+
+/** 現地報告タブ最上部のヒーロー・スライドショー（最新の報告写真が自動で流れる・タップで拡大） */
+function ReportHero({
+  shots,
+  onOpen,
+}: {
+  shots: Array<{ url: string; thumb: string; name: string; date: string }>;
+  onOpen: (idx: number) => void;
+}) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (shots.length < 2) return;
+    const t = setInterval(() => {
+      if (!document.hidden) setI((p) => (p + 1) % shots.length);
+    }, 3500);
+    return () => clearInterval(t);
+  }, [shots.length]);
+  if (shots.length === 0) return null;
+  const cur = shots[Math.min(i, shots.length - 1)];
+  return (
+    <button
+      onClick={() => onOpen(i)}
+      className="relative -mx-2 mb-3 block w-[calc(100%+16px)] overflow-hidden"
+      style={{ height: 240, background: "#3a3428" }}
+      aria-label="現地の写真を拡大"
+    >
+      {shots.map((s, k) => (
+        <img
+          key={`${s.url}-${k}`}
+          src={s.thumb || s.url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
+          style={{ opacity: k === i ? 1 : 0 }}
+        />
+      ))}
+      {/* 下部グラデ + キャプション */}
+      <span
+        className="absolute inset-x-0 bottom-0 px-3 pb-2 pt-8 text-left"
+        style={{ background: "linear-gradient(transparent, rgba(0,0,0,.55))" }}
+      >
+        <span className="block text-[12px] font-bold text-white drop-shadow">
+          🟠 {cur.date} {cur.name}
+        </span>
+      </span>
+      <span className="absolute bottom-2 right-3 flex gap-1">
+        {shots.map((_, k) => (
+          <span
+            key={k}
+            className="rounded-full"
+            style={{ width: k === i ? 7 : 5, height: k === i ? 7 : 5, background: k === i ? "#fff" : "rgba(255,255,255,.5)" }}
+          />
+        ))}
+      </span>
+    </button>
+  );
+}
+
 function relTime(iso: string): string {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
   if (s < 60) return "たった今";
@@ -123,6 +189,9 @@ export function ActivityFeed({
   const [poster, setPoster] = useState<number | null>(null);
   const [posterIdx, setPosterIdx] = useState(0);
   const [report, setReport] = useState<{ key: string; excerpt: string } | null>(null);
+  // 🧡寄付してよかった（現地報告の投稿だけ・feed_likes を item_key "cheer:<id>" で流用）
+  const [cheerCounts, setCheerCounts] = useState<Map<string, number>>(new Map());
+  const [myCheers, setMyCheers] = useState<Set<string>>(new Set());
   // チップをタップ → その種別だけ表示（もう一度タップ or すべて表示 で解除）
   const cursorRef = useRef<string | null>(null);
 
@@ -185,6 +254,20 @@ export function ActivityFeed({
       .sort((a, b) => rank(a) - rank(b) || b.createdAt.localeCompare(a.createdAt)),
   ];
   const visible = items;
+  // ヒーロー・スライドショー: 現地報告の写真を新しい順に最大10枚
+  const heroShots =
+    scope === "report"
+      ? items
+          .flatMap((it) =>
+            it.images.map((url, k) => ({
+              url,
+              thumb: it.thumbs[k] ?? url,
+              name: it.name,
+              date: jstDay(it.createdAt),
+            }))
+          )
+          .slice(0, 10)
+      : [];
 
   const togglePin = async (it: FeedItem) => {
     const rawId = it.key.split(":")[1];
@@ -207,6 +290,13 @@ export function ActivityFeed({
     });
     fetchLikersFor(keys).then(setLikers);
     fetchCommentCounts(keys).then(setCommentCounts);
+    const cheerKeys = items.filter((i) => i.isReport).map((i) => `cheer:${i.key.split(":")[1]}`);
+    if (cheerKeys.length) {
+      fetchFeedLikes(cheerKeys, userId).then(({ counts, mine }) => {
+        setCheerCounts(counts);
+        setMyCheers(mine);
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boards.length, pinned.length, userId]);
 
@@ -231,6 +321,44 @@ export function ActivityFeed({
     // いいねした人の顔をその記事だけ取り直す
     fetchLikersFor([key]).then((m) =>
       setLikers((prev) => ({ ...prev, [key]: m[key] ?? [] }))
+    );
+  };
+
+  const cheer = async (it: FeedItem) => {
+    if (!userId) {
+      requireJoin();
+      return;
+    }
+    const key = `cheer:${it.key.split(":")[1]}`;
+    const on = !myCheers.has(key);
+    setMyCheers((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+    setCheerCounts((prev) => {
+      const next = new Map(prev);
+      next.set(key, Math.max(0, (next.get(key) ?? 0) + (on ? 1 : -1)));
+      return next;
+    });
+    await toggleFeedLike(key, userId, on);
+  };
+
+  // 「私の寄付で、この活動を支援できました！」をSNSへ（スマホは共有シート／PCはXポスト画面）
+  const sharePost = async (it: FeedItem) => {
+    const url = `${window.location.origin}/post/board/${it.key.split(":")[1]}`;
+    const text = "私の寄付で、この活動を支援できました！\n熊本地震支援「わらわ〜ボランティア」現地報告\n";
+    if (navigator.share) {
+      try {
+        await navigator.share({ text, url });
+      } catch {}
+      return;
+    }
+    window.open(
+      `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      "_blank",
+      "noopener"
     );
   };
 
@@ -296,6 +424,14 @@ export function ActivityFeed({
       </div>
       )}
 
+      {/* 現地報告: ヒーロー・スライドショー（最新の報告写真・タップで拡大） */}
+      {scope === "report" && (
+        <ReportHero
+          shots={heroShots}
+          onOpen={(i) => setLightbox({ urls: heroShots.map((s) => s.url), idx: i })}
+        />
+      )}
+
       {/* 中央フィード（CotoZuteと同じ白い列・左右いっぱいの写真） */}
       <div>
         {visible.length === 0 && (
@@ -305,12 +441,25 @@ export function ActivityFeed({
               : "まだ取り組みがありません。最初のひとことをどうぞ"}
           </p>
         )}
-        {visible.slice(0, 80).map((it) => {
+        {visible.slice(0, 80).map((it, mi, arr) => {
           const bodyExpanded = expandedBody.has(it.key);
           const idx = imgIdx.get(it.key) ?? 0;
+          // 日付別アルバム見出し（現地報告タブのみ・日が変わる位置に挟む）
+          const dayHeader =
+            scope === "report" && (mi === 0 || jstDay(arr[mi - 1].createdAt) !== jstDay(it.createdAt))
+              ? jstDay(it.createdAt)
+              : null;
           return (
+            <div key={it.key}>
+            {dayHeader && (
+              <div className="-mx-2 flex items-center gap-2 px-3 pb-1.5 pt-4">
+                <span className="rounded-full px-2.5 py-1 text-[12.5px] font-extrabold text-white" style={{ background: "#d96a1a" }}>
+                  📅 {dayHeader}の活動
+                </span>
+                <span className="h-[2px] flex-1 rounded" style={{ background: "#f0d0a8" }} />
+              </div>
+            )}
             <div
-              key={it.key}
               className="-mx-2 border-b border-[#f0ece0] bg-white"
             >
               <div className="relative overflow-hidden px-3 py-2.5">
@@ -446,6 +595,35 @@ export function ActivityFeed({
                 </div>
 
 
+                {/* 現地報告だけ: 🧡寄付してよかった + 📣シェア */}
+                {it.isReport && (() => {
+                  const ckey = `cheer:${it.key.split(":")[1]}`;
+                  const on = myCheers.has(ckey);
+                  const n = cheerCounts.get(ckey) ?? 0;
+                  return (
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        onClick={() => cheer(it)}
+                        className="flex items-center gap-1 rounded-full border-2 px-3 py-1.5 text-[12px] font-extrabold transition-colors"
+                        style={
+                          on
+                            ? { background: "#d96a1a", borderColor: "#d96a1a", color: "#fff" }
+                            : { background: "#fff", borderColor: "#f0d0a8", color: "#c05e14" }
+                        }
+                      >
+                        🧡 寄付してよかった{n > 0 && <span className="num ml-0.5">{n}</span>}
+                      </button>
+                      <button
+                        onClick={() => sharePost(it)}
+                        className="flex items-center gap-1 rounded-full border-2 px-3 py-1.5 text-[12px] font-extrabold"
+                        style={{ background: "#fff", borderColor: "#f0d0a8", color: "#c05e14" }}
+                      >
+                        📣 シェア
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 {/* いいねした人の顔（CotoZuteのFB風・ハートの下） */}
                 {(likers[it.key]?.length ?? 0) > 0 && (
                   <div className="mt-1 flex items-center">
@@ -496,6 +674,7 @@ export function ActivityFeed({
                   }}
                 />
               </div>
+            </div>
             </div>
           );
         })}
