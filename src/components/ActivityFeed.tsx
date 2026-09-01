@@ -27,6 +27,7 @@ import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
 import { DotsMenu } from "@/components/PostKit";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
+import { ORANGE_LEADER_ID } from "@/lib/config";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -513,6 +514,11 @@ export function ActivityFeed({
                       <VerifiedBadge size={14} />
                     </Link>
                     <div className="text-[11.5px] leading-tight text-[#8a8d91]">
+                      {it.userId === ORANGE_LEADER_ID && it.isReport && (
+                        <span className="mr-1.5 rounded-full px-1.5 py-[1px] text-[10px] font-extrabold text-white" style={{ background: "linear-gradient(90deg,#e8862c,#d96a1a)" }}>
+                          👑 オレンジ軍団リーダー
+                        </span>
+                      )}
                       {relTime(it.createdAt)}
                       {it.memberNo != null && (
                         <span className="num ml-1.5">@わらわ〜ボランティアNo.{it.memberNo}</span>

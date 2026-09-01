@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchOrangeCorps, type Profile } from "@/lib/db";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import { ORANGE_LEADER_ID } from "@/lib/config";
 
 /**
  * 🟠 オレンジ軍団（楽市楽座「おすすめの座主」を移植）。
@@ -13,7 +14,10 @@ export function OrangeCorps() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
-    fetchOrangeCorps().then(setProfiles);
+    // リーダーを先頭に（それ以外は申請順のまま）
+    fetchOrangeCorps().then((rows) =>
+      setProfiles([...rows.filter((p) => p.id === ORANGE_LEADER_ID), ...rows.filter((p) => p.id !== ORANGE_LEADER_ID)])
+    );
   }, []);
 
   if (profiles.length === 0) return null;
@@ -32,6 +36,13 @@ export function OrangeCorps() {
               background: "linear-gradient(180deg,#fff7ec 0%,#fdeed8 100%)",
             }}
           >
+            {p.id === ORANGE_LEADER_ID && (
+              <div className="mb-1 flex justify-center">
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "linear-gradient(90deg,#e8862c,#d96a1a)" }}>
+                  👑 リーダー
+                </span>
+              </div>
+            )}
             <div className="flex justify-center">
               {p.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element

@@ -9,3 +9,6 @@ export const VAPID_PUBLIC_KEY =
 
 // 事務局ボットアカウント（自動TalK・自動コメントの差出人。ログインはしない。管理者は「事務局の受信箱」から代理で返信できる）
 export const OFFICE_BOT_ID = "2b9f33c9-9ad1-4b39-bb1f-8dc7a225fbbf";
+
+// オレンジ軍団リーダー: やぎみほさん No.3239（2026-09-01 ユーザー指定）
+export const ORANGE_LEADER_ID = "3f673b25-43ff-4965-a12a-7d576c27a744";
