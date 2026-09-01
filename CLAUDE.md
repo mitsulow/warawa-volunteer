@@ -46,6 +46,7 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - 模擬データ（サンプル隊員①〜⑤）は**削除済み**・採番リセット済み（次の参加者はNo.2）
 
 ### 2026-08-16 の変更（新しい順）
+- **LightboxにJPEG保存ボタン(2026-09-01)**: Instagram等へ引用したい人向け(事務局・吉岡さん要望)。上部バーの「📥 JPEG保存」でwebp→jpeg(q0.92・透過は白)をcanvas変換してDL。R2画像はCORS未対応(バケット限定トークンではCORS設定も不可・確認済み)のため同一オリジンプロキシ `/r2img/[...path]`(=/imgのR2版・CDN1年キャッシュ)経由で取得
 - **現地入り募集停止(2026-08-25)**: メンバー決定につき BodyApplyDialog 冒頭の BODY_RECRUIT_CLOSED=true で「募集は終了しました」パネルを表示（フォームは温存・再開は false に戻すだけ）
 - **iPhoneセーフエリア対策(2026-08-25)**: viewportFit=cover のため PWA でヘッダーがステータスバー裏に潜り「戻る」が押せないバグ(岩切絵美さん報告・スクショ=デスクトップ「戻るボタン押せないバグ.jpg」)。globals.css に .pt-safe(env のみ・home/voice 用)/.pt-safe-head(env+12px・py-3ヘッダー用)/.pb-safe-foot(env+12px・TalK入力欄用) を追加し、sticky top-0 ヘッダー15ページ+TalK系入力欄4か所に適用。新しい突き当たりヘッダーを作る時は必ずどれかを付ける
 - **📧現地入りメンバーへ一斉メール(2026-08-20)**: /office 現地入りタブ先頭の `BodyMailSection`。①BCC用メアドコピー(申請フォームのprofile_private.email・小文字化で重複除去) ②案内文テンプレコピー(Zoom説明会+iPhone/Androidの「ホーム画面に追加→通知オン」詳細手順・差出人は事務局の西田あかねさん)。送信は西田さんが自分のメールソフトで(BCC必須)。auth.usersのGoogleメールとフォーム記入メールは17人分違う→フォーム記入の方を使用
