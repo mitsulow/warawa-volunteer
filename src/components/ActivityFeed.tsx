@@ -58,7 +58,7 @@ function jstDay(iso: string): string {
   });
 }
 
-/** 現地報告タブ最上部のヒーロー・スライドショー（最新の報告写真が自動で流れる・タップで拡大） */
+/** 現地報告タブ最上部のヒーロー・スライドショー（自動送り+左右スワイプ・タップで拡大） */
 function ReportHero({
   shots,
   onOpen,
@@ -67,20 +67,52 @@ function ReportHero({
   onOpen: (idx: number) => void;
 }) {
   const [i, setI] = useState(0);
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const swallowClick = useRef(false);
+  const lastManual = useRef(0);
   useEffect(() => {
     if (shots.length < 2) return;
     const t = setInterval(() => {
-      if (!document.hidden) setI((p) => (p + 1) % shots.length);
+      if (document.hidden) return;
+      if (Date.now() - lastManual.current < 6000) return; // スワイプ直後は自動送りを一時停止
+      setI((p) => (p + 1) % shots.length);
     }, 3500);
     return () => clearInterval(t);
   }, [shots.length]);
   if (shots.length === 0) return null;
   const cur = shots[Math.min(i, shots.length - 1)];
+  const go = (d: number) => {
+    lastManual.current = Date.now();
+    setI((p) => (p + d + shots.length) % shots.length);
+  };
   return (
     <button
-      onClick={() => onOpen(i)}
+      onClick={() => {
+        if (swallowClick.current) {
+          swallowClick.current = false;
+          return;
+        }
+        onOpen(i);
+      }}
+      onPointerDown={(e) => {
+        touch.current = { x: e.clientX, y: e.clientY };
+      }}
+      onPointerUp={(e) => {
+        const t = touch.current;
+        touch.current = null;
+        if (!t) return;
+        const dx = e.clientX - t.x;
+        const dy = e.clientY - t.y;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+          swallowClick.current = true;
+          go(dx < 0 ? 1 : -1); // 左へスワイプ=次・右へ=前
+        }
+      }}
+      onPointerCancel={() => {
+        touch.current = null;
+      }}
       className="relative -mx-2 mb-3 block w-[calc(100%+16px)] overflow-hidden"
-      style={{ height: 240, background: "#3a3428" }}
+      style={{ height: 240, background: "#3a3428", touchAction: "pan-y" }}
       aria-label="現地の写真を拡大"
     >
       {shots.map((s, k) => (
