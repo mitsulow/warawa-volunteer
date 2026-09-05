@@ -28,12 +28,12 @@ export default function Home() {
     avatar: string | null;
     email: string;
   } | null>(null);
-  // 現地活動開始(2026-09-01)に伴い初期タブは「現地報告」。キーをtab4に変えて全員一度リセット
+  // 現地活動中(2026-09-01〜)は開くたび必ず「現地報告」から始める（2026-09-05 ユーザー指示・前回タブの復元はしない）。
+  // localStorage の warawa-tab4 は ☰メニューのハイライト用にだけ更新する
   const [tab, setTabState] = useState<Tab>("report");
-  // タブ位置を記憶: リロードしても選んでいたタブから始まる
   useEffect(() => {
     try {
-      // ☰メニューからの ?tab= 指定が最優先
+      // ☰メニューからの ?tab= 指定だけは尊重
       const q = new URLSearchParams(window.location.search).get("tab") as Tab | null;
       if (q && TAB_IDS.includes(q)) {
         setTabState(q);
@@ -41,8 +41,7 @@ export default function Home() {
         window.history.replaceState(null, "", "/");
         return;
       }
-      const t = localStorage.getItem("warawa-tab4") as Tab | null;
-      if (t && TAB_IDS.includes(t)) setTabState(t);
+      localStorage.setItem("warawa-tab4", "report");
     } catch {}
   }, []);
   const setTab = (t: Tab) => {
