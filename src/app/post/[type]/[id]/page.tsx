@@ -31,7 +31,7 @@ import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
-import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
+import { EmbedCard, stripEmbedUrl, type OGPEmbed } from "@/components/EmbedCard";
 import { CommentSection } from "@/components/CommentSection";
 import { Linkify } from "@/components/Linkify";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
@@ -224,11 +224,14 @@ export default function PostPage({
   const name = item.profiles?.display_name ?? "参加者";
   const avatar = item.profiles?.avatar_url ?? null;
   const memberNo = item.profiles?.member_no ?? null;
-  const body = isBoard
+  const bodyRaw = isBoard
     ? board!.body
     : offer!.kind === "goods" && offer!.title
       ? `${offer!.title}\n${offer!.detail}`
       : offer!.detail;
+  // 埋め込みが出る投稿は本文のURL文字列を消す（表示のみ・編集欄 draft は原文）
+  const embed = ((isBoard ? board!.embed : offer!.embed) as OGPEmbed | null) ?? null;
+  const body = stripEmbedUrl(bodyRaw, embed);
   const images = isBoard
     ? (board!.image_urls ?? (board!.image_url ? [board!.image_url] : []))
     : (offer!.image_urls ?? (offer!.image_url ? [offer!.image_url] : []));
@@ -343,9 +346,9 @@ export default function PostPage({
                 <Linkify text={body} />
               </p>
             )}
-            {isBoard && board!.embed && (
+            {embed && (
               <div className="mt-2">
-                <EmbedCard embed={board!.embed as OGPEmbed} />
+                <EmbedCard embed={embed} />
               </div>
             )}
             {images.length > 0 && (

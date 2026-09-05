@@ -97,6 +97,8 @@ solo dev・main直push OK。**実ユーザーが既に投稿中**（No.4 さや�
 - E2E: `python scripts/_e2e_donate.py`（使い捨てユーザーで本番 /api/donate-talk を叩き、TalK/donations を確認して掃除。Management APIでservice roleを取得）
 - DB操作の小道具: `python scripts/dbq.py "SQL"`（Management API・User-Agent付き）
 
+- **SNS埋め込み時はURL文字列を非表示(2026-09-05・ユーザー判断)**: `stripEmbedUrl(body, embed)`(EmbedCard.tsx)で表示用本文から埋め込みと同じURLだけ消す(インスタ/YouTube/XはID一致、他はクエリ・末尾/を無視して比較)。URLだけの本文は本文欄ごと消える。**DB・編集欄(draft)は原文のまま**。代わりに埋め込みの右下に薄い「Instagramで見る ↗」等の SourceLink(インスタ埋め込みはヘッダー/フッターを切っているのでクレジット導線として必須)。適用箇所: ActivityFeed(toItem)・GroupFeed(bodyShown)・OffersSection・/post 単体ページ(同時に物資投稿の埋め込みも /post で表示するよう統一)
+
 ## 4. 設計の絶対ルール
 
 - OneSea (C:\Users\waras\onesea) は**読み取り専用の参考**。コード流用は推奨・書き込み/コミット禁止

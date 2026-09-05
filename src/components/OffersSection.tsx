@@ -36,7 +36,7 @@ import { firePush } from "@/lib/push";
 import { Avatar } from "@/components/Avatar";
 import { BodyApplyDialog } from "@/components/BodyApplyDialog";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
+import { EmbedCard, stripEmbedUrl, type OGPEmbed } from "@/components/EmbedCard";
 import { SnsIcon, snsHref } from "@/components/SnsIcon";
 import type { Profile } from "@/lib/db";
 import { useRef } from "react";
@@ -907,10 +907,11 @@ export function OffersSection({
           const key = `offer:${o.id}`;
           const name = o.profiles?.display_name ?? "参加者";
           const memberNo = o.profiles?.member_no ?? null;
-          const body = o.title ? `${o.title}\n${o.detail}` : o.detail;
+          const embed = (o.embed as OGPEmbed | null) ?? null;
+          // 埋め込みが出る投稿は本文のURL文字列を消す（表示のみ・DBは原文）
+          const body = stripEmbedUrl(o.title ? `${o.title}\n${o.detail}` : o.detail, embed);
           const images = o.image_urls?.length ? o.image_urls : o.image_url ? [o.image_url] : [];
           const thumbs = o.thumb_urls?.length ? o.thumb_urls : o.image_url ? [o.image_url] : [];
-          const embed = (o.embed as OGPEmbed | null) ?? null;
           const bodyExpanded = expandedBody.has(key);
           const idx = imgIdx.get(key) ?? 0;
           return (

@@ -27,7 +27,7 @@ import { Lightbox } from "@/components/Lightbox";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import { PostComposer } from "@/components/PostComposer";
-import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
+import { EmbedCard, stripEmbedUrl, type OGPEmbed } from "@/components/EmbedCard";
 import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { KYUSHU_PREFS, PREF_ORDER, fetchMunicipalities } from "@/lib/prefs";
@@ -282,6 +282,8 @@ export function GroupFeed({
               ? [m.image_url]
               : [];
           const thumbs = m.thumb_urls?.length ? m.thumb_urls : images;
+          // 埋め込みが出る投稿は本文のURL文字列を消す（表示のみ・DBは原文）
+          const bodyShown = stripEmbedUrl(m.body, m.embed as OGPEmbed | null);
 
           // 助けて(voice): 名前・アイコンなしのシンプル行「📍○○県○○市 ＋ 欲しい物」
           if (scope === "voice") {
@@ -327,20 +329,20 @@ export function GroupFeed({
                     />
                   )}
                 </div>
-                {m.body && (
+                {bodyShown && (
                   <div className="mt-1.5">
                     <p
                       className={`whitespace-pre-wrap break-words text-[16px] leading-relaxed text-[#3a3428] ${
-                        expandedBody.has(`board:${m.id}`) || !needsFold(m.body) ? "" : "line-clamp-1"
+                        expandedBody.has(`board:${m.id}`) || !needsFold(bodyShown) ? "" : "line-clamp-1"
                       }`}
                       onClick={() => {
-                        if (needsFold(m.body) && !expandedBody.has(`board:${m.id}`))
+                        if (needsFold(bodyShown) && !expandedBody.has(`board:${m.id}`))
                           setExpandedBody((p) => new Set(p).add(`board:${m.id}`));
                       }}
                     >
-                      <Linkify text={m.body} />
+                      <Linkify text={bodyShown} />
                     </p>
-                    {needsFold(m.body) && !expandedBody.has(`board:${m.id}`) && (
+                    {needsFold(bodyShown) && !expandedBody.has(`board:${m.id}`) && (
                       <button
                         onClick={() => setExpandedBody((p) => new Set(p).add(`board:${m.id}`))}
                         className="text-[13.5px] text-[#8a8d91]"
@@ -348,7 +350,7 @@ export function GroupFeed({
                         …もっと見る
                       </button>
                     )}
-                    {needsFold(m.body) && expandedBody.has(`board:${m.id}`) && (
+                    {needsFold(bodyShown) && expandedBody.has(`board:${m.id}`) && (
                       <button
                         onClick={() =>
                           setExpandedBody((p) => {
@@ -495,9 +497,9 @@ export function GroupFeed({
                 </span>
                 <span className="ml-auto text-[10px] text-[#a09888]">{fmtTime(m.created_at)}</span>
               </div>
-              {m.body && (
+              {bodyShown && (
                 <p className="mt-1.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#4a4438]">
-                  <Linkify text={m.body} />
+                  <Linkify text={bodyShown} />
                 </p>
               )}
               {m.embed && (

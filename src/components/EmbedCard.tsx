@@ -36,6 +36,54 @@ function getTweetId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+/** 本文中の URL が埋め込みと同じ投稿を指しているか（クエリ・末尾スラッシュ違いは同一扱い） */
+function sameEmbedUrl(a: string, b: string): boolean {
+  const ia = getInstagramPostId(a), ib = getInstagramPostId(b);
+  if (ia || ib) return ia === ib;
+  const ya = getYouTubeId(a), yb = getYouTubeId(b);
+  if (ya || yb) return ya === yb;
+  const ta = getTweetId(a), tb = getTweetId(b);
+  if (ta || tb) return ta === tb;
+  const norm = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").replace(/[?#].*$/, "").replace(/\/+$/, "");
+  return norm(a) === norm(b);
+}
+
+const BODY_URL_RE = /https?:\/\/[^\s<>"'）)】\]]+/g;
+
+/**
+ * 表示用: 埋め込みカードが出る投稿では本文から同じURLの文字列を消す（保存データは変えない）。
+ * URLだけの本文は空文字になり、呼び出し側で本文欄ごと非表示になる。
+ */
+export function stripEmbedUrl(body: string | null | undefined, embed: { url?: string } | null | undefined): string {
+  if (!body) return "";
+  if (!embed?.url) return body;
+  const out = body.replace(BODY_URL_RE, (u) => (sameEmbedUrl(u, embed.url!) ? "" : u));
+  if (out === body) return body;
+  return out
+    .split("\n")
+    .map((l) => l.replace(/[ \t]+$/, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** 埋め込みの下の小さな元リンク（ヘッダー/フッターを切っている分のクレジット導線） */
+function SourceLink({ url, label }: { url: string; label: string }) {
+  return (
+    <div className="mt-1 text-right">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="text-[11px] text-[#b0a898] no-underline hover:underline"
+      >
+        {label} ↗
+      </a>
+    </div>
+  );
+}
+
 const IG_HEADER = 54; // 埋め込み上部（アバター+名前）の高さ
 const IG_FOOTER = 168; // ★「Instagramでもっと見る」リンク行まで含めて切り落とす // 下部（♡💬↗ボタン列+リンク行）の高さ
 
@@ -100,6 +148,7 @@ export function EmbedCard({ embed, flush }: { embed: OGPEmbed; flush?: boolean }
   /* YouTube: サムネはYouTube公式CDNの静止画（無料・軽量）→タップでその場再生 */
   if (ytId) {
     return (
+      <div>
       <div className={`mt-2 overflow-hidden ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}>
         <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
           {on ? (
@@ -136,6 +185,8 @@ export function EmbedCard({ embed, flush }: { embed: OGPEmbed; flush?: boolean }
           )}
         </div>
       </div>
+      <SourceLink url={url} label="YouTubeで見る" />
+      </div>
     );
   }
 
@@ -144,22 +195,30 @@ export function EmbedCard({ embed, flush }: { embed: OGPEmbed; flush?: boolean }
      それを受けてヘッダー(54px)と下のボタン列(約102px)を枠外にはみ出させて隠す。
      動画はiframe内の▶を押すまで再生されない。loading=lazyで画面に近い枠だけ読込 */
   if (igId) {
-    return <InstagramMediaOnly igId={igId} flush={flush} />;
+    return (
+      <div>
+        <InstagramMediaOnly igId={igId} flush={flush} />
+        <SourceLink url={url} label="Instagramで見る" />
+      </div>
+    );
   }
 
   /* X: タップするまでiframeを読まない */
   if (tweetId) {
     if (on) {
       return (
-        <div className={`mt-2 overflow-hidden bg-[#faf8f2] ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}>
-          <iframe
-            src={`https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`}
-            className="w-full"
-            style={{ height: "560px", border: "none" }}
-            scrolling="no"
-            loading="lazy"
-            title="Post"
-          />
+        <div>
+          <div className={`mt-2 overflow-hidden bg-[#faf8f2] ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}>
+            <iframe
+              src={`https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`}
+              className="w-full"
+              style={{ height: "560px", border: "none" }}
+              scrolling="no"
+              loading="lazy"
+              title="Post"
+            />
+          </div>
+          <SourceLink url={url} label="Xで見る" />
         </div>
       );
     }

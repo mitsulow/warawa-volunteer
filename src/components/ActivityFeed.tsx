@@ -23,7 +23,7 @@ import { Lightbox } from "@/components/Lightbox";
 import { deleteBoardMessage } from "@/lib/db";
 import { Avatar } from "@/components/Avatar";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
-import { EmbedCard, type OGPEmbed } from "@/components/EmbedCard";
+import { EmbedCard, stripEmbedUrl, type OGPEmbed } from "@/components/EmbedCard";
 import { DotsMenu } from "@/components/PostKit";
 import { PostComposer } from "@/components/PostComposer";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -260,7 +260,8 @@ export function ActivityFeed({
     avatar: m.profiles?.avatar_url ?? null,
     memberNo: m.profiles?.member_no ?? null,
     createdAt: m.created_at,
-    body: m.body,
+    // 埋め込みが出る投稿は本文のURL文字列を消す（表示のみ・DBは原文）
+    body: stripEmbedUrl(m.body, m.embed as OGPEmbed | null),
     images: m.image_urls?.length ? m.image_urls : m.image_url ? [m.image_url] : [],
     thumbs: m.thumb_urls?.length ? m.thumb_urls : m.image_url ? [m.image_url] : [],
     embed: (m.embed as OGPEmbed | null) ?? null,
